@@ -27,6 +27,7 @@
         <url/>
     </scm>
     <properties>
+        <org.mapstruct.version>1.6.3</org.mapstruct.version>
         <java.version>17</java.version>
     </properties>
     <dependencies>
@@ -47,6 +48,11 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${org.mapstruct.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

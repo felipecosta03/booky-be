@@ -18,3 +18,4 @@ spring:
       naming-strategy: SNAKE_CASE
   profiles:
     active: ${SCOPE}
+    default: local

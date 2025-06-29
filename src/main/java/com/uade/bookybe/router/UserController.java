@@ -1,13 +1,18 @@
 package com.uade.bookybe.router;
 
+import com.uade.bookybe.core.model.User;
 import com.uade.bookybe.core.model.UserSignUp;
 import com.uade.bookybe.core.usecase.UserService;
 import com.uade.bookybe.router.dto.user.*;
 import com.uade.bookybe.router.mapper.UserDtoMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,42 +40,51 @@ public class UserController {
         .orElseGet(() -> ResponseEntity.badRequest().build());
   }
 
-  @PutMapping("/users")
-  public ResponseEntity<UserDto> updateUser(
-      @RequestPart("user") UserUpdateDto userDto,
-      @RequestPart(value = "image", required = false) MultipartFile image) {
+  @PostMapping("/sign-in")
+  public ResponseEntity<UserDto> signIn(@RequestBody UserSignInDto userSignInDto) {
+    if (userSignInDto.getEmail() == null || userSignInDto.getEmail().isBlank() ||
+        userSignInDto.getPassword() == null || userSignInDto.getPassword().isBlank()) {
+      return ResponseEntity.badRequest().build();
+    }
+    return userService
+        .signIn(userSignInDto.getEmail(), userSignInDto.getPassword())
+        .map(UserDtoMapper.INSTANCE::toDto)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+  }
 
-    return null;
+  @PutMapping("/users")
+  public ResponseEntity<UserDto> updateUserWithImage(
+      @RequestPart("user") UserUpdateDto userUpdateDto,
+      @RequestPart(value = "image", required = false) MultipartFile image) {
+    
+    if (userUpdateDto.getId() == null || userUpdateDto.getId().isBlank()) {
+      return ResponseEntity.badRequest().build();
+    }
+    
+    User user = UserDtoMapper.INSTANCE.toModel(userUpdateDto);
+    return userService
+        .updateUserWithImage(userUpdateDto.getId(), user, image)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.notFound().build());
   }
 
   @GetMapping("/users/{id}/followers")
-  public ResponseEntity<UserPreviewDto> getFollowers(@PathVariable String id) {
-    return null;
+  public ResponseEntity<List<UserPreviewDto>> getFollowers(@PathVariable String id) {
+    List<User> followers = userService.getFollowers(id);
+    List<UserPreviewDto> followersDto = followers.stream()
+        .map(UserDtoMapper.INSTANCE::toPreviewDto)
+        .collect(Collectors.toList());
+    return ResponseEntity.ok(followersDto);
   }
 
   @GetMapping("/users/{id}/following")
-  public ResponseEntity<UserPreviewDto> getFollowing(@PathVariable String id) {
-    return null;
-  }
-
-  @GetMapping("/users/{id}/followers-requests")
-  public ResponseEntity<FollowRequestDto> getFollowersRequests(@PathVariable String id) {
-    return null;
-  }
-
-  @PostMapping("/users/{id}/follow-requests")
-  public ResponseEntity<Void> sendFollowRequest(@PathVariable String id) {
-    return null;
-  }
-
-  @PostMapping("/users/follow-requests/{requestId}/accept")
-  public ResponseEntity<Void> acceptFollowRequest(@PathVariable String requestId) {
-    return null;
-  }
-
-  @PostMapping("/users/follow-requests/{requestId}/reject")
-  public ResponseEntity<Void> rejectFollowRequest(@PathVariable String requestId) {
-    return null;
+  public ResponseEntity<List<UserPreviewDto>> getFollowing(@PathVariable String id) {
+    List<User> following = userService.getFollowing(id);
+    List<UserPreviewDto> followingDto = following.stream()
+        .map(UserDtoMapper.INSTANCE::toPreviewDto)
+        .collect(Collectors.toList());
+    return ResponseEntity.ok(followingDto);
   }
 
   @PostMapping("/users/{followerId}/follow/{followedId}")
@@ -79,6 +93,17 @@ public class UserController {
     boolean followed = userService.followUser(followerId, followedId);
     if (followed) {
       return ResponseEntity.accepted().build();
+    } else {
+      return ResponseEntity.badRequest().build();
+    }
+  }
+
+  @DeleteMapping("/users/{followerId}/follow/{followedId}")
+  public ResponseEntity<Void> unfollowUser(
+      @PathVariable String followerId, @PathVariable String followedId) {
+    boolean unfollowed = userService.unfollowUser(followerId, followedId);
+    if (unfollowed) {
+      return ResponseEntity.noContent().build();
     } else {
       return ResponseEntity.badRequest().build();
     }

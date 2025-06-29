@@ -23,7 +23,7 @@ public class UserServiceImpl implements UserService {
   private final BCryptPasswordEncoder passwordEncoder;
 
   @Override
-  public Optional<UserDto> getUserById(String id) {
+  public Optional<UserDto> getUserById(Long id) {
     return userRepository
         .findById(id)
         .map(UserEntityMapper.INSTANCE::toModel)
@@ -31,7 +31,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public Optional<UserDto> updateUser(String id, UserDto userDto) {
+  public Optional<UserDto> updateUser(Long id, UserDto userDto) {
     Optional<UserEntity> existing = userRepository.findById(id);
     if (existing.isEmpty()) return Optional.empty();
     User user = UserDtoMapper.INSTANCE.toModel(userDto);
@@ -48,7 +48,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public boolean deleteUser(String id) {
+  public boolean deleteUser(Long id) {
     if (!userRepository.existsById(id)) return false;
     userRepository.deleteById(id);
     return true;
@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService {
 
   @Override
   @Transactional
-  public boolean followUser(String followerId, String followedId) {
+  public boolean followUser(Long followerId, Long followedId) {
     if (userRepository.isFollowing(followerId, followedId)) {
       return false;
     }
@@ -74,7 +74,6 @@ public class UserServiceImpl implements UserService {
 
   private User buildUserBySignUp(UserSignUp userSignUp) {
     return User.builder()
-        .id(UUID.randomUUID().toString())
         .email(userSignUp.getEmail())
         .name(userSignUp.getName())
         .dateCreated(LocalDateTime.now())

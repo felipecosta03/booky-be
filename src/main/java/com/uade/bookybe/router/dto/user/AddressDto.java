@@ -11,6 +11,7 @@ import lombok.Setter;
 @Setter
 public class AddressDto {
 
+  private Long id;
   private String state;
   private String country;
   private Double longitude;

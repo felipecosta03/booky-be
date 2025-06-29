@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 public class BookPreviewDto {
 
-  private String id;
+  private Long id;
   private String title;
   private String author;
   private Integer rate;

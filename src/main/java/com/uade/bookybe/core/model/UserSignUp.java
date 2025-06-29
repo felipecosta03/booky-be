@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserSignUp {
+    private Long id;
     private String username;
     private String name;
     private String lastname;
     private String email;
     private String password;
 }
-

@@ -14,7 +14,7 @@ import java.util.List;
 @Setter
 public class BookDto {
 
-  private String id;
+  private Long id;
   private String isbn;
   private String title;
   private String overview;

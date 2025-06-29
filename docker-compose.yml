@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -10,9 +8,11 @@ services:
       POSTGRES_PASSWORD: admin
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./database_schema_updated.sql:/docker-entrypoint-initdb.d/00-schema.sql
+      - ./scripts/alta_usuarios.sql:/docker-entrypoint-initdb.d/01-alta_usuarios.sql
     networks:
       - booky-network
     restart: unless-stopped
@@ -21,6 +21,63 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  booky-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: booky-backend
+    environment:
+      # Database Configuration
+      DATABASE_URL: jdbc:postgresql://postgres:5432/booky
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: admin
+      DATABASE_NAME: booky
+      DDL_AUTO: ${DDL_AUTO:-update}
+      
+      # Cloudinary Configuration
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      
+      # Security Configuration
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-minimum-32-characters-for-development}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      
+      # Logging Configuration
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      APP_LOG_LEVEL: ${APP_LOG_LEVEL:-DEBUG}
+      SECURITY_LOG_LEVEL: ${SECURITY_LOG_LEVEL:-INFO}
+      SHOW_SQL: ${SHOW_SQL:-false}
+      FORMAT_SQL: ${FORMAT_SQL:-true}
+      
+      # CORS Configuration
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:4200}
+      CORS_ALLOWED_METHODS: ${CORS_ALLOWED_METHODS:-GET,POST,PUT,DELETE,OPTIONS}
+      CORS_ALLOWED_HEADERS: ${CORS_ALLOWED_HEADERS:-*}
+      CORS_ALLOW_CREDENTIALS: ${CORS_ALLOW_CREDENTIALS:-true}
+      
+      # Spring Profiles
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      
+      # OpenAPI Configuration
+      OPENAPI_DEV_URL: ${OPENAPI_DEV_URL:-http://localhost:8080}
+      OPENAPI_PROD_URL: ${OPENAPI_PROD_URL:-https://your-production-url.com}
+    ports:
+      - "8080:8080"
+    networks:
+      - booky-network
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # healthcheck comentado temporalmente - requiere Spring Boot Actuator
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 40s
 
   adminer:
     image: adminer:4.8.1

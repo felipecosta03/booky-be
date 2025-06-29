@@ -1,11 +1,10 @@
 package com.uade.bookybe.router.dto.user;
 
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
@@ -19,7 +18,6 @@ public class UserDto {
   private String lastname;
   private String description;
   private String image;
-  private Integer coins;
   private AddressDto address;
   private LocalDateTime dateCreated;
 }

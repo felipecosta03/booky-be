@@ -36,8 +36,6 @@ public class UserEntity {
 
   private String image;
 
-  private Integer coins;
-
   @ManyToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = "address_id", referencedColumnName = "id")
   private AddressEntity address;

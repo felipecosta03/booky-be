@@ -17,7 +17,6 @@ public class User {
   private String lastname;
   private String description;
   private String image;
-  private Integer coins;
   private Address address;
   private LocalDateTime dateCreated;
   private String email;

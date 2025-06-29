@@ -5,8 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,10 +12,8 @@ import java.time.LocalDateTime;
 public class UserUpdateDto {
 
   private String id;
-  private String username;
   private String name;
   private String lastname;
   private String description;
   private AddressDto address;
-  private LocalDateTime dateCreated;
 }

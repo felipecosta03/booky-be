@@ -3,12 +3,13 @@ package com.uade.bookybe.core.usecase.impl;
 import com.uade.bookybe.core.exception.NotFoundException;
 import com.uade.bookybe.core.model.User;
 import com.uade.bookybe.core.model.UserSignUp;
+import com.uade.bookybe.core.port.ImageStoragePort;
 import com.uade.bookybe.core.usecase.UserService;
+import com.uade.bookybe.infraestructure.entity.AddressEntity;
 import com.uade.bookybe.infraestructure.entity.UserEntity;
 import com.uade.bookybe.infraestructure.mapper.UserEntityMapper;
 import com.uade.bookybe.infraestructure.repository.UserRepository;
-import com.uade.bookybe.router.dto.user.UserDto;
-import com.uade.bookybe.router.mapper.UserDtoMapper;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -25,51 +26,68 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
   private final BCryptPasswordEncoder passwordEncoder;
+  private final ImageStoragePort imageStoragePort;
 
   @Override
-  public Optional<UserDto> getUserById(String id) {
+  public Optional<User> getUserById(String id) {
     return userRepository
         .findById(id)
-        .map(UserEntityMapper.INSTANCE::toModel)
-        .map(UserDtoMapper.INSTANCE::toDto);
+        .map(UserEntityMapper.INSTANCE::toModel);
   }
 
-  @Override
-  public Optional<UserDto> updateUser(String id, UserDto userDto) {
-    Optional<UserEntity> existing = userRepository.findById(id);
-    if (existing.isEmpty()) return Optional.empty();
-    User user = UserDtoMapper.INSTANCE.toModel(userDto);
-    user.setId(id);
-    if (user.getPassword() != null && !user.getPassword().isBlank()) {
-      user.setPassword(passwordEncoder.encode(user.getPassword()));
-    } else {
-      user.setPassword(existing.get().getPassword());
-    }
-    UserEntity entity = UserEntityMapper.INSTANCE.toEntity(user);
-    UserEntity saved = userRepository.save(entity);
-    return Optional.ofNullable(
-        UserDtoMapper.INSTANCE.toDto(UserEntityMapper.INSTANCE.toModel(saved)));
-  }
 
   @Override
-  public Optional<UserDto> updateUserWithImage(String id, User user, MultipartFile image) {
+  public Optional<User> updateUser(String id, User user, MultipartFile image) {
     UserEntity existing =
         userRepository
             .findById(id)
             .orElseThrow(() -> new NotFoundException("User not found with id: " + id));
 
-    if (image != null && !image.isEmpty()) {
-      String imageName = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
-      user.setImage(imageName);
+    // Actualizar campos del usuario
+    if (user.getName() != null) {
+      existing.setName(user.getName());
+    }
+    if (user.getLastname() != null) {
+      existing.setLastname(user.getLastname());
+    }
+    if (user.getDescription() != null) {
+      existing.setDescription(user.getDescription());
     }
 
+    // Actualizar dirección si se proporciona
+    if (user.getAddress() != null) {
+      AddressEntity addressEntity = new AddressEntity();
+      addressEntity.setId(user.getAddress().getId());
+      addressEntity.setState(user.getAddress().getState());
+      addressEntity.setCountry(user.getAddress().getCountry());
+      addressEntity.setLongitude(user.getAddress().getLongitude());
+      addressEntity.setLatitude(user.getAddress().getLatitude());
+      existing.setAddress(addressEntity);
+    }
+
+    // Manejar imagen
+    if (image != null && !image.isEmpty()) {
+      // Eliminar imagen anterior si existe
+      if (existing.getImage() != null && !existing.getImage().isBlank()) {
+        imageStoragePort.deleteImage(existing.getImage());
+      }
+      
+      // Subir nueva imagen
+      Optional<String> uploadedImageUrl = imageStoragePort.uploadImage(image, "booky/users");
+      if (uploadedImageUrl.isPresent()) {
+        existing.setImage(uploadedImageUrl.get());
+      }
+    } else if (user.getImage() != null) {
+      existing.setImage(user.getImage());
+    }
+
+    // Actualizar password solo si se proporciona
     if (user.getPassword() != null && !user.getPassword().isBlank()) {
       existing.setPassword(passwordEncoder.encode(user.getPassword()));
     }
 
     UserEntity saved = userRepository.save(existing);
-    return Optional.ofNullable(
-        UserDtoMapper.INSTANCE.toDto(UserEntityMapper.INSTANCE.toModel(saved)));
+    return Optional.ofNullable(UserEntityMapper.INSTANCE.toModel(saved));
   }
 
   @Override

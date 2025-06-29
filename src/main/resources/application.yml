@@ -9,9 +9,11 @@ spring:
     name: postgres
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
-      hibernate: dialect=org.hibernate.dialect.PostgreSQLDialect
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
     show-sql: true
   jackson:
     property:
@@ -21,3 +23,8 @@ spring:
     default: local
   jmx:
     enabled: false
+
+cloudinary:
+  cloud-name: dfsfkyyx7
+  api-key: 438652139556741
+  api-secret: 1QsWsAAwvBelPw1kc4TWdLNSrjc

@@ -5,14 +5,13 @@ import com.uade.bookybe.core.model.UserSignUp;
 import com.uade.bookybe.core.usecase.UserService;
 import com.uade.bookybe.router.dto.user.*;
 import com.uade.bookybe.router.mapper.UserDtoMapper;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +22,7 @@ public class UserController {
   public ResponseEntity<UserDto> getUser(@PathVariable String id) {
     return userService
         .getUserById(id)
+        .map(UserDtoMapper.INSTANCE::toDto)
         .map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.notFound().build());
   }
@@ -42,8 +42,10 @@ public class UserController {
 
   @PostMapping("/sign-in")
   public ResponseEntity<UserDto> signIn(@RequestBody UserSignInDto userSignInDto) {
-    if (userSignInDto.getEmail() == null || userSignInDto.getEmail().isBlank() ||
-        userSignInDto.getPassword() == null || userSignInDto.getPassword().isBlank()) {
+    if (userSignInDto.getEmail() == null
+        || userSignInDto.getEmail().isBlank()
+        || userSignInDto.getPassword() == null
+        || userSignInDto.getPassword().isBlank()) {
       return ResponseEntity.badRequest().build();
     }
     return userService
@@ -57,14 +59,15 @@ public class UserController {
   public ResponseEntity<UserDto> updateUserWithImage(
       @RequestPart("user") UserUpdateDto userUpdateDto,
       @RequestPart(value = "image", required = false) MultipartFile image) {
-    
+
     if (userUpdateDto.getId() == null || userUpdateDto.getId().isBlank()) {
       return ResponseEntity.badRequest().build();
     }
-    
+
     User user = UserDtoMapper.INSTANCE.toModel(userUpdateDto);
     return userService
-        .updateUserWithImage(userUpdateDto.getId(), user, image)
+        .updateUser(userUpdateDto.getId(), user, image)
+        .map(UserDtoMapper.INSTANCE::toDto)
         .map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.notFound().build());
   }
@@ -72,18 +75,16 @@ public class UserController {
   @GetMapping("/users/{id}/followers")
   public ResponseEntity<List<UserPreviewDto>> getFollowers(@PathVariable String id) {
     List<User> followers = userService.getFollowers(id);
-    List<UserPreviewDto> followersDto = followers.stream()
-        .map(UserDtoMapper.INSTANCE::toPreviewDto)
-        .collect(Collectors.toList());
+    List<UserPreviewDto> followersDto =
+        followers.stream().map(UserDtoMapper.INSTANCE::toPreviewDto).collect(Collectors.toList());
     return ResponseEntity.ok(followersDto);
   }
 
   @GetMapping("/users/{id}/following")
   public ResponseEntity<List<UserPreviewDto>> getFollowing(@PathVariable String id) {
     List<User> following = userService.getFollowing(id);
-    List<UserPreviewDto> followingDto = following.stream()
-        .map(UserDtoMapper.INSTANCE::toPreviewDto)
-        .collect(Collectors.toList());
+    List<UserPreviewDto> followingDto =
+        following.stream().map(UserDtoMapper.INSTANCE::toPreviewDto).collect(Collectors.toList());
     return ResponseEntity.ok(followingDto);
   }
 
@@ -107,14 +108,6 @@ public class UserController {
     } else {
       return ResponseEntity.badRequest().build();
     }
-  }
-
-  @PutMapping("/users/{id}")
-  public ResponseEntity<UserDto> updateUser(@PathVariable String id, @RequestBody UserDto userDto) {
-    return userService
-        .updateUser(id, userDto)
-        .map(ResponseEntity::ok)
-        .orElseGet(() -> ResponseEntity.notFound().build());
   }
 
   @DeleteMapping("/users/{id}")

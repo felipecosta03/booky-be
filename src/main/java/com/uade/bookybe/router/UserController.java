@@ -15,7 +15,7 @@ public class UserController {
   private final UserService userService;
 
   @GetMapping("/users/{id}")
-  public ResponseEntity<UserDto> getUser(@PathVariable Long id) {
+  public ResponseEntity<UserDto> getUser(@PathVariable String id) {
     return userService
         .getUserById(id)
         .map(ResponseEntity::ok)
@@ -44,22 +44,22 @@ public class UserController {
   }
 
   @GetMapping("/users/{id}/followers")
-  public ResponseEntity<UserPreviewDto> getFollowers(@PathVariable Long id) {
+  public ResponseEntity<UserPreviewDto> getFollowers(@PathVariable String id) {
     return null;
   }
 
   @GetMapping("/users/{id}/following")
-  public ResponseEntity<UserPreviewDto> getFollowing(@PathVariable Long id) {
+  public ResponseEntity<UserPreviewDto> getFollowing(@PathVariable String id) {
     return null;
   }
 
   @GetMapping("/users/{id}/followers-requests")
-  public ResponseEntity<FollowRequestDto> getFollowersRequests(@PathVariable Long id) {
+  public ResponseEntity<FollowRequestDto> getFollowersRequests(@PathVariable String id) {
     return null;
   }
 
   @PostMapping("/users/{id}/follow-requests")
-  public ResponseEntity<Void> sendFollowRequest(@PathVariable Long id) {
+  public ResponseEntity<Void> sendFollowRequest(@PathVariable String id) {
     return null;
   }
 
@@ -75,7 +75,7 @@ public class UserController {
 
   @PostMapping("/users/{followerId}/follow/{followedId}")
   public ResponseEntity<Void> followUser(
-      @PathVariable Long followerId, @PathVariable Long followedId) {
+      @PathVariable String followerId, @PathVariable String followedId) {
     boolean followed = userService.followUser(followerId, followedId);
     if (followed) {
       return ResponseEntity.accepted().build();
@@ -85,7 +85,7 @@ public class UserController {
   }
 
   @PutMapping("/users/{id}")
-  public ResponseEntity<UserDto> updateUser(@PathVariable Long id, @RequestBody UserDto userDto) {
+  public ResponseEntity<UserDto> updateUser(@PathVariable String id, @RequestBody UserDto userDto) {
     return userService
         .updateUser(id, userDto)
         .map(ResponseEntity::ok)
@@ -93,7 +93,7 @@ public class UserController {
   }
 
   @DeleteMapping("/users/{id}")
-  public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+  public ResponseEntity<Void> deleteUser(@PathVariable String id) {
     boolean deleted = userService.deleteUser(id);
     if (!deleted) return ResponseEntity.notFound().build();
     return ResponseEntity.noContent().build();

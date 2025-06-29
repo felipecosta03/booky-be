@@ -9,12 +9,12 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-public interface UserRepository extends JpaRepository<UserEntity, Long> {
+public interface UserRepository extends JpaRepository<UserEntity, String> {
   @Query(
       value =
           "SELECT COUNT(*) > 0 FROM user_follows WHERE follower_id = :followerId AND followed_id = :followedId",
       nativeQuery = true)
-  boolean isFollowing(@Param("followerId") Long followerId, @Param("followedId") Long followedId);
+  boolean isFollowing(@Param("followerId") String followerId, @Param("followedId") String followedId);
 
   @Modifying
   @Transactional
@@ -22,5 +22,5 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
       value =
           "INSERT INTO user_follows (follower_id, followed_id) VALUES (:followerId, :followedId)",
       nativeQuery = true)
-  void follow(@Param("followerId") Long followerId, @Param("followedId") Long followedId);
+  void follow(@Param("followerId") String followerId, @Param("followedId") String followedId);
 }

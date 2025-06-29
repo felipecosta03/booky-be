@@ -7,13 +7,13 @@ import com.uade.bookybe.core.model.User;
 import java.util.Optional;
 
 public interface UserService {
-  Optional<UserDto> getUserById(Long id);
+  Optional<UserDto> getUserById(String id);
 
-  Optional<UserDto> updateUser(Long id, UserDto userDto);
+  Optional<UserDto> updateUser(String id, UserDto userDto);
 
-  boolean deleteUser(Long id);
+  boolean deleteUser(String id);
 
-  boolean followUser(Long followerId, Long followedId);
+  boolean followUser(String followerId, String followedId);
 
   Optional<User> signUp(UserSignUp userSignUp);
 }

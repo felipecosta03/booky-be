@@ -14,9 +14,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "users")
 public class UserEntity {
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  @Id private String id;
 
   @Column(nullable = false, unique = true)
   private String email;
@@ -40,7 +38,7 @@ public class UserEntity {
 
   private Integer coins;
 
-  @OneToOne(cascade = CascadeType.ALL)
+  @ManyToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = "address_id", referencedColumnName = "id")
   private AddressEntity address;
 

@@ -1,0 +1,14 @@
+# Archivo CSV para alta masiva de usuarios
+# Formato: nombre,apellido,email,username,password
+# Líneas que empiecen con # son comentarios y se ignoran
+
+Roberto,Silva,roberto.silva@empresa.com,robertos,MiPassword123
+Fernanda,Lopez,fernanda.lopez@empresa.com,ferlopez,Password456  
+Diego,Gutierrez,diego.gutierrez@empresa.com,diegog,Segura789
+Carolina,Morales,carolina.morales@empresa.com,carolm,Clave2024
+Alejandro,Vargas,alejandro.vargas@empresa.com,alejov,MyPass999
+Valentina,Castro,valentina.castro@empresa.com,valec,Strong123
+Matias,Herrera,matias.herrera@empresa.com,matiash,SuperPass456
+Camila,Rojas,camila.rojas@empresa.com,camilar,Secure789
+Gonzalo,Mendoza,gonzalo.mendoza@empresa.com,gonzalom,MySecret123
+Agustina,Torres,agustina.torres@empresa.com,agustinat,PassWord456 

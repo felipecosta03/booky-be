@@ -1,17 +1,17 @@
-package com.uade.bookybe.router.dto.book;
+package com.uade.bookybe.core.model;
 
+import com.uade.bookybe.core.model.constant.BookStatus;
 import java.util.List;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
+@Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Setter
-public class BookDto {
-
+public class Book {
   private Long id;
   private String isbn;
   private String title;
@@ -24,4 +24,4 @@ public class BookDto {
   private String image;
   private Integer rate;
   private List<String> categories;
-}
+} 

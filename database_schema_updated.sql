@@ -46,7 +46,7 @@ CREATE TABLE user_follows (
 -- =====================================================
 CREATE TABLE books (
     id BIGSERIAL PRIMARY KEY,
-    isbn VARCHAR(255),
+    isbn VARCHAR(255) UNIQUE,
     title VARCHAR(255),
     overview TEXT,
     synopsis TEXT,
@@ -55,8 +55,7 @@ CREATE TABLE books (
     publisher VARCHAR(255),
     author VARCHAR(255),
     image VARCHAR(255),
-    rate INTEGER,
-    status VARCHAR(255)
+    rate INTEGER
 );
 
 -- =====================================================
@@ -158,15 +157,17 @@ CREATE TABLE reading_club_members (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- Tabla: user_books (libros de usuarios)
+-- Tabla: user_books (libros de usuarios) - ACTUALIZADA
 CREATE TABLE user_books (
-    id VARCHAR(255) PRIMARY KEY,
-    is_available_for_exchange BOOLEAN,
-    status VARCHAR(255),
-    book_id BIGINT,
-    user_id VARCHAR(255),
+    id BIGSERIAL PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    book_id BIGINT NOT NULL,
+    status VARCHAR(255) NOT NULL,
+    is_favorite BOOLEAN NOT NULL DEFAULT FALSE,
+    wants_to_exchange BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (book_id) REFERENCES books(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    UNIQUE(user_id, book_id)
 );
 
 -- Tabla: book_transaction (transacciones de libros)

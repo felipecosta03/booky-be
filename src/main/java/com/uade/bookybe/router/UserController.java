@@ -1,7 +1,9 @@
 package com.uade.bookybe.router;
 
+import com.uade.bookybe.core.model.UserSignUp;
 import com.uade.bookybe.core.usecase.UserService;
 import com.uade.bookybe.router.dto.user.*;
+import com.uade.bookybe.router.mapper.UserDtoMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,20 +16,23 @@ public class UserController {
 
   @GetMapping("/users/{id}")
   public ResponseEntity<UserDto> getUser(@PathVariable String id) {
-
-    return null;
+    return userService
+        .getUserById(id)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.notFound().build());
   }
 
   @PostMapping("/sign-up")
   public ResponseEntity<UserDto> signUp(@RequestBody UserSignUpDto userSignUpDto) {
-
-    return null;
-  }
-
-  @PostMapping("/sign-in")
-  public ResponseEntity<UserDto> createUser(@RequestBody UserSignUpDto userSignInDto) {
-
-    return null;
+    if (userSignUpDto.getPassword() == null || userSignUpDto.getPassword().isBlank()) {
+      return ResponseEntity.badRequest().build();
+    }
+    UserSignUp userSignUp = UserDtoMapper.INSTANCE.toModel(userSignUpDto);
+    return userService
+        .signUp(userSignUp)
+        .map(UserDtoMapper.INSTANCE::toDto)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.badRequest().build());
   }
 
   @PutMapping("/users")
@@ -77,5 +82,20 @@ public class UserController {
     } else {
       return ResponseEntity.badRequest().build();
     }
+  }
+
+  @PutMapping("/users/{id}")
+  public ResponseEntity<UserDto> updateUser(@PathVariable String id, @RequestBody UserDto userDto) {
+    return userService
+        .updateUser(id, userDto)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.notFound().build());
+  }
+
+  @DeleteMapping("/users/{id}")
+  public ResponseEntity<Void> deleteUser(@PathVariable String id) {
+    boolean deleted = userService.deleteUser(id);
+    if (!deleted) return ResponseEntity.notFound().build();
+    return ResponseEntity.noContent().build();
   }
 }

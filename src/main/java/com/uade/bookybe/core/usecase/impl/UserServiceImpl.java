@@ -9,7 +9,6 @@ import com.uade.bookybe.infraestructure.entity.AddressEntity;
 import com.uade.bookybe.infraestructure.entity.UserEntity;
 import com.uade.bookybe.infraestructure.mapper.UserEntityMapper;
 import com.uade.bookybe.infraestructure.repository.UserRepository;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -30,11 +29,8 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public Optional<User> getUserById(String id) {
-    return userRepository
-        .findById(id)
-        .map(UserEntityMapper.INSTANCE::toModel);
+    return userRepository.findById(id).map(UserEntityMapper.INSTANCE::toModel);
   }
-
 
   @Override
   public Optional<User> updateUser(String id, User user, MultipartFile image) {
@@ -71,7 +67,7 @@ public class UserServiceImpl implements UserService {
       if (existing.getImage() != null && !existing.getImage().isBlank()) {
         imageStoragePort.deleteImage(existing.getImage());
       }
-      
+
       // Subir nueva imagen
       Optional<String> uploadedImageUrl = imageStoragePort.uploadImage(image, "booky/users");
       if (uploadedImageUrl.isPresent()) {

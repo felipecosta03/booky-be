@@ -1,15 +1,13 @@
 package com.uade.bookybe.router.dto.user;
 
 import java.time.LocalDateTime;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter
+@Builder
 public class UserDto {
 
   private String id;

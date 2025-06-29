@@ -12,7 +12,6 @@ import java.util.TimeZone;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
@@ -47,10 +46,5 @@ public class SpringConfig implements WebMvcConfigurer {
             .serializationInclusion(JsonInclude.Include.NON_NULL)
             .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
             .dateFormat(sdf);
-  }
-
-  @Bean
-  public BCryptPasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
   }
 }

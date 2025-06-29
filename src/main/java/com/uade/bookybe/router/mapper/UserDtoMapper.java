@@ -1,9 +1,7 @@
 package com.uade.bookybe.router.mapper;
 
-import com.uade.bookybe.core.model.Address;
 import com.uade.bookybe.core.model.User;
 import com.uade.bookybe.core.model.UserSignUp;
-import com.uade.bookybe.router.dto.user.AddressDto;
 import com.uade.bookybe.router.dto.user.UserDto;
 import com.uade.bookybe.router.dto.user.UserPreviewDto;
 import com.uade.bookybe.router.dto.user.UserSignUpDto;
@@ -12,9 +10,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
-@Mapper(
-    unmappedTargetPolicy = ReportingPolicy.IGNORE,
-    unmappedSourcePolicy = ReportingPolicy.IGNORE)
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface UserDtoMapper {
   UserDtoMapper INSTANCE = Mappers.getMapper(UserDtoMapper.class);
 
@@ -25,8 +21,4 @@ public interface UserDtoMapper {
   User toModel(UserUpdateDto dto);
 
   UserPreviewDto toPreviewDto(User model);
-
-  AddressDto toDto(Address model);
-
-  Address toModel(AddressDto dto);
 }

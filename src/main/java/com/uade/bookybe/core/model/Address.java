@@ -1,14 +1,12 @@
 package com.uade.bookybe.core.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
-@Builder
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@Setter
+@Builder
 public class Address {
   private String id;
   private String state;

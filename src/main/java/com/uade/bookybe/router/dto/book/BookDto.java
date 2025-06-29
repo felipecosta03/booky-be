@@ -1,12 +1,11 @@
 package com.uade.bookybe.router.dto.book;
 
 import com.uade.bookybe.core.model.constant.BookStatus;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.List;
 
 @Getter
 @AllArgsConstructor

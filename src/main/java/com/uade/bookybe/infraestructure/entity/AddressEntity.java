@@ -1,23 +1,20 @@
 package com.uade.bookybe.infraestructure.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter
+@Builder
 @Entity
 @Table(name = "addresses")
 public class AddressEntity {
-    @Id
-    private String id;
+  @Id private String id;
 
-    private String state;
-    private String country;
-    private Double longitude;
-    private Double latitude;
+  private String state;
+  private String country;
+  private Double longitude;
+  private Double latitude;
 }

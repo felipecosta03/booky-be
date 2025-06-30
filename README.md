@@ -104,8 +104,8 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:4200
    ```
 
 4. **Verificar funcionamiento**
-   - API: http://localhost:8080/api/v1
-   - Documentación: http://localhost:8080/swagger-ui.html
+   - API: http://localhost:8080
+   - Documentación: http://localhost:8080/swagger-ui/index.html
 
 ## 📖 API Documentation
 
@@ -113,21 +113,25 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:4200
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| POST | `/api/v1/sign-up` | Registro de usuario |
-| POST | `/api/v1/sign-in` | Inicio de sesión |
-| GET | `/api/v1/users/{id}` | Obtener usuario por ID |
-| PUT | `/api/v1/users` | Actualizar perfil de usuario |
-| DELETE | `/api/v1/users/{id}` | Eliminar usuario |
-| GET | `/api/v1/users/{id}/followers` | Obtener seguidores |
-| GET | `/api/v1/users/{id}/following` | Obtener seguidos |
-| POST | `/api/v1/users/{followerId}/follow/{followedId}` | Seguir usuario |
-| DELETE | `/api/v1/users/{followerId}/follow/{followedId}` | Dejar de seguir |
+| POST | `/sign-up` | Registro de usuario |
+| POST | `/sign-in` | Inicio de sesión |
+| GET | `/users/{id}` | Obtener usuario por ID |
+| PUT | `/users` | Actualizar perfil de usuario |
+| DELETE | `/users/{id}` | Eliminar usuario |
+| GET | `/users/{id}/followers` | Obtener seguidores |
+| GET | `/users/{id}/following` | Obtener seguidos |
+| POST | `/users/{followerId}/follow/{followedId}` | Seguir usuario |
+| DELETE | `/users/{followerId}/follow/{followedId}` | Dejar de seguir |
+| GET | `/books/search?q={query}` | Buscar libros |
+| GET | `/books/isbn/{isbn}` | Obtener libro por ISBN |
+| POST | `/books/users/{userId}/library` | Agregar libro a biblioteca |
+| GET | `/books/users/{userId}/library` | Obtener biblioteca del usuario |
 
 ### Ejemplo de Uso
 
 **Registro de Usuario:**
 ```json
-POST /api/v1/sign-up
+POST /sign-up
 {
   "name": "Juan",
   "lastname": "Pérez",

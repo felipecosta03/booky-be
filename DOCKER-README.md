@@ -2,73 +2,73 @@
 
 ## 📋 Prerequisitos
 
-- **Docker Desktop** instalado y ejecutándose
-- **Docker Compose** (incluido con Docker Desktop)
+- **Docker** instalado y ejecutándose (Docker Desktop o Colima)
+- **Git** para clonar el repositorio
 
 ## 🏃‍♂️ Inicio Rápido
 
-### Opción 1: Script Automático (Recomendado)
+### Scripts Simplificados (Recomendado)
 
-**Linux/macOS:**
+El proyecto incluye **4 scripts principales** optimizados para **Colima** y **Docker Desktop**:
+
 ```bash
-./docker-run.sh
+# 🚀 Levantar toda la aplicación (primera vez)
+./start.sh
+
+# 🔄 Restart solo backend (para cambios de código)
+./restart-app.sh  
+
+# 📊 Ver estado y diagnóstico
+./status.sh
+
+# 🛑 Parar toda la aplicación
+./stop.sh
 ```
 
-**Windows:**
-```batch
-docker-run.bat
-```
-
-### Opción 2: Inicio Ultra-Rápido
+### Comandos Docker Manuales (Alternativo)
 ```bash
-./quick-start.sh
-```
-
-### Opción 3: Rebuild Completo
-```bash
-./quick-rebuild.sh
-```
-
-### Opción 4: Rebuild Solo App (Rápido)
-```bash
-./quick-app-rebuild.sh
-```
-
-### Opción 5: Comandos Manuales
-```bash
-# Construir y ejecutar
+# Opción 1: Usando docker-compose
 docker-compose up --build -d
 
-# Rebuild completo (elimina todo y reconstruye)
-docker-compose down -v --rmi all --remove-orphans
-docker system prune -f
-docker-compose up --build -d
-
-# Ver logs
+# Opción 2: Ver logs
 docker-compose logs -f
 
-# Parar aplicación
+# Opción 3: Parar aplicación
 docker-compose down
 ```
 
-## ⚡ **Tipos de Rebuild**
+## ⚡ **Tipos de Comandos**
 
-| Comando | Velocidad | Qué Rebuilda | Cuándo Usar |
-|---------|-----------|--------------|-------------|
-| `./quick-app-rebuild.sh` | ⚡⚡⚡ Súper Rápido | Solo la aplicación Java | Cambios de código únicamente |
-| `./docker-run.sh restart` | ⚡⚡ Rápido | Aplicación + dependencias | Cambios en dependencies/config |
-| `./quick-rebuild.sh` | ⚡ Lento | Todo + BD desde cero | Reset completo / problemas serios |
+| Script | Velocidad | Qué Hace | Cuándo Usar |
+|---------|-----------|----------|-------------|
+| `./start.sh` | ⚡⚡ Completo | Levanta BD + Backend + Adminer | Primera vez o después de stop |
+| `./restart-app.sh` | ⚡⚡⚡ Súper Rápido | Solo rebuilda backend | Cambios de código únicamente |
+| `./status.sh` | ⚡⚡⚡⚡ Instantáneo | Muestra estado y logs | Diagnóstico y monitoreo |
+| `./stop.sh` | ⚡⚡⚡ Rápido | Para todos los servicios | Al terminar de trabajar |
 
-## 🔄 Cuándo usar cada opción
+## 🔄 Flujo de Desarrollo
 
 | Situación | Comando Recomendado | Descripción |
 |-----------|-------------------|-------------|
-| 🆕 **Primera vez** | `./docker-run.sh` o `./quick-start.sh` | Inicio normal |
-| 📝 **Cambios de código** | `./quick-app-rebuild.sh` | Solo rebuilda app (⚡ rápido) |
-| 🔄 **Cambios mayores** | `./docker-run.sh restart` | Rebuild completo |
-| 🐛 **Problemas de dependencies** | `./quick-rebuild.sh` | Limpieza total |
-| 🗄️ **Reset de base de datos** | `./quick-rebuild.sh` | Elimina datos y recrea |
-| 🔧 **Problemas de Docker** | `./docker-run.sh rebuild` | Limpieza completa |
+| 🆕 **Primera vez** | `./start.sh` | Levanta todo desde cero |
+| 📝 **Cambios de código** | `./restart-app.sh` | Solo rebuilda app (⚡ súper rápido) |
+| 🔍 **Ver estado** | `./status.sh` | Diagnóstico completo |
+| 🛑 **Terminar trabajo** | `./stop.sh` | Para todos los servicios |
+| 🧹 **Problemas graves** | `./stop.sh` → `./start.sh` | Reset completo |
+
+## 🔧 Configuración Automática
+
+Los scripts cargan automáticamente las variables del archivo **`.env`**:
+
+```bash
+# Variables principales usadas por los scripts
+DATABASE_NAME=booky
+DATABASE_USERNAME=postgres  
+DATABASE_PASSWORD=admin
+JWT_SECRET=your-jwt-secret-key
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+# ... y todas las demás del archivo .env
+```
 
 ## 🌐 URLs de la Aplicación
 
@@ -81,9 +81,19 @@ docker-compose down
 
 ## 🧪 Comandos de Prueba
 
+### Buscar libros:
+```bash
+curl "http://localhost:8080/books/search?q=hobbit"
+```
+
+### Obtener libro por ISBN:
+```bash
+curl "http://localhost:8080/books/isbn/9780547928227"
+```
+
 ### Agregar libro a biblioteca:
 ```bash
-curl -X POST "http://localhost:8080/api/books/users/user-001/library" \
+curl -X POST "http://localhost:8080/books/users/user-001/library" \
   -H "Content-Type: application/json" \
   -d '{
     "isbn": "9780547928227",
@@ -93,67 +103,64 @@ curl -X POST "http://localhost:8080/api/books/users/user-001/library" \
 
 ### Obtener biblioteca del usuario:
 ```bash
-curl "http://localhost:8080/api/books/users/user-001/library"
+curl "http://localhost:8080/books/users/user-001/library"
 ```
 
-### Buscar libros:
+### Registro de usuario:
 ```bash
-curl "http://localhost:8080/api/books/search?q=hobbit"
-```
-
-### Obtener libro por ISBN:
-```bash
-curl "http://localhost:8080/api/books/isbn/9780547928227"
+curl -X POST "http://localhost:8080/sign-up" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Juan",
+    "lastname": "Pérez", 
+    "email": "juan@example.com",
+    "username": "juanperez",
+    "password": "SecurePass123!"
+  }'
 ```
 
 ## 🛠️ Comandos Docker Útiles
 
-### Ver estado de contenedores:
+### Ver estado:
 ```bash
-docker-compose ps
+# Estado de contenedores (script)
+./status.sh
+
+# Estado manual
+docker ps --filter "name=booky"
 ```
 
-### Ver logs en tiempo real:
+### Ver logs:
 ```bash
-# Logs de la aplicación
-docker-compose logs -f booky-app
+# Logs del backend
+docker logs booky-backend -f
 
-# Logs de la base de datos
-docker-compose logs -f postgres
+# Logs de la base de datos  
+docker logs booky-postgres -f
 
-# Todos los logs
+# Logs usando docker-compose
 docker-compose logs -f
 ```
 
-### Reiniciar servicios:
+### Gestión de contenedores:
 ```bash
-# Reiniciar todo
-docker-compose restart
+# Reiniciar solo backend (script recomendado)
+./restart-app.sh
 
-# Reiniciar solo la aplicación
-docker-compose restart booky-app
+# Reiniciar manual
+docker restart booky-backend
 
-# Rebuild completo (usando script)
-./docker-run.sh rebuild
-
-# Rebuild rápido (todo)
-./quick-rebuild.sh
-
-# Rebuild solo app (cambios de código)
-./docker-run.sh rebuild-app
-./quick-app-rebuild.sh
+# Ver uso de recursos
+docker stats --filter "name=booky"
 ```
 
 ### Limpiar recursos:
 ```bash
-# Parar y eliminar contenedores
-docker-compose down
+# Parar servicios (script recomendado)
+./stop.sh
 
-# Parar, eliminar contenedores y volúmenes
-docker-compose down -v
-
-# Limpiar recursos no utilizados
-docker system prune -f
+# Limpiar completamente (¡CUIDADO! Borra datos)
+docker system prune -a --volumes
 ```
 
 ## 🐛 Solución de Problemas
@@ -162,39 +169,52 @@ docker system prune -f
 ```bash
 # Ver qué proceso usa el puerto
 lsof -i :8080
+lsof -i :5433
 
-# Cambiar puerto en docker-compose.yml
-ports:
-  - "8081:8080"  # Cambiar primer número
+# Solución: cambiar puertos en docker-compose.yml o matar proceso
 ```
 
 ### Error: "Docker daemon not running"
-- Abrir Docker Desktop
-- Esperar a que inicie completamente
-- Intentar de nuevo
+- **Docker Desktop:** Abrir Docker Desktop y esperar que inicie
+- **Colima:** Ejecutar `colima start`
 
 ### Aplicación no responde:
 ```bash
-# Ver logs para diagnosticar
-docker-compose logs booky-app
+# 1. Ver estado
+./status.sh
 
-# Verificar estado de contenedores
-docker-compose ps
+# 2. Ver logs para diagnosticar
+docker logs booky-backend --tail 50
 
-# Reiniciar si es necesario
-docker-compose restart booky-app
+# 3. Reiniciar backend
+./restart-app.sh
+
+# 4. Si persiste, reset completo
+./stop.sh && ./start.sh
 ```
 
 ### Base de datos no conecta:
 ```bash
-# Verificar que PostgreSQL esté corriendo
-docker-compose ps postgres
+# 1. Verificar que PostgreSQL esté corriendo
+docker ps | grep postgres
 
-# Ver logs de la base de datos
-docker-compose logs postgres
+# 2. Ver logs de la base de datos
+docker logs booky-postgres --tail 20
 
-# Conectarse directamente para probar
-docker-compose exec postgres psql -U postgres -d booky
+# 3. Conectarse directamente para probar
+docker exec -it booky-postgres psql -U postgres -d booky
+
+# 4. Reset completo si es necesario
+./stop.sh && ./start.sh
+```
+
+### Scripts no funcionan (permisos):
+```bash
+# Dar permisos de ejecución
+chmod +x *.sh
+
+# Verificar que bash esté disponible
+which bash
 ```
 
 ## 📊 Configuración de Base de Datos
@@ -203,57 +223,57 @@ docker-compose exec postgres psql -U postgres -d booky
 - **Host:** localhost
 - **Puerto:** 5433
 - **Usuario:** postgres
-- **Contraseña:** admin
+- **Contraseña:** admin  
 - **Base de datos:** booky
 
 ### Adminer (Interfaz web):
 1. Ir a http://localhost:8081
-2. Sistema: PostgreSQL
-3. Servidor: postgres
-4. Usuario: postgres
-5. Contraseña: admin
-6. Base de datos: booky
-
-## 🔧 Variables de Entorno
-
-El archivo `docker-compose.yml` incluye configuración por defecto. Para personalizar:
-
-1. Crear archivo `.env`:
-```env
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters
-JWT_EXPIRATION=86400000
-
-# Cloudinary (opcional)
-CLOUDINARY_CLOUD_NAME=your-cloud-name
-CLOUDINARY_API_KEY=your-api-key
-CLOUDINARY_API_SECRET=your-api-secret
-
-# Logging
-LOG_LEVEL=DEBUG
-SHOW_SQL=true
-
-# CORS
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:4200
-```
-
-2. Reiniciar aplicación:
-```bash
-docker-compose down
-docker-compose up -d
-```
+2. **Sistema:** PostgreSQL
+3. **Servidor:** postgres (o booky-postgres)
+4. **Usuario:** postgres
+5. **Contraseña:** admin
+6. **Base de datos:** booky
 
 ## 📚 Endpoints Principales
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| POST | `/api/books/users/{userId}/library` | Agregar libro a biblioteca |
-| GET | `/api/books/users/{userId}/library` | Obtener biblioteca del usuario |
-| GET | `/api/books/users/{userId}/favorites` | Obtener libros favoritos |
-| GET | `/api/books/search?q={query}` | Buscar libros |
-| GET | `/api/books/isbn/{isbn}` | Obtener libro por ISBN |
-| PUT | `/api/books/users/{userId}/books/{bookId}/status` | Actualizar estado |
-| PUT | `/api/books/users/{userId}/books/{bookId}/favorite` | Toggle favorito |
-| GET | `/api/books/exchange` | Libros para intercambio |
+| **Libros** |
+| GET | `/books/search?q={query}` | Buscar libros |
+| GET | `/books/isbn/{isbn}` | Obtener libro por ISBN |
+| GET | `/books/exchange` | Libros disponibles para intercambio |
+| **Biblioteca de Usuario** |
+| POST | `/books/users/{userId}/library` | Agregar libro a biblioteca |
+| GET | `/books/users/{userId}/library` | Obtener biblioteca del usuario |
+| GET | `/books/users/{userId}/favorites` | Obtener libros favoritos |
+| PUT | `/books/users/{userId}/books/{bookId}/status` | Actualizar estado de lectura |
+| PUT | `/books/users/{userId}/books/{bookId}/favorite` | Toggle favorito |
+| **Usuarios** |
+| POST | `/sign-up` | Registro de usuario |
+| POST | `/sign-in` | Inicio de sesión |
+| GET | `/users/{id}` | Obtener usuario por ID |
+| PUT | `/users` | Actualizar perfil de usuario |
+| GET | `/users/{id}/followers` | Obtener seguidores |
+| GET | `/users/{id}/following` | Obtener usuarios seguidos |
+| POST | `/users/{followerId}/follow/{followedId}` | Seguir usuario |
+
+## 💡 Consejos para Desarrollo
+
+1. **Para cambios frecuentes de código:** Usa `./restart-app.sh` (es muy rápido)
+2. **Para diagnóstico:** Usa `./status.sh` regularmente  
+3. **Al terminar el día:** Usa `./stop.sh` para liberar recursos
+4. **Si algo va mal:** `./stop.sh` → `./start.sh` soluciona la mayoría de problemas
+
+## 🎯 Scripts vs Docker Compose
+
+| Característica | Scripts | Docker Compose |
+|---------------|---------|----------------|
+| **Facilidad** | ✅ Muy fácil | ⚠️ Requiere conocimiento |
+| **Velocidad** | ✅ Optimizado | ⚠️ Más lento |
+| **Variables .env** | ✅ Automático | ❌ Manual |
+| **Diagnóstico** | ✅ `./status.sh` | ❌ Comandos manuales |
+| **Colima** | ✅ Optimizado | ⚠️ Puede fallar |
+
+**Recomendación:** Usa los scripts para desarrollo diario. Usa docker-compose solo si necesitas configuraciones avanzadas.
 
 ¡Listo para usar! 🎉 

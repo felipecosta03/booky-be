@@ -28,7 +28,7 @@ public class ReadingClubEntity {
   private String name;
 
   @Column(name = "book_id")
-  private Long bookId;
+  private String bookId;
 
   @Column(name = "community_id", nullable = false)
   private String communityId;

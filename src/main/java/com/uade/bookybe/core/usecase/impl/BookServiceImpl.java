@@ -37,7 +37,7 @@ public class BookServiceImpl implements BookService {
     // Get or create the book using existing method
     Book book = getBookByIsbn(isbn).orElseThrow(() -> new NotFoundException("Book not found with ISBN: " + isbn));
 
-    Long bookId = book.getId();
+    String bookId = book.getId();
 
     // Check if user already has this book in their library
     if (userBookRepository.existsByUserIdAndBookId(userId, bookId)) {
@@ -45,8 +45,12 @@ public class BookServiceImpl implements BookService {
       return Optional.empty();
     }
 
+    // Generate unique ID for user_book
+    String userBookId = "user-book-" + java.util.UUID.randomUUID().toString().substring(0, 8);
+
     // Add book to user's library
     UserBookEntity userBookEntity = UserBookEntity.builder()
+        .id(userBookId)
         .userId(userId)
         .bookId(bookId)
         .status(status)
@@ -56,11 +60,14 @@ public class BookServiceImpl implements BookService {
 
     userBookEntity = userBookRepository.save(userBookEntity);
 
-    // Set the book entity for proper mapping
-    BookEntity bookEntity = BookEntityMapper.INSTANCE.toEntity(book);
-    userBookEntity.setBook(bookEntity);
+    // Reload with book information
+    Optional<UserBookEntity> savedWithBook = userBookRepository.findByUserIdAndBookIdWithBook(userId, bookId);
+    if (savedWithBook.isEmpty()) {
+      log.error("Failed to reload saved user book with book information");
+      return Optional.empty();
+    }
 
-    UserBook userBook = UserBookEntityMapper.INSTANCE.toModel(userBookEntity);
+    UserBook userBook = UserBookEntityMapper.INSTANCE.toModel(savedWithBook.get());
     log.info("Successfully added book to user library: {}", userBook.getId());
     return Optional.of(userBook);
   }
@@ -97,17 +104,37 @@ public class BookServiceImpl implements BookService {
       return Optional.empty();
     }
 
-    // Save book to database
-    BookEntity bookEntity = BookEntityMapper.INSTANCE.toEntity(googleBook.get());
-    bookEntity = bookRepository.save(bookEntity);
+    try {
+      // Save book to database
+      BookEntity bookEntity = BookEntityMapper.INSTANCE.toEntity(googleBook.get());
+      
+      // Generate unique ID for the book
+      String bookId = "book-" + java.util.UUID.randomUUID().toString().substring(0, 8);
+      bookEntity.setId(bookId);
+      
+      bookEntity = bookRepository.save(bookEntity);
 
-    Book savedBook = BookEntityMapper.INSTANCE.toModel(bookEntity);
-    log.info("Book fetched from Google Books API and saved: {}", savedBook.getTitle());
-    return Optional.of(savedBook);
+      Book savedBook = BookEntityMapper.INSTANCE.toModel(bookEntity);
+      log.info("Book fetched from Google Books API and saved: {}", savedBook.getTitle());
+      return Optional.of(savedBook);
+      
+    } catch (Exception e) {
+      // Handle ISBN conflict - try to find by the Google Books returned ISBN
+      if (e.getMessage() != null && e.getMessage().contains("duplicate key value violates unique constraint")) {
+        log.warn("ISBN conflict detected, searching for existing book with Google Books ISBN: {}", googleBook.get().getIsbn());
+        Optional<BookEntity> conflictBook = bookRepository.findByIsbn(googleBook.get().getIsbn());
+        if (conflictBook.isPresent()) {
+          log.info("Found existing book with conflicting ISBN: {}", conflictBook.get().getTitle());
+          return Optional.of(BookEntityMapper.INSTANCE.toModel(conflictBook.get()));
+        }
+      }
+      log.error("Error saving book from Google Books API: {}", e.getMessage());
+      throw e;
+    }
   }
 
   @Override
-  public Optional<UserBook> updateBookStatus(String userId, Long bookId, BookStatus status) {
+  public Optional<UserBook> updateBookStatus(String userId, String bookId, BookStatus status) {
     log.info("Updating book status. UserId: {}, BookId: {}, Status: {}", userId, bookId, status);
 
     Optional<UserBookEntity> userBookEntity = userBookRepository.findByUserIdAndBookId(userId, bookId);
@@ -127,7 +154,7 @@ public class BookServiceImpl implements BookService {
   }
 
   @Override
-  public Optional<UserBook> updateBookExchangePreference(String userId, Long bookId, boolean wantsToExchange) {
+  public Optional<UserBook> updateBookExchangePreference(String userId, String bookId, boolean wantsToExchange) {
     log.info("Updating book exchange preference. UserId: {}, BookId: {}, WantsToExchange: {}", userId, bookId, wantsToExchange);
 
     Optional<UserBookEntity> userBookEntity = userBookRepository.findByUserIdAndBookId(userId, bookId);
@@ -147,7 +174,7 @@ public class BookServiceImpl implements BookService {
   }
 
   @Override
-  public Optional<UserBook> toggleBookFavorite(String userId, Long bookId) {
+  public Optional<UserBook> toggleBookFavorite(String userId, String bookId) {
     log.info("Toggling book favorite. UserId: {}, BookId: {}", userId, bookId);
 
     Optional<UserBookEntity> userBookEntity = userBookRepository.findByUserIdAndBookId(userId, bookId);

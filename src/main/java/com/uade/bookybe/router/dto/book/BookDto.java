@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 public class BookDto {
 
-  private Long id;
+  private String id;
   private String isbn;
   private String title;
   private String overview;

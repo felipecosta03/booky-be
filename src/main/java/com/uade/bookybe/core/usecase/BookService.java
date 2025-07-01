@@ -26,17 +26,17 @@ public interface BookService {
   /**
    * Updates the status of a user's book
    */
-  Optional<UserBook> updateBookStatus(String userId, Long bookId, BookStatus status);
+  Optional<UserBook> updateBookStatus(String userId, String bookId, BookStatus status);
   
   /**
    * Updates the exchange preference of a user's book
    */
-  Optional<UserBook> updateBookExchangePreference(String userId, Long bookId, boolean wantsToExchange);
+  Optional<UserBook> updateBookExchangePreference(String userId, String bookId, boolean wantsToExchange);
   
   /**
    * Marks a book as favorite or unfavorite
    */
-  Optional<UserBook> toggleBookFavorite(String userId, Long bookId);
+  Optional<UserBook> toggleBookFavorite(String userId, String bookId);
   
   /**
    * Gets all books in user's library

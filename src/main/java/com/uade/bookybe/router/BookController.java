@@ -56,7 +56,8 @@ public class BookController {
     return bookService.addBookToUserLibrary(userId, dto.getIsbn(), dto.getStatus())
         .map(BookDtoMapper.INSTANCE::toUserBookDto)
         .map(userBook -> {
-          log.info("Book added successfully to user library: {}", userBook.getBook().getTitle());
+          String bookTitle = userBook.getBook() != null ? userBook.getBook().getTitle() : "Unknown";
+          log.info("Book added successfully to user library: {}", bookTitle);
           return ResponseEntity.ok(userBook);
         })
         .orElseGet(() -> {
@@ -152,7 +153,7 @@ public class BookController {
   @PutMapping("/users/{userId}/books/{bookId}/status")
   public ResponseEntity<UserBookDto> updateBookStatus(
       @Parameter(description = "User ID", required = true) @PathVariable String userId,
-      @Parameter(description = "Book ID", required = true) @PathVariable Long bookId,
+      @Parameter(description = "Book ID", required = true) @PathVariable String bookId,
       @Parameter(description = "Status update data", required = true) @Valid @RequestBody UpdateStatusDto dto) {
     
     log.info("Updating book status for user: {}, book: {}", userId, bookId);
@@ -185,7 +186,7 @@ public class BookController {
   @PutMapping("/users/{userId}/books/{bookId}/exchange")
   public ResponseEntity<UserBookDto> updateExchangePreference(
       @Parameter(description = "User ID", required = true) @PathVariable String userId,
-      @Parameter(description = "Book ID", required = true) @PathVariable Long bookId,
+      @Parameter(description = "Book ID", required = true) @PathVariable String bookId,
       @Parameter(description = "Exchange preference data", required = true) @Valid @RequestBody UpdateExchangePreferenceDto dto) {
     
     log.info("Updating exchange preference for user: {}, book: {}", userId, bookId);
@@ -218,7 +219,7 @@ public class BookController {
   @PutMapping("/users/{userId}/books/{bookId}/favorite")
   public ResponseEntity<UserBookDto> toggleBookFavorite(
       @Parameter(description = "User ID", required = true) @PathVariable String userId,
-      @Parameter(description = "Book ID", required = true) @PathVariable Long bookId) {
+      @Parameter(description = "Book ID", required = true) @PathVariable String bookId) {
     
     log.info("Toggling favorite for user: {}, book: {}", userId, bookId);
     

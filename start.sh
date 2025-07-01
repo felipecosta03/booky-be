@@ -28,7 +28,7 @@ docker run -d \
   -e PGDATA=/var/lib/postgresql/data/pgdata \
   -p 5433:5432 \
   -v postgres_data:/var/lib/postgresql/data \
-  -v "$(pwd)/database_schema_updated.sql:/docker-entrypoint-initdb.d/00-schema.sql" \
+  -v "$(pwd)/scripts/database_schema_updated.sql:/docker-entrypoint-initdb.d/00-schema.sql" \
   -v "$(pwd)/scripts/alta_usuarios.sql:/docker-entrypoint-initdb.d/01-alta_usuarios.sql" \
   postgres:15-alpine 2>/dev/null || echo "PostgreSQL already running"
 

@@ -12,5 +12,5 @@ import lombok.Setter;
 public class CreateReadingClubDto {
   private String name;
   private String description;
-  private Long bookId; // El libro sobre el que será el club
+  private String bookId; // El libro sobre el que será el club
 } 

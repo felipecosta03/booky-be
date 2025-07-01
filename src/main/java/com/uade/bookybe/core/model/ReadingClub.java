@@ -16,10 +16,11 @@ public class ReadingClub {
   private String description;
   private LocalDateTime lastUpdated;
   private String name;
-  private Long bookId;
+  private String bookId;
   private String communityId;
   private String moderatorId;
   private Book book;
   private Community community;
   private User moderator;
+  private long memberCount;
 } 

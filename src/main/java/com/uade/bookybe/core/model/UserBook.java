@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserBook {
-  private Long id;
+  private String id;
   private String userId;
-  private Long bookId;
+  private String bookId;
   private BookStatus status;
   private boolean favorite;
   private boolean wantsToExchange;

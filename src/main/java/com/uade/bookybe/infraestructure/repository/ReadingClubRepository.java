@@ -14,7 +14,7 @@ public interface ReadingClubRepository extends JpaRepository<ReadingClubEntity, 
   
   List<ReadingClubEntity> findByModeratorIdOrderByDateCreatedDesc(String moderatorId);
   
-  List<ReadingClubEntity> findByBookIdOrderByDateCreatedDesc(Long bookId);
+  List<ReadingClubEntity> findByBookIdOrderByDateCreatedDesc(String bookId);
   
   @Query("SELECT rc FROM ReadingClubEntity rc JOIN FETCH rc.book JOIN FETCH rc.community WHERE rc.communityId = :communityId ORDER BY rc.dateCreated DESC")
   List<ReadingClubEntity> findByCommunityIdWithDetailsOrderByDateCreatedDesc(@Param("communityId") String communityId);

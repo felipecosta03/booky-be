@@ -15,14 +15,13 @@ import lombok.NoArgsConstructor;
 @Table(name = "user_books")
 public class UserBookEntity {
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  private String id;
 
   @Column(name = "user_id", nullable = false)
   private String userId;
 
   @Column(name = "book_id", nullable = false)
-  private Long bookId;
+  private String bookId;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "status", nullable = false)

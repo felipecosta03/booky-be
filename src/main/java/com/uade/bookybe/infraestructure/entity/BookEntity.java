@@ -15,8 +15,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "books")
 public class BookEntity {
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  private String id;
 
   private String isbn;
   private String title;
@@ -31,7 +30,6 @@ public class BookEntity {
   private String author;
   private String image;
   private Integer rate;
-  private String status;
 
   @ElementCollection
   @CollectionTable(name = "book_categories", joinColumns = @JoinColumn(name = "book_id"))

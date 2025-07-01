@@ -9,9 +9,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserBookRepository extends JpaRepository<UserBookEntity, Long> {
+public interface UserBookRepository extends JpaRepository<UserBookEntity, String> {
 
-  Optional<UserBookEntity> findByUserIdAndBookId(String userId, Long bookId);
+  Optional<UserBookEntity> findByUserIdAndBookId(String userId, String bookId);
 
   List<UserBookEntity> findByUserId(String userId);
 
@@ -30,5 +30,8 @@ public interface UserBookRepository extends JpaRepository<UserBookEntity, Long> 
   @Query("SELECT ub FROM UserBookEntity ub JOIN FETCH ub.book WHERE ub.wantsToExchange = true")
   List<UserBookEntity> findByWantsToExchangeTrueWithBook();
 
-  boolean existsByUserIdAndBookId(String userId, Long bookId);
+  @Query("SELECT ub FROM UserBookEntity ub JOIN FETCH ub.book WHERE ub.userId = :userId AND ub.bookId = :bookId")
+  Optional<UserBookEntity> findByUserIdAndBookIdWithBook(@Param("userId") String userId, @Param("bookId") String bookId);
+
+  boolean existsByUserIdAndBookId(String userId, String bookId);
 } 

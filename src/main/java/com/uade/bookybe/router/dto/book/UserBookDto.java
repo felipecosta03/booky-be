@@ -11,7 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserBookDto {
-  private Long id;
+  private String id;
   private String userId;
   private BookStatus status;
   private boolean favorite;

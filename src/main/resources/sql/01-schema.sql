@@ -1,5 +1,31 @@
--- Script SQL Actualizado para Booky Backend
--- Basado en las entidades reales del código fuente
+-- =====================================================
+-- Script SQL Idempotente para Booky Backend
+-- Elimina y recrea todas las tablas para desarrollo local
+-- =====================================================
+
+-- Eliminar tablas en orden inverso para respetar las foreign keys
+DROP TABLE IF EXISTS transaction_sender_books CASCADE;
+DROP TABLE IF EXISTS transaction_receiver_books CASCADE;
+DROP TABLE IF EXISTS book_transaction CASCADE;
+DROP TABLE IF EXISTS user_books CASCADE;
+DROP TABLE IF EXISTS reading_club_members CASCADE;
+DROP TABLE IF EXISTS reading_clubs CASCADE;
+DROP TABLE IF EXISTS community_members CASCADE;
+DROP TABLE IF EXISTS community_likes CASCADE;
+DROP TABLE IF EXISTS comment CASCADE;
+DROP TABLE IF EXISTS post CASCADE;
+DROP TABLE IF EXISTS user_activity_badges CASCADE;
+DROP TABLE IF EXISTS user_activity CASCADE;
+DROP TABLE IF EXISTS user_rates CASCADE;
+DROP TABLE IF EXISTS user_follows CASCADE;
+DROP TABLE IF EXISTS community CASCADE;
+DROP TABLE IF EXISTS book_categories CASCADE;
+DROP TABLE IF EXISTS books CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS addresses CASCADE;
+DROP TABLE IF EXISTS author CASCADE;
+DROP TABLE IF EXISTS badge CASCADE;
+DROP TABLE IF EXISTS level CASCADE;
 
 -- =====================================================
 -- TABLA: addresses
@@ -70,7 +96,6 @@ CREATE TABLE book_categories (
 
 -- =====================================================
 -- TABLAS ADICIONALES DEL DIAGRAMA ERD
--- (Manteniendo la estructura del diagrama para futuras funcionalidades)
 -- =====================================================
 
 -- Tabla: level (sistema de niveles)
@@ -157,7 +182,7 @@ CREATE TABLE reading_club_members (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- Tabla: user_books (libros de usuarios) - ACTUALIZADA
+-- Tabla: user_books (libros de usuarios)
 CREATE TABLE user_books (
     id VARCHAR(255) PRIMARY KEY,
     user_id VARCHAR(255) NOT NULL,
@@ -203,7 +228,7 @@ CREATE TABLE transaction_sender_books (
     FOREIGN KEY (book_id) REFERENCES books(id)
 );
 
--- Tabla: post (publicaciones)
+-- Tabla: post (publicaciones en comunidades)
 CREATE TABLE post (
     id VARCHAR(255) PRIMARY KEY,
     body VARCHAR(2000),
@@ -215,7 +240,7 @@ CREATE TABLE post (
     FOREIGN KEY (community_id) REFERENCES community(id)
 );
 
--- Tabla: comment (comentarios)
+-- Tabla: comment (comentarios en publicaciones)
 CREATE TABLE comment (
     id VARCHAR(255) PRIMARY KEY,
     body VARCHAR(1000),
@@ -226,7 +251,7 @@ CREATE TABLE comment (
     FOREIGN KEY (post_id) REFERENCES post(id)
 );
 
--- Tabla: community_likes (likes de comunidades)
+-- Tabla: community_likes (likes en comunidades)
 CREATE TABLE community_likes (
     community_id VARCHAR(255),
     user_id VARCHAR(255),
@@ -265,38 +290,4 @@ CREATE INDEX idx_comment_user_id ON comment(user_id);
 CREATE INDEX idx_reading_clubs_community_id ON reading_clubs(community_id);
 CREATE INDEX idx_reading_clubs_book_id ON reading_clubs(book_id);
 CREATE INDEX idx_user_books_user_id ON user_books(user_id);
-CREATE INDEX idx_user_books_book_id ON user_books(book_id);
-
--- =====================================================
--- COMENTARIOS SOBRE LAS CORRECCIONES PRINCIPALES
--- =====================================================
-/*
-PRINCIPALES CAMBIOS REALIZADOS:
-
-1. TABLA USERS:
-   - Agregados constraints NOT NULL y UNIQUE según UserEntity
-   - Campo 'coins' como INTEGER
-   - Relación con addresses mediante address_id
-   - Campo date_created usando TIMESTAMP
-
-2. TABLA ADDRESSES:
-   - Estructura simplificada según AddressEntity del código
-   - Campos: id, state, country, longitude, latitude
-
-3. TABLA USER_FOLLOWS:
-   - Una sola tabla para el sistema de seguimiento
-   - Reemplaza user_followers y user_following del diagrama
-   - Coincide con las queries del UserRepository
-
-4. TABLA BOOKS:
-   - ID como BIGSERIAL (auto-incremental)
-   - Estructura según BookEntity del código
-   - Campo 'author' como VARCHAR (no FK a tabla author)
-
-5. TABLA BOOK_CATEGORIES:
-   - Relación Many-to-Many entre books y categories
-   - Según la anotación @ElementCollection del código
-
-Las demás tablas mantienen la estructura del diagrama ERD 
-para futuras funcionalidades del sistema.
-*/ 
+CREATE INDEX idx_user_books_book_id ON user_books(book_id); 

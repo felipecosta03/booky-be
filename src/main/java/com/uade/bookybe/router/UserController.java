@@ -3,6 +3,7 @@ package com.uade.bookybe.router;
 import com.uade.bookybe.core.model.User;
 import com.uade.bookybe.core.model.UserSignUp;
 import com.uade.bookybe.core.usecase.UserService;
+import com.uade.bookybe.core.service.JwtService;
 import com.uade.bookybe.router.dto.user.*;
 import com.uade.bookybe.router.mapper.UserDtoMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
     description = "APIs for user registration, authentication, and profile management")
 public class UserController {
   private final UserService userService;
+  private final JwtService jwtService;
 
   @Operation(
       summary = "Get user by ID",
@@ -119,24 +121,31 @@ public class UserController {
             content =
                 @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = UserDto.class))),
+                    schema = @Schema(implementation = UserSignInResponseDto.class))),
         @ApiResponse(responseCode = "401", description = "Invalid credentials", content = @Content),
         @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
       })
   @PostMapping("/sign-in")
-  public ResponseEntity<UserDto> signIn(
+  public ResponseEntity<UserSignInResponseDto> signIn(
       @Parameter(description = "User login credentials", required = true) @Valid @RequestBody
           UserSignInDto userSignInDto) {
     log.info("Login attempt for email: {}", userSignInDto.getEmail());
 
     return userService
         .signIn(userSignInDto.getEmail(), userSignInDto.getPassword())
-        .map(UserDtoMapper.INSTANCE::toDto)
-        .map(
-            user -> {
-              log.info("User logged in successfully: {}", user.getUsername());
-              return ResponseEntity.ok(user);
-            })
+        .map(user -> {
+          // Generate JWT token
+          String token = jwtService.generateToken(user.getId(), user.getEmail());
+          
+          // Create response with token and user data
+          UserSignInResponseDto response = UserSignInResponseDto.builder()
+              .token(token)
+              .user(UserDtoMapper.INSTANCE.toDto(user))
+              .build();
+          
+          log.info("User logged in successfully: {}", user.getUsername());
+          return ResponseEntity.ok(response);
+        })
         .orElseGet(
             () -> {
               log.warn("Failed login attempt for email: {}", userSignInDto.getEmail());

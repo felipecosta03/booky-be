@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Booky - Demo Mode</title>
+        <link rel="stylesheet" href="styles.css">
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>📚 Booky - Demo Mode</h1>
+                <div class="user-info">
+                    <span id="current-user">No logueado</span>
+                    <button id="logout-btn"
+                        style="display: none;">Logout</button>
+                </div>
+            </header>
+
+            <!-- Login Section -->
+            <section id="login-section" class="section">
+                <h2>🔐 Login (Demo)</h2>
+                <div class="form-group">
+                    <select id="user-select">
+                        <option value>Selecciona un usuario</option>
+                        <option value="admin">admin (Administrador)</option>
+                        <option value="juanp">juanp (Juan Pérez)</option>
+                        <option value="mariag">mariag (María García)</option>
+                        <option value="carlosr">carlosr (Carlos
+                            Rodríguez)</option>
+                    </select>
+                    <button id="login-btn">Login</button>
+                </div>
+                <p class="help-text">🎮 <strong>Modo Demo:</strong> Datos
+                    simulados - No requiere backend</p>
+            </section>
+
+            <!-- Main App -->
+            <div id="app" style="display: none;">
+
+                <!-- Navigation -->
+                <nav class="nav-tabs">
+                    <button class="tab-btn active" data-tab="posts">📝
+                        Posts</button>
+                    <button class="tab-btn" data-tab="communities">🏘️
+                        Comunidades</button>
+                    <button class="tab-btn" data-tab="clubs">📖 Clubes de
+                        Lectura</button>
+                    <button class="tab-btn" data-tab="users">👥
+                        Usuarios</button>
+                </nav>
+
+                <!-- Posts Tab -->
+                <section id="posts-tab" class="tab-content active">
+                    <div class="actions">
+                        <button id="load-feed">🏠 Mi Feed</button>
+                        <button id="load-all-posts">🌍 Todos los Posts</button>
+                        <button id="show-create-post">➕ Crear Post</button>
+                    </div>
+
+                    <!-- Create Post Form -->
+                    <div id="create-post-form" class="form-section"
+                        style="display: none;">
+                        <h3>Crear Nuevo Post</h3>
+                        <div class="form-group">
+                            <select id="post-community">
+                                <option value>Post General (sin
+                                    comunidad)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <textarea id="post-body"
+                                placeholder="¿Qué estás leyendo?"></textarea>
+                        </div>
+                        <div class="actions">
+                            <button id="create-post-btn">Publicar</button>
+                            <button id="cancel-post-btn">Cancelar</button>
+                        </div>
+                    </div>
+
+                    <!-- Posts List -->
+                    <div id="posts-list" class="content-list"></div>
+                </section>
+
+                <!-- Communities Tab -->
+                <section id="communities-tab" class="tab-content">
+                    <div class="actions">
+                        <button id="load-communities">🔄 Cargar
+                            Comunidades</button>
+                        <button id="load-my-communities">👤 Mis
+                            Comunidades</button>
+                        <button id="show-create-community">➕ Crear
+                            Comunidad</button>
+                    </div>
+
+                    <!-- Create Community Form -->
+                    <div id="create-community-form" class="form-section"
+                        style="display: none;">
+                        <h3>Crear Nueva Comunidad</h3>
+                        <div class="form-group">
+                            <input type="text" id="community-name"
+                                placeholder="Nombre de la comunidad">
+                        </div>
+                        <div class="form-group">
+                            <textarea id="community-description"
+                                placeholder="Descripción de la comunidad"></textarea>
+                        </div>
+                        <div class="actions">
+                            <button id="create-community-btn">Crear</button>
+                            <button id="cancel-community-btn">Cancelar</button>
+                        </div>
+                    </div>
+
+                    <div id="communities-list" class="content-list"></div>
+                </section>
+
+                <!-- Reading Clubs Tab -->
+                <section id="clubs-tab" class="tab-content">
+                    <div class="actions">
+                        <button id="load-clubs">🔄 Cargar Clubes</button>
+                        <button id="load-my-clubs">👤 Mis Clubes</button>
+                    </div>
+                    <div id="clubs-list" class="content-list"></div>
+                </section>
+
+                <!-- Users Tab -->
+                <section id="users-tab" class="tab-content">
+                    <div class="actions">
+                        <button id="load-users">🔄 Cargar Usuarios</button>
+                    </div>
+                    <div id="users-list" class="content-list"></div>
+                </section>
+            </div>
+
+            <!-- Loading/Error -->
+            <div id="loading" class="loading"
+                style="display: none;">Cargando...</div>
+            <div id="error" class="error" style="display: none;"></div>
+        </div>
+
+        <script>
+        // DEMO MODE - Mock Data
+        const mockUsers = [
+            { id: 'user-001', username: 'juanp', name: 'Juan', lastname: 'Pérez', description: 'Amante de la literatura clásica', coins: 150, address: { state: 'Buenos Aires', country: 'Argentina' }, dateCreated: '2024-01-15T10:00:00Z' },
+            { id: 'user-002', username: 'mariag', name: 'María', lastname: 'García', description: 'Lectora de misterio', coins: 200, address: { state: 'Córdoba', country: 'Argentina' }, dateCreated: '2024-01-16T10:00:00Z' },
+            { id: 'user-003', username: 'carlosr', name: 'Carlos', lastname: 'Rodríguez', description: 'Fanático de sci-fi', coins: 175, address: { state: 'Rosario', country: 'Argentina' }, dateCreated: '2024-01-17T10:00:00Z' },
+            { id: 'admin-001', username: 'admin', name: 'Administrador', lastname: 'Sistema', description: 'Admin del sistema', coins: 1000, address: { state: 'Buenos Aires', country: 'Argentina' }, dateCreated: '2024-01-01T10:00:00Z' }
+        ];
+
+        const mockPosts = [
+            {
+                id: 'post-001',
+                body: '¡Acabo de terminar "Cien años de soledad"! La magia de García Márquez es incomparable. ¿Alguien más se quedó viviendo en Macondo? 📚✨',
+                dateCreated: '2024-06-30T20:00:00Z',
+                user: mockUsers[0],
+                community: null
+            },
+            {
+                id: 'post-002',
+                body: 'Organizando mi biblioteca y tengo más libros sin leer que leídos. ¿Les pasa lo mismo? #ProblemasDeUnaLectora',
+                dateCreated: '2024-06-30T17:00:00Z',
+                user: mockUsers[1],
+                community: null
+            },
+            {
+                id: 'post-003',
+                body: '¿Es Emma Bovary víctima del romanticismo o adelantada a su tiempo? Flaubert creó un personaje complejo. Abramos el debate.',
+                dateCreated: '2024-06-30T15:00:00Z',
+                user: mockUsers[0],
+                community: { id: 'comm-001', name: 'Literatura Clásica' }
+            }
+        ];
+
+        const mockCommunities = [
+            { id: 'comm-001', name: 'Literatura Clásica', description: 'Espacio para amantes de la literatura clásica y contemporánea', admin: mockUsers[0], dateCreated: '2024-01-20T10:00:00Z' },
+            { id: 'comm-002', name: 'Club de Misterio', description: 'Comunidad dedicada a los misterios más intrigantes de la literatura', admin: mockUsers[1], dateCreated: '2024-01-21T10:00:00Z' },
+            { id: 'comm-003', name: 'Sci-Fi & Fantasy', description: 'Para fanáticos de mundos fantásticos y ciencia ficción', admin: mockUsers[2], dateCreated: '2024-01-22T10:00:00Z' }
+        ];
+
+        const mockClubs = [
+            {
+                id: 'club-001',
+                name: 'Club Mockingbird',
+                description: 'Club dedicado a la lectura de "To Kill a Mockingbird"',
+                book: { id: '1', title: 'To Kill a Mockingbird', author: 'Harper Lee' },
+                community: mockCommunities[0],
+                moderator: mockUsers[0],        
+                dateCreated: '2024-02-01T10:00:00Z'
+            },
+            {
+                id: 'club-002',
+                name: 'Hermano Mayor',
+                description: 'Análisis de "1984" de Orwell en tiempos modernos',
+                book: { id: '2', title: '1984', author: 'George Orwell' },
+                community: mockCommunities[2],
+                moderator: mockUsers[2],
+                dateCreated: '2024-02-02T10:00:00Z'
+            }
+        ];
+
+        const mockComments = {
+            'post-001': [
+                { id: 'comm-001', body: 'Macondo es más real que muchos lugares reales. García Márquez tenía esa magia única.', user: mockUsers[1], dateCreated: '2024-06-30T21:00:00Z' },
+                { id: 'comm-002', body: 'A mí me pasó lo mismo con "El amor en los tiempos del cólera". García Márquez escribía con el corazón.', user: mockUsers[2], dateCreated: '2024-06-30T21:30:00Z' }
+            ],
+            'post-002': [
+                { id: 'comm-003', body: '¡Ese es el síndrome del TBR infinito! Parte de la magia de ser lector.', user: mockUsers[0], dateCreated: '2024-06-30T18:00:00Z' }
+            ]
+        };
+
+        let currentUser = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEventListeners();
+            initializeTabs();
+            showDemoNotice();
+        });
+
+        function showDemoNotice() {
+            const notice = document.createElement('div');
+            notice.className = 'success';
+            notice.innerHTML = '🎮 <strong>MODO DEMO:</strong> Usando datos de ejemplo para mostrar funcionalidades. Cuando el backend esté listo, usa index.html';
+            document.querySelector('.container').insertBefore(notice, document.querySelector('header').nextSibling);
+        }
+
+        function initializeEventListeners() {
+            document.getElementById('login-btn').addEventListener('click', handleLogin);
+            document.getElementById('logout-btn').addEventListener('click', handleLogout);
+            
+            document.getElementById('load-feed').addEventListener('click', loadUserFeed);
+            document.getElementById('load-all-posts').addEventListener('click', loadAllPosts);
+            document.getElementById('show-create-post').addEventListener('click', showCreatePostForm);
+            document.getElementById('create-post-btn').addEventListener('click', createPost);
+            document.getElementById('cancel-post-btn').addEventListener('click', hideCreatePostForm);
+            
+            document.getElementById('load-communities').addEventListener('click', loadAllCommunities);
+            document.getElementById('load-my-communities').addEventListener('click', loadMyCommunities);
+            document.getElementById('show-create-community').addEventListener('click', showCreateCommunityForm);
+            document.getElementById('create-community-btn').addEventListener('click', createCommunity);
+            document.getElementById('cancel-community-btn').addEventListener('click', hideCreateCommunityForm);
+            
+            document.getElementById('load-clubs').addEventListener('click', loadAllClubs);
+            document.getElementById('load-my-clubs').addEventListener('click', loadMyClubs);
+            
+            document.getElementById('load-users').addEventListener('click', loadAllUsers);
+        }
+
+        function initializeTabs() {
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabName = btn.dataset.tab;
+                    
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === `${tabName}-tab`) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+        }
+
+        async function handleLogin() {
+            const username = document.getElementById('user-select').value;
+            if (!username) {
+                showError('Por favor selecciona un usuario');
+                return;
+            }
+            
+            showLoading();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            currentUser = mockUsers.find(user => user.username === username);
+            if (!currentUser) {
+                showError('Usuario no encontrado');
+                hideLoading();
+                return;
+            }
+            
+            document.getElementById('current-user').textContent = `${currentUser.name} ${currentUser.lastname} (@${currentUser.username})`;
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            document.getElementById('logout-btn').style.display = 'inline-block';
+            
+            loadCommunityOptions();
+            loadAllPosts();
+            
+            showSuccess('¡Login exitoso! (Modo Demo)');
+            hideLoading();
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('current-user').textContent = 'No logueado';
+            document.getElementById('login-section').style.display = 'block';
+            document.getElementById('app').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'none';
+            clearAllContent();
+        }
+
+        async function loadUserFeed() {
+            showLoading();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const feedPosts = mockPosts.filter(post => post.user.id !== currentUser.id);
+            displayPosts(feedPosts, '🏠 Tu Feed Personal (Demo)');
+            hideLoading();
+        }
+
+        async function loadAllPosts() {
+            showLoading();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            displayPosts(mockPosts, '🌍 Todos los Posts (Demo)');
+            hideLoading();
+        }
+
+        async function createPost() {
+            const body = document.getElementById('post-body').value.trim();
+            const communityId = document.getElementById('post-community').value || null;
+            
+            if (!body) {
+                showError('El contenido del post no puede estar vacío');
+                return;
+            }
+            
+            showLoading();
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            const newPost = {
+                id: `post-${Date.now()}`,
+                body: body,
+                dateCreated: new Date().toISOString(),
+                user: currentUser,
+                community: communityId ? mockCommunities.find(c => c.id === communityId) : null
+            };
+            
+            mockPosts.unshift(newPost);
+            
+            document.getElementById('post-body').value = '';
+            document.getElementById('post-community').value = '';
+            hideCreatePostForm();
+            
+            loadAllPosts();
+            showSuccess('¡Post creado exitosamente! (Demo)');
+            hideLoading();
+        }
+
+        async function loadAllCommunities() {
+            showLoading();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            displayCommunities(mockCommunities, '🏘️ Todas las Comunidades (Demo)');
+            hideLoading();
+        }
+
+        async function loadMyCommunities() {
+            showLoading();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const myCommunities = mockCommunities.slice(0, 2);
+            displayCommunities(myCommunities, '👤 Mis Comunidades (Demo)');
+            hideLoading();
+        }
+
+        function showCreateCommunityForm() {
+            document.getElementById('create-community-form').style.display = 'block';
+        }
+
+        function hideCreateCommunityForm() {
+            document.getElementById('create-community-form').style.display = 'none';
+        }
+
+        async function createCommunity() {
+            const name = document.getElementById('community-name').value.trim();
+            const description = document.getElementById('community-description').value.trim();
+
+            if (!name || !description) {
+                showError('El nombre y la descripción son obligatorios');
+                return;
+            }
+
+            showLoading();
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            // Create new community (demo)
+            const newCommunity = {
+                id: `comm-${Date.now()}`,
+                name: name,
+                description: description,
+                admin: currentUser,
+                dateCreated: new Date().toISOString()
+            };
+
+            mockCommunities.unshift(newCommunity);
+
+            // Clear form
+            document.getElementById('community-name').value = '';
+            document.getElementById('community-description').value = '';
+            hideCreateCommunityForm();
+
+            // Reload communities
+            loadAllCommunities();
+            showSuccess('¡Comunidad creada exitosamente! (Demo)');
+            hideLoading();
+        }
+
+        async function loadCommunityPosts(communityId) {
+            showLoading();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const communityPosts = mockPosts.filter(post => post.community && post.community.id === communityId);
+            const community = mockCommunities.find(c => c.id === communityId);
+            displayPosts(communityPosts, `📋 Posts de ${community ? community.name : 'Comunidad'} (Demo)`);
+            hideLoading();
+        }
+
+        function loadPostComments(postId) {
+            const container = document.getElementById(`comments-${postId}`);
+            
+            if (container.style.display === 'block') {
+                container.style.display = 'none';
+                return;
+            }
+            
+            const comments = mockComments[postId] || [];
+            displayComments(comments, postId);
+            container.style.display = 'block';
+        }
+
+        function displayComments(comments, postId) {
+            const container = document.getElementById(`comments-${postId}`);
+            
+            if (!comments || comments.length === 0) {
+                container.innerHTML = `
+                    <div class="comments-header">
+                        <h4>💬 Comentarios</h4>
+                        <button onclick="showAddCommentForm('${postId}')">➕ Agregar Comentario</button>
+                    </div>
+                    <div id="add-comment-${postId}" class="add-comment-form" style="display: none;">
+                        <textarea id="comment-body-${postId}" placeholder="Escribe tu comentario..."></textarea>
+                        <div class="actions">
+                            <button onclick="addComment('${postId}')">Comentar</button>
+                            <button onclick="hideAddCommentForm('${postId}')">Cancelar</button>
+                        </div>
+                    </div>
+                    <p>No hay comentarios aún.</p>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="comments-header">
+                    <h4>💬 Comentarios (${comments.length})</h4>
+                    <button onclick="showAddCommentForm('${postId}')">➕ Agregar Comentario</button>
+                </div>
+                <div id="add-comment-${postId}" class="add-comment-form" style="display: none;">
+                    <textarea id="comment-body-${postId}" placeholder="Escribe tu comentario..."></textarea>
+                    <div class="actions">
+                        <button onclick="addComment('${postId}')">Comentar</button>
+                        <button onclick="hideAddCommentForm('${postId}')">Cancelar</button>
+                    </div>
+                </div>
+                ${comments.map(comment => `
+                    <div class="comment">
+                        <div class="comment-header">
+                            <div class="comment-author">
+                                <div class="author-avatar">
+                                    ${comment.user.name.charAt(0)}${comment.user.lastname.charAt(0)}
+                                </div>
+                                <div>
+                                    <div class="author-name">${comment.user.name} ${comment.user.lastname}</div>
+                                    <div class="comment-time">${formatDate(comment.dateCreated)}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="comment-body">${comment.body}</div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function showAddCommentForm(postId) {
+            document.getElementById(`add-comment-${postId}`).style.display = 'block';
+        }
+
+        function hideAddCommentForm(postId) {
+            document.getElementById(`add-comment-${postId}`).style.display = 'none';
+            document.getElementById(`comment-body-${postId}`).value = '';
+        }
+
+        async function addComment(postId) {
+            const body = document.getElementById(`comment-body-${postId}`).value.trim();
+            
+            if (!body) {
+                showError('El comentario no puede estar vacío');
+                return;
+            }
+
+            showLoading();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Create new comment (demo)
+            const newComment = {
+                id: `comment-${Date.now()}`,
+                body: body,
+                user: currentUser,
+                dateCreated: new Date().toISOString()
+            };
+
+            if (!mockComments[postId]) {
+                mockComments[postId] = [];
+            }
+            mockComments[postId].push(newComment);
+
+            hideAddCommentForm(postId);
+            // Reload comments
+            document.getElementById(`comments-${postId}`).style.display = 'none';
+            loadPostComments(postId);
+            showSuccess('¡Comentario agregado exitosamente! (Demo)');
+            hideLoading();
+        }
+
+        async function loadAllClubs() {
+            showLoading();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            displayClubs(mockClubs, '📖 Todos los Clubes de Lectura (Demo)');
+            hideLoading();
+        }
+
+        async function loadMyClubs() {
+            showLoading();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            displayClubs([mockClubs[0]], '👤 Mis Clubes de Lectura (Demo)');
+            hideLoading();
+        }
+
+        async function loadAllUsers() {
+            showLoading();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            displayUsers(mockUsers, '👥 Todos los Usuarios (Demo)');
+            hideLoading();
+        }
+
+        function displayPosts(posts, title) {
+            const container = document.getElementById('posts-list');
+            
+            if (!posts || posts.length === 0) {
+                container.innerHTML = `<div class="post-card"><h3>${title}</h3><p>No hay posts disponibles.</p></div>`;
+                return;
+            }
+            
+            container.innerHTML = `<h3>${title}</h3>` + posts.map(post => `
+                <div class="post-card">
+                    <div class="post-header">
+                        <div class="author-info">
+                            <div class="author-avatar">
+                                ${post.user.name.charAt(0)}${post.user.lastname.charAt(0)}
+                            </div>
+                            <div>
+                                <div class="author-name">${post.user.name} ${post.user.lastname}</div>
+                                <div class="post-time">${formatDate(post.dateCreated)}</div>
+                            </div>
+                        </div>
+                        ${post.community ? `<span class="community-badge">${post.community.name}</span>` : ''}
+                    </div>
+                    <div class="post-body">${post.body}</div>
+                    <div class="post-actions">
+                        <button onclick="loadPostComments('${post.id}')">💬 Ver Comentarios</button>
+                        ${post.user.id === currentUser.id ? `<button onclick="deletePost('${post.id}')">🗑️ Eliminar</button>` : ''}
+                    </div>
+                    <div id="comments-${post.id}" class="comments-section" style="display: none;"></div>
+                </div>
+            `).join('');
+        }
+
+        function displayCommunities(communities, title) {
+            const container = document.getElementById('communities-list');
+            container.innerHTML = `<h3>${title}</h3>` + communities.map(community => `
+                <div class="community-card">
+                    <div class="card-header">
+                        <h4>${community.name}</h4>
+                        <div class="card-meta">Admin: ${community.admin.name}</div>
+                    </div>
+                    <div class="card-description">${community.description}</div>
+                    <div class="stats">
+                        <div class="stat">
+                            <span>📅</span>
+                            <span>Creada: ${formatDate(community.dateCreated)}</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button onclick="loadCommunityPosts('${community.id}')">📝 Ver Posts</button>
+                        <button onclick="showSuccess('Te has unido a la comunidad (Demo)')">➕ Unirse</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayClubs(clubs, title) {
+            const container = document.getElementById('clubs-list');
+            container.innerHTML = `<h3>${title}</h3>` + clubs.map(club => `
+                <div class="club-card">
+                    <div class="card-header">
+                        <h4>${club.name}</h4>
+                        <div class="card-meta">Moderador: ${club.moderator.name}</div>
+                    </div>
+                    <div class="card-description">${club.description}</div>
+                    <div class="stats">
+                        <div class="stat"><span>📚</span><span>Libro: ${club.book.title}</span></div>
+                        <div class="stat"><span>✍️</span><span>Autor: ${club.book.author}</span></div>
+                        <div class="stat"><span>🏘️</span><span>Comunidad: ${club.community.name}</span></div>
+                    </div>
+                    <div class="card-actions">
+                        <button onclick="showSuccess('Te has unido al club (Demo)')">➕ Unirse al Club</button>
+                        <button onclick="showSuccess('Mostrando detalles del libro (Demo)')">📖 Ver Libro</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayUsers(users, title) {
+            const container = document.getElementById('users-list');
+            container.innerHTML = `<h3>${title}</h3>` + users.map(user => `
+                <div class="user-card">
+                    <div class="card-header">
+                        <div class="author-info">
+                            <div class="author-avatar">
+                                ${user.name.charAt(0)}${user.lastname.charAt(0)}
+                            </div>
+                            <div>
+                                <div class="author-name">${user.name} ${user.lastname}</div>
+                                <div class="card-meta">@${user.username}</div>
+                            </div>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">${user.coins}</span>
+                            <span>🪙 coins</span>
+                        </div>
+                    </div>
+                    <div class="card-description">${user.description || 'Sin descripción'}</div>
+                    <div class="stats">
+                        <div class="stat">
+                            <span>📍</span>
+                            <span>${user.address ? `${user.address.state}, ${user.address.country}` : 'Sin ubicación'}</span>
+                        </div>
+                        <div class="stat">
+                            <span>📅</span>
+                            <span>Miembro desde: ${formatDate(user.dateCreated)}</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        ${user.id !== currentUser.id ? `<button onclick="showSuccess('Ahora sigues a este usuario (Demo)')">➕ Seguir</button>` : ''}
+                        <button onclick="loadUserPosts('${user.id}')">📝 Ver Posts</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadCommunityOptions() {
+            const select = document.getElementById('post-community');
+            select.innerHTML = '<option value="">Post General (sin comunidad)</option>';
+            mockCommunities.forEach(community => {
+                select.innerHTML += `<option value="${community.id}">${community.name}</option>`;
+            });
+        }
+
+        function loadPostComments(postId) {
+            const container = document.getElementById(`comments-${postId}`);
+            
+            if (container.style.display === 'block') {
+                container.style.display = 'none';
+                return;
+            }
+            
+            const comments = mockComments[postId] || [];
+            
+            if (comments.length > 0) {
+                container.innerHTML = comments.map(comment => `
+                    <div class="comment">
+                        <div class="comment-author">${comment.user.name} ${comment.user.lastname}</div>
+                        <div class="comment-body">${comment.body}</div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p>No hay comentarios aún.</p>';
+            }
+            
+            container.style.display = 'block';
+        }
+
+        function deletePost(postId) {
+            if (confirm('¿Estás seguro de que quieres eliminar este post?')) {
+                const index = mockPosts.findIndex(post => post.id === postId);
+                if (index > -1) {
+                    mockPosts.splice(index, 1);
+                    loadAllPosts();
+                    showSuccess('Post eliminado exitosamente (Demo)');
+                }
+            }
+        }
+
+        function loadCommunityPosts(communityId) {
+            const communityPosts = mockPosts.filter(post => post.community && post.community.id === communityId);
+            displayPosts(communityPosts, `📝 Posts de la Comunidad (Demo)`);
+            document.querySelector('[data-tab="posts"]').click();
+        }
+
+        function loadUserPosts(userId) {
+            const userPosts = mockPosts.filter(post => post.user.id === userId);
+            const user = mockUsers.find(u => u.id === userId);
+            displayPosts(userPosts, `📝 Posts de ${user.name} (Demo)`);
+            document.querySelector('[data-tab="posts"]').click();
+        }
+
+        function showCreatePostForm() {
+            document.getElementById('create-post-form').style.display = 'block';
+        }
+
+        function hideCreatePostForm() {
+            document.getElementById('create-post-form').style.display = 'none';
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 1) return 'Hace 1 día';
+            if (diffDays < 7) return `Hace ${diffDays} días`;
+            if (diffDays < 30) return `Hace ${Math.floor(diffDays / 7)} semanas`;
+            
+            return date.toLocaleDateString('es-ES');
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success';
+            successDiv.textContent = message;
+            document.querySelector('.container').insertBefore(successDiv, document.querySelector('.container').firstChild.nextSibling);
+            
+            setTimeout(() => {
+                successDiv.remove();
+            }, 3000);
+        }
+
+        function clearAllContent() {
+            document.getElementById('posts-list').innerHTML = '';
+            document.getElementById('communities-list').innerHTML = '';
+            document.getElementById('clubs-list').innerHTML = '';
+            document.getElementById('users-list').innerHTML = '';
+        }
+    </script>
+    </body>
+</html>

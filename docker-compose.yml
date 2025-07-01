@@ -12,7 +12,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database_schema_updated.sql:/docker-entrypoint-initdb.d/00-schema.sql
-      - ./scripts/alta_usuarios.sql:/docker-entrypoint-initdb.d/01-alta_usuarios.sql
+      - ./scripts/alta_usuarios.sql:/docker-entrypoint-initdb.d/scripts/alta_usuarios.sql
+      - ./scripts/alta_comunidades.sql:/docker-entrypoint-initdb.d/scripts/alta_comunidades.sql
+      - ./scripts/alta_posteos.sql:/docker-entrypoint-initdb.d/scripts/alta_posteos.sql
+      - ./scripts/alta_clubes_lectura.sql:/docker-entrypoint-initdb.d/scripts/alta_clubes_lectura.sql
+      - ./scripts/seed_all_data.sql:/docker-entrypoint-initdb.d/01-seed_all_data.sql
     networks:
       - booky-network
     restart: unless-stopped

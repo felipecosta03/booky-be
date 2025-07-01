@@ -4,3 +4,5 @@ globs:
 alwaysApply: true
 ---
 La aplicación debe tener la capa controller con todos los request mappings. Esta capa recibe Dto, debe mapearlo a modelo mediante mappers de mapstruct (creado en el package mapper, uno por recurso). Los service deben recibir modelo desd el controller, y si le tienen que devolver información al controller debe ser con un optional wrappeando al modelo. Los service deben comunicarse con los repositorios y deben pasarle la entidad (aqui aplica mapper de modelo a entidad y entidad a modelo). Los repositorios deben recibir y devolver entidades. 
+
+En docs/esquema sql.png vas a poder visualizar como deberia quedar mas o menos el esuqema de la base de datos para la creación de entidades y modelos (No es una version final)

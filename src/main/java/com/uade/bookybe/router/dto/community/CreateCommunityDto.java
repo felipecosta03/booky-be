@@ -1,4 +1,4 @@
-package com.uade.bookybe.router.dto.user;
+package com.uade.bookybe.router.dto.community;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,10 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserPreviewDto {
-  private String id;
-  private String username;
+public class CreateCommunityDto {
   private String name;
-  private String lastname;
-  private String image;
-}
+  private String description;
+} 

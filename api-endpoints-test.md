@@ -210,8 +210,8 @@ curl "http://localhost:8080/reading-clubs"
 ### 🔍 Get Specific Reading Club
 ```bash
 # Obtener club específico
-curl "http://localhost:8080/reading-clubs/rc-001"
-curl "http://localhost:8080/reading-clubs/rc-002"
+curl "http://localhost:8080/reading-clubs/club-001"
+curl "http://localhost:8080/reading-clubs/club-002"
 ```
 
 ### 👥 Get Reading Clubs by User
@@ -263,7 +263,7 @@ curl -X POST "http://localhost:8080/sign-up" \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser",
-    "password": "test123",
+    "password": "test1234",
     "name": "Test",
     "lastname": "User",
     "email": "test@test.com",

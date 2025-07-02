@@ -47,14 +47,14 @@ CREATE TABLE user_follows (
 CREATE TABLE books (
     id VARCHAR(255) PRIMARY KEY,
     isbn VARCHAR(255) UNIQUE,
-    title VARCHAR(255),
+    title VARCHAR(1000),
     overview TEXT,
     synopsis TEXT,
     pages INTEGER,
     edition VARCHAR(255),
-    publisher VARCHAR(255),
-    author VARCHAR(255),
-    image VARCHAR(255),
+    publisher VARCHAR(500),
+    author VARCHAR(500),
+    image TEXT,
     rate INTEGER
 );
 

@@ -1,252 +1,224 @@
 # 📚 Booky Backend
 
-**Booky-BE** es una API REST desarrollada con Spring Boot para una plataforma de gestión de libros y lectura social.
+Sistema backend para aplicación de intercambio y gestión de libros desarrollado con Spring Boot.
 
-## 🚀 Características Principales
+## 🚀 Inicio Rápido
 
-- **👤 Gestión de Usuarios**: Registro, autenticación y perfiles de usuario
-- **📖 Sistema de Seguimientos**: Los usuarios pueden seguir y ser seguidos
-- **🖼️ Gestión de Imágenes**: Integración con Cloudinary para subida de imágenes
-- **🔐 Seguridad**: Autenticación con Spring Security
-- **📊 Base de Datos**: PostgreSQL con JPA/Hibernate
-- **📚 Documentación**: API documentada con OpenAPI/Swagger
+### Prerrequisitos
+- Docker y Docker Compose instalados
+- Java 17+ (para desarrollo)
+- Maven 3.8+ (para desarrollo)
 
-## 🛠️ Tecnologías Utilizadas
+### Opciones de Inicio
 
-- **Java 17**
-- **Spring Boot 3.5.0**
-- **Spring Data JPA**
-- **Spring Security**
-- **PostgreSQL**
-- **MapStruct** - Mapeo de objetos
-- **Lombok** - Reducción de código boilerplate
-- **OpenAPI/Swagger** - Documentación de API
-- **Cloudinary** - Gestión de imágenes
-- **Maven** - Gestión de dependencias
+#### Opción 1: Script de Control Unificado (Recomendado)
+
+Usa el script `booky.sh` para manejar toda la aplicación:
+
+```bash
+# Hacer el script ejecutable (solo primera vez)
+chmod +x booky.sh
+
+# Ver todos los comandos disponibles
+./booky.sh
+```
+
+#### Opción 2: Docker Compose (Alternativa)
+
+```bash
+# Iniciar todos los servicios
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f
+
+# Parar servicios
+docker-compose down
+```
+
+## 📋 Comandos Disponibles
+
+### 1️⃣ Inicio Completo
+```bash
+./booky.sh start
+```
+- **Función**: Setup completo desde cero
+- **Incluye**: PostgreSQL + Backend + Datos de muestra + Adminer
+- **Tiempo**: ~2-3 minutos
+- **Uso**: Primera ejecución o reset completo
+
+### 2️⃣ Solo Backend (Desarrollo Rápido)
+```bash
+./booky.sh backend
+```
+- **Función**: Reconstruye solo el backend
+- **Prerrequisito**: PostgreSQL debe estar corriendo
+- **Tiempo**: ~1 minuto
+- **Uso**: Ideal después de cambios en código
+
+### 3️⃣ Parar Todo
+```bash
+./booky.sh stop
+```
+- **Función**: Para todos los servicios y limpia contenedores
+- **Tiempo**: ~10 segundos
+- **Uso**: Cierre limpio al terminar
+
+## 🌐 Servicios Disponibles
+
+Una vez iniciado, tendrás acceso a:
+
+| Servicio | URL | Descripción |
+|----------|-----|-------------|
+| **API Backend** | http://localhost:8080 | API REST principal |
+| **Swagger UI** | http://localhost:8080/swagger-ui/index.html | Documentación interactiva |
+| **Adminer** | http://localhost:8081 | Cliente web PostgreSQL |
+| **PostgreSQL** | localhost:5433 | Base de datos (postgres/admin) |
+
+## 🧪 Endpoints de Prueba
+
+```bash
+# Buscar libros
+curl "http://localhost:8080/books/search?q=hobbit"
+
+# Obtener usuarios
+curl "http://localhost:8080/users"
+
+# Obtener comunidades
+curl "http://localhost:8080/reading-clubs"
+```
 
 ## 🏗️ Arquitectura
 
-El proyecto sigue una arquitectura en capas con elementos de arquitectura hexagonal:
-
+### Estructura del Proyecto
 ```
 src/main/java/com/uade/bookybe/
-├── config/              # Configuraciones (Security, OpenAPI, Exception Handler)
-├── core/                # Dominio de la aplicación
-│   ├── model/          # Modelos de dominio
-│   ├── usecase/        # Casos de uso (Services)
-│   ├── port/           # Puertos (Interfaces)
-│   └── exception/      # Excepciones del dominio
-├── infraestructure/     # Infraestructura
-│   ├── entity/         # Entidades JPA
-│   ├── repository/     # Repositorios
-│   ├── adapter/        # Adaptadores
-│   └── mapper/         # Mappers Entidad-Modelo
-├── router/              # Capa de presentación
-│   ├── dto/            # DTOs de entrada/salida
-│   └── mapper/         # Mappers DTO-Modelo
-└── util/               # Utilidades
-
+├── config/           # Configuraciones (Security, JWT, etc.)
+├── core/            # Modelos de dominio y casos de uso
+├── infraestructure/ # Entidades, repositorios y adaptadores
+└── router/          # Controladores y DTOs
 ```
 
-## 🔧 Configuración y Ejecución
+### Capas de la Aplicación
 
-### Prerrequisitos
+1. **Controller**: Recibe DTOs, los mapea a modelos via MapStruct
+2. **Service**: Lógica de negocio, comunica con repositorios
+3. **Repository**: Acceso a datos, maneja entidades
+4. **Mappers**: MapStruct para conversión DTO ↔ Modelo ↔ Entidad
 
-- Java 17+
-- Maven 3.6+
-- PostgreSQL 12+
-- Cuenta de Cloudinary (opcional)
+## 🗄️ Base de Datos
+
+### Esquema Principal
+- **users**: Usuarios del sistema
+- **books**: Catálogo de libros
+- **user_books**: Biblioteca personal de cada usuario
+- **community**: Comunidades de lectores
+- **reading_clubs**: Clubes de lectura
+- **reading_club_members**: Membresías de clubes
+
+### Datos de Muestra Incluidos
+- **16 usuarios** (incluye administradores)
+- **20 comunidades** organizadas por géneros literarios
+- **5 clubes de lectura** activos
+- **5 libros** con categorías
+
+## 🔧 Desarrollo
+
+### Flujo Típico de Desarrollo
+```bash
+# Primera vez
+./booky.sh start
+
+# Hacer cambios en código...
+./booky.sh backend    # Rebuild rápido
+
+# Más cambios...
+./booky.sh backend    # Rebuild rápido
+
+# Al terminar
+./booky.sh stop
+```
 
 ### Variables de Entorno
-
-Configura las siguientes variables de entorno:
-
-```bash
-# Base de datos
-DATABASE_URL=jdbc:postgresql://localhost:5432/booky
+```env
+DATABASE_URL=jdbc:postgresql://booky-postgres:5432/booky
 DATABASE_USERNAME=postgres
-DATABASE_PASSWORD=your_password
-DATABASE_NAME=booky
-
-# Cloudinary
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-# JWT (opcional)
-JWT_SECRET=your-jwt-secret-key
-JWT_EXPIRATION=86400000
-
-# Logging
-LOG_LEVEL=INFO
-APP_LOG_LEVEL=DEBUG
-
-# CORS
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:4200
+DATABASE_PASSWORD=admin
+SPRING_PROFILES_ACTIVE=local
 ```
 
-### Ejecución Local
+### Autenticación JWT
+La aplicación utiliza JWT para autenticación:
+- **Sign-up**: `POST /sign-up`
+- **Sign-in**: `POST /sign-in` (retorna JWT token)
+- **Headers**: `Authorization: Bearer <token>`
 
-1. **Clonar el repositorio**
-   ```bash
-   git clone <repository-url>
-   cd booky-be
-   ```
+## 📊 Funcionalidades Principales
 
-2. **Configurar base de datos**
-   ```sql
-   CREATE DATABASE booky;
-   ```
+### ✅ Implementadas y Verificadas
+- **Gestión de Usuarios**: Registro, login, perfiles
+- **Catálogo de Libros**: Búsqueda via Google Books API
+- **Biblioteca Personal**: Agregar/remover libros, estados de lectura
+- **Comunidades**: Creación y gestión de comunidades temáticas
+- **Clubes de Lectura**: Clubes por libro con moderadores
+- **Autenticación**: JWT con Spring Security
 
-3. **Ejecutar la aplicación**
-   ```bash
-   mvn spring-boot:run
-   ```
+### 🔒 Endpoints Protegidos
+- Todas las operaciones de biblioteca personal
+- Gestión de comunidades
+- Operaciones de clubes de lectura
 
-4. **Verificar funcionamiento**
-   - API: http://localhost:8080
-   - Documentación: http://localhost:8080/swagger-ui/index.html
+## 🐛 Solución de Problemas
 
-## 📖 API Documentation
-
-### Endpoints Principales
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| POST | `/sign-up` | Registro de usuario |
-| POST | `/sign-in` | Inicio de sesión |
-| GET | `/users/{id}` | Obtener usuario por ID |
-| PUT | `/users` | Actualizar perfil de usuario |
-| DELETE | `/users/{id}` | Eliminar usuario |
-| GET | `/users/{id}/followers` | Obtener seguidores |
-| GET | `/users/{id}/following` | Obtener seguidos |
-| POST | `/users/{followerId}/follow/{followedId}` | Seguir usuario |
-| DELETE | `/users/{followerId}/follow/{followedId}` | Dejar de seguir |
-| GET | `/books/search?q={query}` | Buscar libros |
-| GET | `/books/isbn/{isbn}` | Obtener libro por ISBN |
-| POST | `/books/users/{userId}/library` | Agregar libro a biblioteca |
-| GET | `/books/users/{userId}/library` | Obtener biblioteca del usuario |
-
-### Ejemplo de Uso
-
-**Registro de Usuario:**
-```json
-POST /sign-up
-{
-  "name": "Juan",
-  "lastname": "Pérez",
-  "email": "juan.perez@example.com",
-  "username": "juanperez",
-  "password": "SecurePassword123!"
-}
-```
-
-**Respuesta:**
-```json
-{
-  "id": "123e4567-e89b-12d3-a456-426614174000",
-  "name": "Juan",
-  "lastname": "Pérez",
-  "email": "juan.perez@example.com",
-  "username": "juanperez",
-  "date_created": "2025-01-15T10:30:00"
-}
-```
-
-## 🔧 Mejoras Implementadas
-
-### ✅ Configuración Mejorada
-- Variables de entorno para configuración segura
-- Logging estructurado y configurable
-- Configuración de CORS y multipart
-
-### ✅ Manejo de Excepciones
-- Manejador global de excepciones (`@RestControllerAdvice`)
-- Respuestas de error estandarizadas
-- Logging detallado de errores
-
-### ✅ Validaciones
-- Validaciones con Bean Validation (JSR-303)
-- DTOs con validaciones robustas
-- Mensajes de error descriptivos
-
-### ✅ Documentación API
-- Integración completa con OpenAPI 3
-- Documentación detallada de endpoints
-- Ejemplos de request/response
-- Esquemas de seguridad documentados
-
-### ✅ Logging Mejorado
-- Logs estructurados en todos los endpoints
-- Diferentes niveles de log configurables
-- Tracking de operaciones importantes
-
-### ✅ Arquitectura Limpia
-- Separación clara de responsabilidades
-- Uso correcto de MapStruct para mapeos
-- Inyección de dependencias optimizada
-
-## 🧪 Testing
-
-### Ejecutar Tests
+### El backend no inicia
 ```bash
-mvn test
+# Ver logs
+docker logs booky-backend
+
+# Verificar PostgreSQL
+docker ps | grep booky-postgres
 ```
 
-### Cobertura de Tests
+### Base de datos no conecta
 ```bash
-mvn jacoco:report
+# Reiniciar todo desde cero
+./booky.sh stop
+./booky.sh start
 ```
 
-## 📝 Buenas Prácticas Implementadas
-
-1. **Clean Architecture**: Separación clara entre capas
-2. **SOLID Principles**: Código mantenible y extensible
-3. **DTOs**: Separación entre modelos de dominio y API
-4. **Exception Handling**: Manejo centralizado de errores
-5. **Logging**: Trazabilidad completa de operaciones
-6. **Validation**: Validación robusta de entrada de datos
-7. **Documentation**: API bien documentada
-8. **Security**: Configuración segura con variables de entorno
-
-## 🔐 Seguridad
-
-- **Variables de Entorno**: Credenciales no hardcodeadas
-- **Input Validation**: Validación robusta de todos los inputs
-- **Error Handling**: No exposición de información sensible
-- **CORS**: Configuración adecuada para cross-origin requests
-
-## 🚀 Despliegue
-
-### Docker (Próximamente)
-```dockerfile
-# Dockerfile de ejemplo
-FROM openjdk:17-jdk-slim
-COPY target/booky-be-*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+### Puerto ya en uso
+```bash
+# Verificar qué está usando el puerto
+lsof -i :8080
+lsof -i :5433
 ```
 
-### Variables de Producción
-Asegúrate de configurar todas las variables de entorno en tu servidor de producción.
+## 📂 Scripts de Base de Datos
 
-## 🤝 Contribución
+Los siguientes scripts se cargan automáticamente:
 
-1. Fork el proyecto
-2. Crear rama feature (`git checkout -b feature/nueva-caracteristica`)
-3. Commit cambios (`git commit -am 'Añade nueva característica'`)
-4. Push a la rama (`git push origin feature/nueva-caracteristica`)
-5. Crear Pull Request
+- `scripts/database_schema_updated.sql` - Esquema principal
+- `scripts/alta_usuarios.sql` - Datos de usuarios
+- `scripts/alta_comunidades.sql` - Datos de comunidades  
+- `scripts/alta_clubes_lectura.sql` - Datos de clubes
 
-## 📄 Licencia
+## 🎯 Tecnologías
 
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para detalles.
+- **Backend**: Spring Boot 3.5.0, Java 17
+- **Base de Datos**: PostgreSQL 15
+- **Seguridad**: Spring Security + JWT
+- **Documentación**: SpringDoc OpenAPI (Swagger)
+- **Mapeo**: MapStruct
+- **Contenedores**: Docker + Docker Compose
+- **Build**: Maven
 
-## 👥 Equipo
+## 📝 Notas
 
-- **Desarrollador**: Tu Nombre
-- **Email**: tu.email@example.com
+- **Contraseña por defecto**: Todos los usuarios de muestra tienen la contraseña `password123`
+- **Admin users**: `admin@booky.com` y `superadmin@booky.com`
+- **Network**: Los contenedores usan la red `booky-network`
+- **Persistencia**: Los datos de PostgreSQL se mantienen en el volumen `postgres_data`
 
 ---
 
-⭐ **¡Dale una estrella al proyecto si te fue útil!** 
+**¿Problemas?** Usa `./booky.sh` para ver la ayuda completa o verifica los logs con `docker logs booky-backend` 

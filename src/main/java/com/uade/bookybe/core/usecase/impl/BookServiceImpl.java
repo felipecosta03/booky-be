@@ -104,6 +104,17 @@ public class BookServiceImpl implements BookService {
       return Optional.empty();
     }
 
+    // Before saving, check if book with Google Books ISBN already exists
+    String googleBookIsbn = googleBook.get().getIsbn();
+    if (googleBookIsbn != null && !googleBookIsbn.equals(isbn)) {
+      log.info("Checking if book with Google Books ISBN {} already exists", googleBookIsbn);
+      Optional<BookEntity> existingGoogleBook = bookRepository.findByIsbn(googleBookIsbn);
+      if (existingGoogleBook.isPresent()) {
+        log.info("Found existing book with Google Books ISBN: {}", existingGoogleBook.get().getTitle());
+        return Optional.of(BookEntityMapper.INSTANCE.toModel(existingGoogleBook.get()));
+      }
+    }
+
     try {
       // Save book to database
       BookEntity bookEntity = BookEntityMapper.INSTANCE.toEntity(googleBook.get());
@@ -122,14 +133,27 @@ public class BookServiceImpl implements BookService {
       // Handle ISBN conflict - try to find by the Google Books returned ISBN
       if (e.getMessage() != null && e.getMessage().contains("duplicate key value violates unique constraint")) {
         log.warn("ISBN conflict detected, searching for existing book with Google Books ISBN: {}", googleBook.get().getIsbn());
+        
+        // Try to find with Google Books ISBN
         Optional<BookEntity> conflictBook = bookRepository.findByIsbn(googleBook.get().getIsbn());
         if (conflictBook.isPresent()) {
           log.info("Found existing book with conflicting ISBN: {}", conflictBook.get().getTitle());
           return Optional.of(BookEntityMapper.INSTANCE.toModel(conflictBook.get()));
         }
+        
+        // Also try with original ISBN in case of format differences
+        Optional<BookEntity> originalBook = bookRepository.findByIsbn(isbn);
+        if (originalBook.isPresent()) {
+          log.info("Found existing book with original ISBN: {}", originalBook.get().getTitle());
+          return Optional.of(BookEntityMapper.INSTANCE.toModel(originalBook.get()));
+        }
+        
+        // If still not found, log and return empty instead of throwing
+        log.error("Book exists (ISBN conflict) but could not be retrieved: {}", e.getMessage());
+        return Optional.empty();
       }
       log.error("Error saving book from Google Books API: {}", e.getMessage());
-      throw e;
+      return Optional.empty(); // Changed from throw e; to prevent 500 errors
     }
   }
 

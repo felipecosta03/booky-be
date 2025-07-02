@@ -75,7 +75,16 @@ Una vez iniciado, tendrás acceso a:
 | **Adminer** | http://localhost:8081 | Cliente web PostgreSQL |
 | **PostgreSQL** | localhost:5433 | Base de datos (postgres/admin) |
 
-## 🧪 Endpoints de Prueba
+## 🧪 Testing de Endpoints
+
+### Opción 1: Script Automatizado (Recomendado)
+```bash
+# Ejecutar todos los tests automáticamente
+./test-all-endpoints.sh
+```
+
+### Opción 2: Tests Manuales
+Ver documentación completa en `api-endpoints-test.md`
 
 ```bash
 # Buscar libros
@@ -84,9 +93,19 @@ curl "http://localhost:8080/books/search?q=hobbit"
 # Obtener usuarios
 curl "http://localhost:8080/users"
 
+# Agregar libro a biblioteca
+curl -X POST "http://localhost:8080/books/users/user-001/library" \
+  -H "Content-Type: application/json" \
+  -d '{"isbn": "9780439708180", "status": "TO_READ"}'
+
 # Obtener comunidades
 curl "http://localhost:8080/reading-clubs"
 ```
+
+### 📄 Archivos de Testing Disponibles
+- **`test-all-endpoints.sh`** - Script ejecutable que prueba todos los endpoints
+- **`api-endpoints-test.md`** - Documentación completa con ejemplos de curl
+- **Estado actual**: 16/17 endpoints funcionando (94% success rate)
 
 ## 🏗️ Arquitectura
 

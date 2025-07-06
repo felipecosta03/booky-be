@@ -108,12 +108,19 @@ Cada push a `main` actualiza automáticamente tu aplicación:
 ## 🚨 Troubleshooting
 
 ### Si usas AWS Sandbox:
-- Las credenciales expiran → Ejecuta `./setup-aws-sandbox.sh` nuevamente
-- Lab cerrado → Inicia el lab y actualiza credenciales
+- **Credenciales expiran** → Ejecuta `./setup-aws-sandbox.sh` nuevamente
+- **Lab cerrado** → Inicia el lab y actualiza credenciales
+- **Error SSH** → El script usa automáticamente AWS SSM como fallback
 
 ### Si usas AWS Regular:
-- Revisa que los secrets estén bien configurados
-- Verifica permisos de AWS IAM
+- **Secrets mal configurados** → Revisa GitHub Secrets
+- **Permisos AWS** → Verifica permisos de AWS IAM
+- **Error de deployment** → Revisa logs de GitHub Actions
+
+### Errores Comunes:
+- **"JAR not found"** → Ejecuta `mvn clean package -DskipTests` primero
+- **"ssh-keyscan failed"** → El script creará automáticamente las llaves SSH
+- **"Health check failed"** → La app puede tardar en iniciar, verifica manualmente
 
 ## 📞 ¿Necesitas ayuda?
 

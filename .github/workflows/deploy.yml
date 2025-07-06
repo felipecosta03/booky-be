@@ -37,19 +37,12 @@ jobs:
         aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
         aws-region: ${{ secrets.AWS_REGION }}
     
-    - name: Create or update EC2 instance
+    - name: Setup and Deploy to EC2
       run: |
-        chmod +x ./scripts/setup-ec2.sh
-        ./scripts/setup-ec2.sh
-    
-    - name: Deploy to EC2
-      run: |
-        chmod +x ./scripts/deploy.sh
-        ./scripts/deploy.sh
+        chmod +x ./scripts/setup-and-deploy.sh
+        ./scripts/setup-and-deploy.sh
       env:
-        EC2_HOST: ${{ secrets.EC2_HOST }}
-        EC2_USER: ${{ secrets.EC2_USER }}
-        EC2_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
         DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
         CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}

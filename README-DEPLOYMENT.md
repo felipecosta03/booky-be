@@ -111,27 +111,34 @@ Cada push a `main` actualiza automáticamente tu aplicación:
 
 #### 1. **Deployment Automático** (Recomendado)
 ```bash
-# Push a main activa GitHub Actions
+# Push a main activa GitHub Actions automáticamente
 git push origin main
 ```
 
-#### 2. **Deployment Manual con Script Simplificado**
-Si el automático falla:
+#### 2. **Deployment Rápido** (Para instancias existentes)
 ```bash
+# Script optimizado para instancias ya creadas
+./scripts/quick-deploy.sh
+```
+
+#### 3. **Deployment Simplificado** (Para casos especiales)
+```bash
+# Para casos donde los otros scripts fallan
 ./scripts/simple-deploy.sh
 ```
 
-#### 3. **Deployment Completamente Manual**
+#### 4. **Deployment Completamente Manual**
 Para casos extremos, ver [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
 
 ### 🔧 Errores Comunes y Soluciones
 
 | Error | Solución |
 |-------|----------|
-| `Instances not in a valid state for account` | Usar `./scripts/simple-deploy.sh` |
-| `ssh-keyscan failed` | El script creará automáticamente nuevas SSH keys |
+| `Instances not in a valid state for account` | Usar `./scripts/quick-deploy.sh` o `./scripts/simple-deploy.sh` |
+| `ssh-keyscan failed` | Usar `./scripts/quick-deploy.sh` (encuentra keys automáticamente) |
 | `JAR not found` | Ejecutar `mvn clean package -DskipTests` primero |
 | `Health check failed` | La app puede tardar en iniciar, verificar manualmente |
+| `Connection timed out` | Usar `./scripts/quick-deploy.sh` con keys existentes |
 
 ### 🔄 AWS Sandbox Específico
 
@@ -154,11 +161,17 @@ Para troubleshooting completo, consulta: **[TROUBLESHOOTING.md](./TROUBLESHOOTIN
 
 ## 🎯 Archivos Importantes
 
+### 📋 Scripts de Configuración:
 - `setup-aws-sandbox.sh` - Setup para AWS Sandbox
 - `setup-aws-deployment.sh` - Setup para AWS Regular
-- `scripts/setup-and-deploy.sh` - Script principal de deployment
-- `scripts/simple-deploy.sh` - Script simplificado para troubleshooting
+
+### 🚀 Scripts de Deployment:
+- `scripts/setup-and-deploy.sh` - Script principal (crea instancia + deploy)
+- `scripts/quick-deploy.sh` - Script rápido (para instancias existentes)
+- `scripts/simple-deploy.sh` - Script simplificado (para troubleshooting)
 - `scripts/manage-server.sh` - Gestión del servidor
+
+### 📚 Documentación:
 - `DEPLOYMENT.md` - Documentación completa
 - `TROUBLESHOOTING.md` - Guía de solución de problemas
 

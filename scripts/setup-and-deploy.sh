@@ -11,6 +11,7 @@ REGION=${AWS_REGION:-us-east-1}
 KEY_NAME=${EC2_KEY_NAME:-booky-key}
 SECURITY_GROUP=${EC2_SECURITY_GROUP:-booky-sg}
 INSTANCE_NAME=${EC2_INSTANCE_NAME:-booky-server}
+INSTANCE_RECREATED=false
 
 echo "🚀 Configurando y desplegando Booky Backend en EC2..."
 
@@ -18,6 +19,8 @@ echo "🚀 Configurando y desplegando Booky Backend en EC2..."
 # PARTE 1: CONFIGURACIÓN DE EC2
 # ================================================================
 
+# Función para crear instancia EC2
+create_ec2_instance() {
 echo "📝 Verificando si la instancia EC2 existe..."
 
 # Verificar si la instancia ya existe
@@ -209,6 +212,29 @@ EOF
   echo "✅ Instancia creada: $INSTANCE_ID"
 else
   echo "✅ Instancia ya existe: $INSTANCE_ID"
+  
+  # Solo verificar SSM si no hemos recreado la instancia ya
+  if [[ "$INSTANCE_RECREATED" == "false" ]]; then
+    # Verificar si la instancia tiene SSM habilitado
+    if ! aws ssm describe-instance-information --region $REGION --filters "Key=InstanceIds,Values=$INSTANCE_ID" --query 'InstanceInformationList[0].InstanceId' --output text 2>/dev/null | grep -q "$INSTANCE_ID"; then
+      echo "⚠️  La instancia existente no tiene SSM habilitado"
+      echo "💡 Para un deployment más robusto, se recomienda recrear con SSM"
+      echo "🔄 Recreando instancia con SSM habilitado..."
+      
+      # Terminar la instancia existente
+      aws ec2 terminate-instances --region $REGION --instance-ids $INSTANCE_ID
+      echo "⏳ Esperando que la instancia se termine..."
+      aws ec2 wait instance-terminated --region $REGION --instance-ids $INSTANCE_ID
+      
+      # Marcar como recreada para evitar bucles
+      INSTANCE_RECREATED=true
+      
+      # Recrear la instancia
+      echo "🏗️  Recreando instancia EC2 con SSM habilitado..."
+      create_ec2_instance
+      return
+    fi
+  fi
 fi
 
 # Obtener la IP pública
@@ -219,6 +245,10 @@ PUBLIC_IP=$(aws ec2 describe-instances \
   --output text)
 
 echo "🌐 IP Pública: $PUBLIC_IP"
+}
+
+# Ejecutar creación de instancia
+create_ec2_instance
 
 # ================================================================
 # PARTE 2: DEPLOYMENT
@@ -273,16 +303,15 @@ if [[ ! -f "${KEY_NAME}.pem" ]]; then
     else
       echo "❌ SSM no está disponible en esta instancia"
       echo "💡 La instancia necesita un rol IAM con permisos SSM"
-      echo "🔄 Intentando recrear la instancia con SSM habilitado..."
+      echo "🔄 Usando SSH directo como fallback..."
       
-      # Terminar la instancia existente
-      aws ec2 terminate-instances --region $REGION --instance-ids $INSTANCE_ID
-      echo "⏳ Esperando que la instancia se termine..."
-      aws ec2 wait instance-terminated --region $REGION --instance-ids $INSTANCE_ID
-      
-      # Forzar recreación
-      INSTANCE_ID="None"
+      # Usar SSH directo con key temporal
+      cp "${TEMP_KEY_NAME}.pem" ~/.ssh/id_rsa
+      chmod 600 ~/.ssh/id_rsa
       USE_SSM=false
+      KEY_NAME=$TEMP_KEY_NAME
+      
+      echo "✅ Usando SSH directo con key temporal"
     fi
   else
     echo "❌ Key pair no existe en AWS"

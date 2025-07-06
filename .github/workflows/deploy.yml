@@ -41,11 +41,15 @@ jobs:
       run: |
         chmod +x ./scripts/setup-and-deploy.sh
         chmod +x ./scripts/simple-deploy.sh
+        chmod +x ./scripts/quick-deploy.sh
         
         # Intentar deployment principal primero
         if ! ./scripts/setup-and-deploy.sh; then
-          echo "❌ Deployment principal falló, intentando método simplificado..."
-          ./scripts/simple-deploy.sh
+          echo "❌ Deployment principal falló, intentando método rápido..."
+          if ! ./scripts/quick-deploy.sh; then
+            echo "❌ Deployment rápido falló, intentando método simplificado..."
+            ./scripts/simple-deploy.sh
+          fi
         fi
       env:
         AWS_REGION: ${{ secrets.AWS_REGION }}

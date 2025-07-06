@@ -107,33 +107,60 @@ Cada push a `main` actualiza automáticamente tu aplicación:
 
 ## 🚨 Troubleshooting
 
-### Si usas AWS Sandbox:
-- **Credenciales expiran** → Ejecuta `./setup-aws-sandbox.sh` nuevamente
-- **Lab cerrado** → Inicia el lab y actualiza credenciales
-- **Error SSH** → El script usa automáticamente AWS SSM como fallback
+### ⚡ Opciones de Deployment
 
-### Si usas AWS Regular:
-- **Secrets mal configurados** → Revisa GitHub Secrets
-- **Permisos AWS** → Verifica permisos de AWS IAM
-- **Error de deployment** → Revisa logs de GitHub Actions
+#### 1. **Deployment Automático** (Recomendado)
+```bash
+# Push a main activa GitHub Actions
+git push origin main
+```
 
-### Errores Comunes:
-- **"JAR not found"** → Ejecuta `mvn clean package -DskipTests` primero
-- **"ssh-keyscan failed"** → El script creará automáticamente las llaves SSH
-- **"Health check failed"** → La app puede tardar en iniciar, verifica manualmente
+#### 2. **Deployment Manual con Script Simplificado**
+Si el automático falla:
+```bash
+./scripts/simple-deploy.sh
+```
+
+#### 3. **Deployment Completamente Manual**
+Para casos extremos, ver [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
+
+### 🔧 Errores Comunes y Soluciones
+
+| Error | Solución |
+|-------|----------|
+| `Instances not in a valid state for account` | Usar `./scripts/simple-deploy.sh` |
+| `ssh-keyscan failed` | El script creará automáticamente nuevas SSH keys |
+| `JAR not found` | Ejecutar `mvn clean package -DskipTests` primero |
+| `Health check failed` | La app puede tardar en iniciar, verificar manualmente |
+
+### 🔄 AWS Sandbox Específico
+
+| Problema | Solución |
+|----------|----------|
+| **Credenciales expiran** | Ejecutar `./setup-aws-sandbox.sh` nuevamente |
+| **Lab cerrado** | Iniciar el lab y actualizar credenciales |
+| **Error SSH/SSM** | Usar el script simplificado o deployment manual |
+
+### 📚 Guía Detallada
+
+Para troubleshooting completo, consulta: **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)**
 
 ## 📞 ¿Necesitas ayuda?
 
-1. **Revisa los logs** en GitHub Actions
-2. **Conecta por SSH** y revisa logs: `./scripts/manage-server.sh logs`
-3. **Verifica health check**: `http://TU_IP/actuator/health`
+1. **Revisa los logs** de GitHub Actions para ver errores específicos
+2. **Consulta** [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) para soluciones detalladas
+3. **Prueba** el script simplificado: `./scripts/simple-deploy.sh`
+4. **Conecta por SSH** y revisa logs: `./scripts/manage-server.sh logs`
 
 ## 🎯 Archivos Importantes
 
 - `setup-aws-sandbox.sh` - Setup para AWS Sandbox
 - `setup-aws-deployment.sh` - Setup para AWS Regular
+- `scripts/setup-and-deploy.sh` - Script principal de deployment
+- `scripts/simple-deploy.sh` - Script simplificado para troubleshooting
 - `scripts/manage-server.sh` - Gestión del servidor
 - `DEPLOYMENT.md` - Documentación completa
+- `TROUBLESHOOTING.md` - Guía de solución de problemas
 
 ## 🎉 ¡Eso es todo!
 

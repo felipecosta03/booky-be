@@ -40,7 +40,13 @@ jobs:
     - name: Setup and Deploy to EC2
       run: |
         chmod +x ./scripts/setup-and-deploy.sh
-        ./scripts/setup-and-deploy.sh
+        chmod +x ./scripts/simple-deploy.sh
+        
+        # Intentar deployment principal primero
+        if ! ./scripts/setup-and-deploy.sh; then
+          echo "❌ Deployment principal falló, intentando método simplificado..."
+          ./scripts/simple-deploy.sh
+        fi
       env:
         AWS_REGION: ${{ secrets.AWS_REGION }}
         DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}

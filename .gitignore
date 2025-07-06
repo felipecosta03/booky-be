@@ -54,3 +54,9 @@ aws-credentials.txt
 backups/
 *.sql
 *.dump
+
+# Archivos temporales de deployment
+deploy-commands.sh
+docker-compose.prod.yml
+booky-deploy-*.pem
+booky-temp-*.pem

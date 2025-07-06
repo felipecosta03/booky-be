@@ -38,6 +38,46 @@ if [[ "$INSTANCE_ID" == "None" || "$INSTANCE_ID" == "" ]]; then
     echo "✅ Key Pair creado: ${KEY_NAME}.pem"
   fi
   
+  # Crear rol IAM para SSM si no existe
+  IAM_ROLE_NAME="EC2-SSM-Role"
+  if ! aws iam get-role --role-name $IAM_ROLE_NAME &> /dev/null; then
+    echo "🔐 Creando rol IAM para SSM..."
+    
+    # Crear el rol
+    aws iam create-role \
+      --role-name $IAM_ROLE_NAME \
+      --assume-role-policy-document '{
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "ec2.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+          }
+        ]
+      }' > /dev/null
+    
+    # Adjuntar la política de SSM
+    aws iam attach-role-policy \
+      --role-name $IAM_ROLE_NAME \
+      --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+    
+    # Crear instance profile
+    aws iam create-instance-profile --instance-profile-name $IAM_ROLE_NAME > /dev/null
+    
+    # Adjuntar el rol al instance profile
+    aws iam add-role-to-instance-profile \
+      --instance-profile-name $IAM_ROLE_NAME \
+      --role-name $IAM_ROLE_NAME
+    
+    # Esperar un poco para que se propaguen los cambios
+    sleep 10
+    
+    echo "✅ Rol IAM creado para SSM"
+  fi
+  
   # Crear Security Group si no existe
   if ! aws ec2 describe-security-groups --region $REGION --group-names $SECURITY_GROUP &> /dev/null; then
     echo "🔒 Creando Security Group..."
@@ -153,6 +193,7 @@ EOF
     --instance-type $INSTANCE_TYPE \
     --key-name $KEY_NAME \
     --security-groups $SECURITY_GROUP \
+    --iam-instance-profile Name=$IAM_ROLE_NAME \
     --user-data "$USER_DATA" \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
     --query 'Instances[0].InstanceId' \
@@ -191,11 +232,61 @@ chmod 700 ~/.ssh
 
 # Crear archivo de llave SSH desde el key pair existente o recién creado
 if [[ ! -f "${KEY_NAME}.pem" ]]; then
-  echo "🔑 Descargando key pair..."
-  # Si no tenemos la llave, necesitamos recrearla (esto solo funciona si acabamos de crear la instancia)
-  if [[ "$INSTANCE_ID" != "None" ]]; then
-    echo "⚠️  Usando AWS Session Manager para deployment sin SSH key"
-    USE_SSM=true
+  echo "🔑 Intentando obtener key pair existente..."
+  
+  # Verificar si existe un key pair en AWS
+  if aws ec2 describe-key-pairs --region $REGION --key-names $KEY_NAME &> /dev/null; then
+    echo "⚠️  Key pair existe en AWS pero no tenemos el archivo .pem"
+    echo "💡 Para instancias existentes, necesitamos crear un nuevo key pair"
+    
+    # Crear un nuevo key pair temporal
+    TEMP_KEY_NAME="booky-temp-$(date +%s)"
+    echo "🔑 Creando key pair temporal: $TEMP_KEY_NAME"
+    
+    aws ec2 create-key-pair --region $REGION --key-name $TEMP_KEY_NAME --query 'KeyMaterial' --output text > ${TEMP_KEY_NAME}.pem
+    chmod 400 ${TEMP_KEY_NAME}.pem
+    
+    # Agregar la nueva key al autorized_keys de la instancia via user data
+    echo "🔧 Agregando nueva key a la instancia..."
+    NEW_PUBLIC_KEY=$(ssh-keygen -y -f ${TEMP_KEY_NAME}.pem)
+    
+    # Usar SSM para agregar la key (si está disponible)
+    if aws ssm describe-instance-information --region $REGION --filters "Key=InstanceIds,Values=$INSTANCE_ID" --query 'InstanceInformationList[0].InstanceId' --output text 2>/dev/null | grep -q "$INSTANCE_ID"; then
+      echo "🔧 Usando SSM para agregar SSH key..."
+      aws ssm send-command \
+        --region $REGION \
+        --instance-ids $INSTANCE_ID \
+        --document-name "AWS-RunShellScript" \
+        --parameters "commands=['echo \"$NEW_PUBLIC_KEY\" >> /home/ubuntu/.ssh/authorized_keys']" \
+        --query 'Command.CommandId' \
+        --output text
+      
+      # Esperar un poco para que el comando se ejecute
+      sleep 10
+      
+      cp "${TEMP_KEY_NAME}.pem" ~/.ssh/id_rsa
+      chmod 600 ~/.ssh/id_rsa
+      USE_SSM=false
+      KEY_NAME=$TEMP_KEY_NAME
+      
+      echo "✅ Key SSH agregada exitosamente"
+    else
+      echo "❌ SSM no está disponible en esta instancia"
+      echo "💡 La instancia necesita un rol IAM con permisos SSM"
+      echo "🔄 Intentando recrear la instancia con SSM habilitado..."
+      
+      # Terminar la instancia existente
+      aws ec2 terminate-instances --region $REGION --instance-ids $INSTANCE_ID
+      echo "⏳ Esperando que la instancia se termine..."
+      aws ec2 wait instance-terminated --region $REGION --instance-ids $INSTANCE_ID
+      
+      # Forzar recreación
+      INSTANCE_ID="None"
+      USE_SSM=false
+    fi
+  else
+    echo "❌ Key pair no existe en AWS"
+    USE_SSM=false
   fi
 else
   cp "${KEY_NAME}.pem" ~/.ssh/id_rsa
@@ -206,23 +297,66 @@ fi
 # Función para ejecutar comandos remotos
 if [[ "$USE_SSM" == "true" ]]; then
   remote_exec() {
-    aws ssm send-command \
+    local cmd="$1"
+    echo "🔧 Ejecutando via SSM: $cmd"
+    
+    # Enviar comando
+    local command_id=$(aws ssm send-command \
       --region $REGION \
       --instance-ids $INSTANCE_ID \
       --document-name "AWS-RunShellScript" \
-      --parameters "commands=['$1']" \
+      --parameters "commands=['$cmd']" \
       --query 'Command.CommandId' \
-      --output text
+      --output text 2>/dev/null)
+    
+    if [[ -z "$command_id" ]]; then
+      echo "❌ Error enviando comando via SSM"
+      return 1
+    fi
+    
+    # Esperar a que el comando termine
+    local status="InProgress"
+    local attempts=0
+    while [[ "$status" == "InProgress" && $attempts -lt 30 ]]; do
+      sleep 2
+      status=$(aws ssm get-command-invocation \
+        --region $REGION \
+        --command-id "$command_id" \
+        --instance-id $INSTANCE_ID \
+        --query 'Status' \
+        --output text 2>/dev/null || echo "Failed")
+      ((attempts++))
+    done
+    
+    if [[ "$status" == "Success" ]]; then
+      return 0
+    else
+      echo "❌ Comando SSM falló: $status"
+      return 1
+    fi
   }
   echo "🔧 Usando AWS Systems Manager para deployment"
 else
   remote_exec() {
-    ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@$PUBLIC_IP "$1"
+    local cmd="$1"
+    echo "🔧 Ejecutando via SSH: $cmd"
+    ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ubuntu@$PUBLIC_IP "$cmd"
   }
   echo "🔧 Usando SSH para deployment"
   
   # Añadir host a known_hosts
+  echo "🔑 Agregando host a known_hosts..."
   ssh-keyscan -H $PUBLIC_IP >> ~/.ssh/known_hosts 2>/dev/null || true
+  
+  # Probar conexión SSH
+  echo "🔍 Probando conexión SSH..."
+  if ! ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=10 ubuntu@$PUBLIC_IP "echo 'SSH conectado exitosamente'" 2>/dev/null; then
+    echo "❌ Error de conexión SSH"
+    echo "💡 Intentando usar SSM como fallback..."
+    USE_SSM=true
+  else
+    echo "✅ Conexión SSH exitosa"
+  fi
 fi
 
 # Función para copiar archivos

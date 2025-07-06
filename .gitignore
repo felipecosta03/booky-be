@@ -31,3 +31,26 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Security - Archivos con credenciales ###
+# Archivos generados por scripts de configuración
+github-secrets.txt
+github-secrets-sandbox.txt
+*github-secrets-sandbox.txt*
+*.pem
+*.key
+
+# Variables de entorno
+.env
+.env.local
+.env.prod
+.env.production
+
+# Configuración AWS local
+.aws/
+aws-credentials.txt
+
+# Backups que pueden contener datos sensibles
+backups/
+*.sql
+*.dump

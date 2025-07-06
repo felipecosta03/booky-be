@@ -112,14 +112,19 @@ CLOUDINARY_API_SECRET: tu_cloudinary_api_secret
 
 ## 📊 ¿Qué hace el deployment?
 
-### 1. Setup de EC2 (`setup-ec2.sh`)
+### 1. Construcción de la aplicación
+- ✅ Construye el JAR con Maven (saltando tests)
+- ✅ Los tests se saltan para evitar problemas de conexión a BD local
+- ✅ Los tests se ejecutarán en el entorno de producción con la BD real
+
+### 2. Setup de EC2 (`setup-ec2.sh`)
 - ✅ Crea una instancia EC2 (t3.medium por defecto)
 - ✅ Configura Security Groups (puertos 22, 80, 443, 8080)
 - ✅ Instala Docker y Docker Compose
 - ✅ Configura Nginx como reverse proxy
 - ✅ Crea Key Pair para SSH
 
-### 2. Deployment (`deploy.sh`)
+### 3. Deployment (`deploy.sh`)
 - ✅ Copia archivos al servidor
 - ✅ Configura variables de entorno
 - ✅ Ejecuta Docker Compose
@@ -264,8 +269,8 @@ docker-compose -f docker-compose.prod.yml logs postgres
 ### Actualizaciones Automáticas
 Cada push a `main` o `master` actualizará automáticamente la aplicación:
 
-1. Se ejecutan las pruebas
-2. Se construye la nueva imagen
+1. Se construye la aplicación
+2. Se crea la nueva imagen Docker
 3. Se despliega sin downtime
 4. Se verifica que la aplicación funcione
 

@@ -100,8 +100,8 @@ Una vez desplegado:
 ## 🔄 Actualizaciones Automáticas
 
 Cada push a `main` actualiza automáticamente tu aplicación:
-1. ✅ Ejecuta tests
-2. ✅ Construye nueva imagen
+1. ✅ Construye la aplicación
+2. ✅ Crea nueva imagen Docker
 3. ✅ Despliega sin downtime
 4. ✅ Verifica que funcione
 

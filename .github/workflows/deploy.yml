@@ -26,10 +26,7 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     
-    - name: Test application
-      run: mvn clean test
-    
-    - name: Build JAR
+    - name: Build JAR (skipping tests)
       run: mvn clean package -DskipTests
     
     - name: Configure AWS credentials

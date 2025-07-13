@@ -38,10 +38,18 @@ services:
       SECURITY_ENABLED: true
       JWT_SECRET: ${JWT_SECRET:-booky-production-secret-key-change-me-in-production}
       JWT_EXPIRATION: 86400000
+      # Image Storage Configuration
+      IMAGE_STORAGE_STRATEGY: ${IMAGE_STORAGE_STRATEGY:-cloudinary}
       # Cloudinary Configuration
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-your-production-cloud-name}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-your-production-api-key}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-your-production-api-secret}
+      # AWS S3 Configuration
+      AWS_S3_ACCESS_KEY: ${AWS_S3_ACCESS_KEY:-}
+      AWS_S3_SECRET_KEY: ${AWS_S3_SECRET_KEY:-}
+      AWS_S3_REGION: ${AWS_S3_REGION:-us-east-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-bucket-user-images-store}
+      AWS_S3_BASE_URL: ${AWS_S3_BASE_URL:-}
     ports:
       - "8080:8080"
     networks:

@@ -9,12 +9,14 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "image.storage.strategy", havingValue = "cloudinary", matchIfMissing = true)
 public class CloudinaryImageStorageAdapter implements ImageStoragePort {
 
   private final Cloudinary cloudinary;

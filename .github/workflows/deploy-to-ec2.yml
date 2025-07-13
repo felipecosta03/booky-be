@@ -51,7 +51,7 @@ jobs:
           -e DATABASE_PASSWORD=admin \
           -e DATABASE_NAME=booky \
           -e SPRING_PROFILES_ACTIVE=prod \
-          -e SECURITY_ENABLED=true \
+          -e SECURITY_ENABLED=false \
           -e JWT_SECRET=booky-production-secret-key-change-me-in-production \
           -e JWT_EXPIRATION=86400000 \
           -e SHOW_SQL=false \

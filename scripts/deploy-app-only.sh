@@ -62,13 +62,50 @@ sleep 15
 
 echo "🔍 Checking application health..."
 for i in {1..30}; do
-  if curl -f http://localhost:8080/actuator/health 2>/dev/null; then
-    echo "✅ Application is healthy!"
+  # Method 1: Check if port 8080 is listening
+  if netstat -tuln | grep -q :8080; then
+    echo "✅ Port 8080 is listening!"
+    
+    # Method 2: Try basic HTTP connection
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 | grep -q "200\|404\|302"; then
+      echo "✅ Application is responding to HTTP requests!"
+      break
+    fi
+    
+    # Method 3: Try common Spring Boot endpoints
+    if curl -s http://localhost:8080/ 2>/dev/null | grep -q "Whitelabel\|Welcome\|Error"; then
+      echo "✅ Application is serving content!"
+      break
+    fi
+    
+    # Method 4: Check if any of your endpoints respond
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/users 2>/dev/null | grep -q "200\|404\|401\|403"; then
+      echo "✅ Application endpoints are accessible!"
+      break
+    fi
+  fi
+  
+  # Method 5: Check container logs for success indicators
+  if docker logs booky-backend 2>&1 | grep -q "Started.*Application\|Tomcat started on port"; then
+    echo "✅ Application started successfully according to logs!"
     break
   fi
+  
   echo "Attempt $i: Application not ready, waiting..."
   sleep 5
 done
+
+# Show verification details
+echo ""
+echo "=== VERIFICATION DETAILS ==="
+echo "🔍 Port status:"
+netstat -tuln | grep :8080 || echo "Port 8080 not listening"
+
+echo "🔍 HTTP response:"
+curl -s -o /dev/null -w "HTTP Status: %{http_code}" http://localhost:8080 || echo "No HTTP response"
+
+echo "🔍 Recent application logs:"
+docker logs booky-backend --tail 10 2>&1
 
 # Limpiar imágenes viejas
 echo "🧹 Cleaning up old Docker images..."

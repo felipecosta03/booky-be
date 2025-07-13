@@ -24,12 +24,32 @@ jobs:
         docker build -t bookypfi/booky-backend:latest .
         
     - name: Deploy with unified Docker Compose
+      env:
+        # Docker Configuration
+        DOCKER_IMAGE: bookypfi/booky-backend:latest
+        SPRING_PROFILES_ACTIVE: prod
+        # Security Configuration
+        SECURITY_ENABLED: true
+        JWT_SECRET: ${{ secrets.JWT_SECRET || 'booky-production-secret-key-change-me-in-production' }}
+        JWT_EXPIRATION: 86400000
+        # Image Storage Configuration
+        IMAGE_STORAGE_STRATEGY: ${{ secrets.IMAGE_STORAGE_STRATEGY || 'cloudinary' }}
+        # Cloudinary Configuration
+        CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+        CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+        CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+        # AWS S3 Configuration
+        AWS_S3_ACCESS_KEY: ${{ secrets.AWS_S3_ACCESS_KEY }}
+        AWS_S3_SECRET_KEY: ${{ secrets.AWS_S3_SECRET_KEY }}
+        AWS_S3_REGION: ${{ secrets.AWS_S3_REGION || 'us-east-1' }}
+        AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET || 'bucket-user-images-store' }}
+        AWS_S3_BASE_URL: ${{ secrets.AWS_S3_BASE_URL }}
       run: |
         echo "Stopping current services..."
         docker-compose down || true
         
         echo "Starting services with production configuration..."
-        docker-compose --env-file env.production up -d
+        docker-compose up -d
         
         echo "Waiting for services to be ready..."
         sleep 30

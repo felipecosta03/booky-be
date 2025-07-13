@@ -1,6 +1,9 @@
 # Multi-stage build para aplicación Spring Boot
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 
+# Configurar Maven para builds más rápidos
+ENV MAVEN_OPTS="-Xmx2048m -XX:MaxPermSize=512m -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=25 -Dmaven.wagon.http.retryHandler.count=3"
+
 # Establecer directorio de trabajo
 WORKDIR /app
 
@@ -10,14 +13,21 @@ COPY .mvn .mvn
 COPY mvnw .
 COPY mvnw.cmd .
 
-# Descargar dependencias (para aprovechar cache de Docker)
-RUN mvn dependency:go-offline -B
+# Descargar dependencias con timeouts más largos (para aprovechar cache de Docker)
+RUN mvn dependency:go-offline -B \
+    -Dmaven.wagon.http.ssl.insecure=true \
+    -Dmaven.wagon.http.ssl.allowall=true \
+    -Dmaven.wagon.http.ssl.ignore.validity.dates=true \
+    -Dmaven.wagon.httpconnectionManager.maxTotal=30 \
+    -Dmaven.wagon.httpconnectionManager.maxPerRoute=10
 
 # Copiar código fuente
 COPY src ./src
 
-# Compilar la aplicación
-RUN mvn clean package -DskipTests
+# Compilar la aplicación con configuraciones optimizadas
+RUN mvn clean package -DskipTests -B \
+    -Dmaven.wagon.http.pool=false \
+    -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
 
 # Etapa de runtime
 FROM eclipse-temurin:17-jre

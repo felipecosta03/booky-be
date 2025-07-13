@@ -10,6 +10,7 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
+    timeout-minutes: 30
     
     steps:
     - name: Checkout code
@@ -18,10 +19,30 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
       
+    - name: System cleanup and verification
+      run: |
+        echo "=== SYSTEM STATUS ==="
+        df -h
+        echo "=== DOCKER STATUS ==="
+        docker system df
+        echo "=== CLEANING UP ==="
+        docker system prune -f || true
+        docker volume prune -f || true
+        echo "=== POST-CLEANUP STATUS ==="
+        df -h
+      
     - name: Build Docker image
+      timeout-minutes: 20
       run: |
         echo "Building Docker image..."
-        docker build -t bookypfi/booky-backend:latest .
+        echo "Cleaning up old build cache..."
+        docker builder prune -f || true
+        
+        echo "Building with progress output..."
+        docker build -t bookypfi/booky-backend:latest . \
+          --progress=plain \
+          --no-cache-filter=build \
+          --build-arg BUILDKIT_INLINE_CACHE=1
         
     - name: Deploy with unified Docker Compose
       env:

@@ -11,6 +11,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 @Configuration
 public class OpenApiConfig {
@@ -18,18 +19,28 @@ public class OpenApiConfig {
   @Value("${app.openapi.dev-url:http://localhost:8080}")
   private String devUrl;
 
-  @Value("${app.openapi.prod-url:https://booky-api.com}")
+  @Value("${app.openapi.prod-url:http://52.15.181.167:8080}")
   private String prodUrl;
+
+  private final Environment environment;
+
+  public OpenApiConfig(Environment environment) {
+    this.environment = environment;
+  }
 
   @Bean
   public OpenAPI bookiOpenAPI() {
-    Server devServer = new Server();
-    devServer.setUrl(devUrl);
-    devServer.setDescription("Server URL in Development environment");
-
-    Server prodServer = new Server();
-    prodServer.setUrl(prodUrl);
-    prodServer.setDescription("Server URL in Production environment");
+    // Determinar qué servidor mostrar basado en el perfil activo
+    boolean isProduction = List.of(environment.getActiveProfiles()).contains("prod");
+    
+    Server currentServer = new Server();
+    if (isProduction) {
+      currentServer.setUrl(prodUrl);
+      currentServer.setDescription("Production Server");
+    } else {
+      currentServer.setUrl(devUrl);
+      currentServer.setDescription("Development Server");
+    }
 
     Contact contact = new Contact();
     contact.setEmail("support@booky.com");
@@ -60,7 +71,7 @@ public class OpenApiConfig {
 
     return new OpenAPI()
         .info(info)
-        .servers(List.of(devServer, prodServer))
+        .servers(List.of(currentServer))
         .addSecurityItem(securityRequirement)
         .schemaRequirement("Bearer Authentication", securityScheme);
   }

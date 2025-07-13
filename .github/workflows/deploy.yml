@@ -42,13 +42,23 @@ jobs:
         chmod +x ./scripts/setup-and-deploy.sh
         chmod +x ./scripts/simple-deploy.sh
         chmod +x ./scripts/quick-deploy.sh
+        chmod +x ./scripts/sandbox-deploy.sh
         
-        # Intentar deployment principal primero
-        if ! ./scripts/setup-and-deploy.sh; then
-          echo "❌ Deployment principal falló, intentando método rápido..."
-          if ! ./scripts/quick-deploy.sh; then
-            echo "❌ Deployment rápido falló, intentando método simplificado..."
-            ./scripts/simple-deploy.sh
+        # Detectar si estamos en AWS Sandbox/Learner Lab
+        USER_ARN=$(aws sts get-caller-identity --query 'Arn' --output text 2>/dev/null || echo "")
+        
+        if [[ "$USER_ARN" == *"voclabs"* || "$USER_ARN" == *"student"* || "$USER_ARN" == *"learner"* ]]; then
+          echo "🎓 AWS Sandbox/Learner Lab detectado - usando script optimizado"
+          ./scripts/sandbox-deploy.sh
+        else
+          echo "🔐 AWS cuenta regular detectada - usando deployment estándar"
+          # Intentar deployment principal primero
+          if ! ./scripts/setup-and-deploy.sh; then
+            echo "❌ Deployment principal falló, intentando método rápido..."
+            if ! ./scripts/quick-deploy.sh; then
+              echo "❌ Deployment rápido falló, intentando método simplificado..."
+              ./scripts/simple-deploy.sh
+            fi
           fi
         fi
       env:

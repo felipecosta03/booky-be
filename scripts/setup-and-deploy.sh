@@ -41,44 +41,55 @@ if [[ "$INSTANCE_ID" == "None" || "$INSTANCE_ID" == "" ]]; then
     echo "✅ Key Pair creado: ${KEY_NAME}.pem"
   fi
   
-  # Crear rol IAM para SSM si no existe
-  IAM_ROLE_NAME="EC2-SSM-Role"
-  if ! aws iam get-role --role-name $IAM_ROLE_NAME &> /dev/null; then
-    echo "🔐 Creando rol IAM para SSM..."
+  # Detectar si estamos en AWS Sandbox/Learner Lab
+  USER_ARN=$(aws sts get-caller-identity --query 'Arn' --output text 2>/dev/null || echo "")
+  if [[ "$USER_ARN" == *"voclabs"* || "$USER_ARN" == *"student"* || "$USER_ARN" == *"learner"* ]]; then
+    echo "🎓 AWS Sandbox/Learner Lab detectado - omitiendo creación de roles IAM"
+    IAM_ROLE_NAME=""
+    USE_INSTANCE_PROFILE=false
+  else
+    echo "🔐 AWS cuenta regular - configurando roles IAM..."
+    USE_INSTANCE_PROFILE=true
     
-    # Crear el rol
-    aws iam create-role \
-      --role-name $IAM_ROLE_NAME \
-      --assume-role-policy-document '{
-        "Version": "2012-10-17",
-        "Statement": [
-          {
-            "Effect": "Allow",
-            "Principal": {
-              "Service": "ec2.amazonaws.com"
-            },
-            "Action": "sts:AssumeRole"
-          }
-        ]
-      }' > /dev/null
-    
-    # Adjuntar la política de SSM
-    aws iam attach-role-policy \
-      --role-name $IAM_ROLE_NAME \
-      --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
-    
-    # Crear instance profile
-    aws iam create-instance-profile --instance-profile-name $IAM_ROLE_NAME > /dev/null
-    
-    # Adjuntar el rol al instance profile
-    aws iam add-role-to-instance-profile \
-      --instance-profile-name $IAM_ROLE_NAME \
-      --role-name $IAM_ROLE_NAME
-    
-    # Esperar un poco para que se propaguen los cambios
-    sleep 10
-    
-    echo "✅ Rol IAM creado para SSM"
+    # Crear rol IAM para SSM si no existe
+    IAM_ROLE_NAME="EC2-SSM-Role"
+    if ! aws iam get-role --role-name $IAM_ROLE_NAME &> /dev/null; then
+      echo "🔐 Creando rol IAM para SSM..."
+      
+      # Crear el rol
+      aws iam create-role \
+        --role-name $IAM_ROLE_NAME \
+        --assume-role-policy-document '{
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        ]' > /dev/null
+      
+      # Adjuntar la política de SSM
+      aws iam attach-role-policy \
+        --role-name $IAM_ROLE_NAME \
+        --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      
+      # Crear instance profile
+      aws iam create-instance-profile --instance-profile-name $IAM_ROLE_NAME > /dev/null
+      
+      # Adjuntar el rol al instance profile
+      aws iam add-role-to-instance-profile \
+        --instance-profile-name $IAM_ROLE_NAME \
+        --role-name $IAM_ROLE_NAME
+      
+      # Esperar un poco para que se propaguen los cambios
+      sleep 10
+      
+      echo "✅ Rol IAM creado para SSM"
+    fi
   fi
   
   # Crear Security Group si no existe
@@ -190,17 +201,32 @@ EOF
   
   # Crear la instancia
   echo "🏗️  Creando instancia EC2..."
-  INSTANCE_ID=$(aws ec2 run-instances \
-    --region $REGION \
-    --image-id $AMI_ID \
-    --instance-type $INSTANCE_TYPE \
-    --key-name $KEY_NAME \
-    --security-groups $SECURITY_GROUP \
-    --iam-instance-profile Name=$IAM_ROLE_NAME \
-    --user-data "$USER_DATA" \
-    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
-    --query 'Instances[0].InstanceId' \
-    --output text)
+  if [[ "$USE_INSTANCE_PROFILE" == "true" && ! -z "$IAM_ROLE_NAME" ]]; then
+    echo "🔐 Creando instancia con rol IAM para SSM..."
+    INSTANCE_ID=$(aws ec2 run-instances \
+      --region $REGION \
+      --image-id $AMI_ID \
+      --instance-type $INSTANCE_TYPE \
+      --key-name $KEY_NAME \
+      --security-groups $SECURITY_GROUP \
+      --iam-instance-profile Name=$IAM_ROLE_NAME \
+      --user-data "$USER_DATA" \
+      --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
+      --query 'Instances[0].InstanceId' \
+      --output text)
+  else
+    echo "🎓 Creando instancia para AWS Sandbox (sin rol IAM)..."
+    INSTANCE_ID=$(aws ec2 run-instances \
+      --region $REGION \
+      --image-id $AMI_ID \
+      --instance-type $INSTANCE_TYPE \
+      --key-name $KEY_NAME \
+      --security-groups $SECURITY_GROUP \
+      --user-data "$USER_DATA" \
+      --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
+      --query 'Instances[0].InstanceId' \
+      --output text)
+  fi
   
   echo "⏳ Esperando que la instancia esté lista..."
   aws ec2 wait instance-running --region $REGION --instance-ids $INSTANCE_ID
@@ -213,8 +239,8 @@ EOF
 else
   echo "✅ Instancia ya existe: $INSTANCE_ID"
   
-  # Solo verificar SSM si no hemos recreado la instancia ya
-  if [[ "$INSTANCE_RECREATED" == "false" ]]; then
+  # Solo verificar SSM si no hemos recreado la instancia ya y estamos en AWS regular
+  if [[ "$INSTANCE_RECREATED" == "false" && "$USE_INSTANCE_PROFILE" == "true" ]]; then
     # Verificar si la instancia tiene SSM habilitado
     if ! aws ssm describe-instance-information --region $REGION --filters "Key=InstanceIds,Values=$INSTANCE_ID" --query 'InstanceInformationList[0].InstanceId' --output text 2>/dev/null | grep -q "$INSTANCE_ID"; then
       echo "⚠️  La instancia existente no tiene SSM habilitado"
@@ -234,6 +260,8 @@ else
       create_ec2_instance
       return
     fi
+  elif [[ "$USE_INSTANCE_PROFILE" == "false" ]]; then
+    echo "🎓 AWS Sandbox detectado - usando SSH directo (SSM no disponible)"
   fi
 fi
 
@@ -320,6 +348,12 @@ if [[ ! -f "${KEY_NAME}.pem" ]]; then
 else
   cp "${KEY_NAME}.pem" ~/.ssh/id_rsa
   chmod 600 ~/.ssh/id_rsa
+  USE_SSM=false
+fi
+
+# Determinar método de conexión
+if [[ "$USE_INSTANCE_PROFILE" == "false" ]]; then
+  echo "🎓 AWS Sandbox: Forzando uso de SSH directo"
   USE_SSM=false
 fi
 

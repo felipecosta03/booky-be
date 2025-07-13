@@ -115,26 +115,33 @@ Cada push a `main` actualiza automáticamente tu aplicación:
 git push origin main
 ```
 
-#### 2. **Deployment Rápido** (Para instancias existentes)
+#### 2. **Deployment para AWS Sandbox** 🎓 (Recomendado para Learner Lab)
+```bash
+# Script especialmente optimizado para AWS Learner Lab
+./scripts/sandbox-deploy.sh
+```
+
+#### 3. **Deployment Rápido** (Para instancias existentes)
 ```bash
 # Script optimizado para instancias ya creadas
 ./scripts/quick-deploy.sh
 ```
 
-#### 3. **Deployment Simplificado** (Para casos especiales)
+#### 4. **Deployment Simplificado** (Para casos especiales)
 ```bash
 # Para casos donde los otros scripts fallan
 ./scripts/simple-deploy.sh
 ```
 
-#### 4. **Deployment Completamente Manual**
+#### 5. **Deployment Completamente Manual**
 Para casos extremos, ver [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
 
 ### 🔧 Errores Comunes y Soluciones
 
 | Error | Solución |
 |-------|----------|
-| `Instances not in a valid state for account` | Usar `./scripts/quick-deploy.sh` o `./scripts/simple-deploy.sh` |
+| `AccessDenied` al crear roles IAM | **Usar `./scripts/sandbox-deploy.sh` para AWS Learner Lab** 🎓 |
+| `Instances not in a valid state for account` | Usar `./scripts/sandbox-deploy.sh` o `./scripts/quick-deploy.sh` |
 | `ssh-keyscan failed` | Usar `./scripts/quick-deploy.sh` (encuentra keys automáticamente) |
 | `JAR not found` | Ejecutar `mvn clean package -DskipTests` primero |
 | `Health check failed` | La app puede tardar en iniciar, verificar manualmente |
@@ -167,6 +174,7 @@ Para troubleshooting completo, consulta: **[TROUBLESHOOTING.md](./TROUBLESHOOTIN
 
 ### 🚀 Scripts de Deployment:
 - `scripts/setup-and-deploy.sh` - Script principal (crea instancia + deploy)
+- `scripts/sandbox-deploy.sh` - **Script optimizado para AWS Learner Lab** 🎓
 - `scripts/quick-deploy.sh` - Script rápido (para instancias existentes)
 - `scripts/simple-deploy.sh` - Script simplificado (para troubleshooting)
 - `scripts/manage-server.sh` - Gestión del servidor
@@ -183,4 +191,123 @@ Con estos scripts, tu aplicación estará en producción en minutos. ¿Fácil, n
 
 **¿Primera vez?** → Usa `./setup-aws-sandbox.sh` 
 **¿Experto?** → Usa `./setup-aws-deployment.sh`
-**¿Problemas?** → Revisa `DEPLOYMENT.md` 
+**¿Problemas?** → Revisa `DEPLOYMENT.md`
+
+# 🚀 Guía de Deployment - Booky Backend
+
+## 📋 Resumen
+
+Tu instancia EC2 **ya está creada** y funcionando! 🎉
+
+- **Instancia**: `i-0c84eb49ef31ffac7`
+- **IP Pública**: `54.174.40.56`
+- **SSH Key**: `booky-sandbox-key.pem`
+
+El script creó todo correctamente, solo necesitaba más tiempo para que SSH estuviera listo.
+
+## 🔧 Opciones de Deployment
+
+### ✅ Opción 1: Reconectar y completar (RECOMENDADO)
+```bash
+./scripts/reconnect-deploy.sh
+```
+Este script:
+- Se conecta a tu instancia existente
+- Espera pacientemente a que SSH esté listo
+- Completa el deployment automáticamente
+
+### 🆕 Opción 2: Crear nueva instancia
+```bash
+./scripts/sandbox-deploy.sh
+```
+Solo si quieres crear una nueva instancia desde cero.
+
+### ⚡ Opción 3: Deployment vía GitHub Actions
+```bash
+git add .
+git commit -m "Deploy to production"
+git push origin main
+```
+
+## 🔍 Verificación Manual
+
+Si quieres verificar que tu instancia está funcionando:
+
+```bash
+# Verificar que la instancia existe
+aws ec2 describe-instances --instance-ids i-0c84eb49ef31ffac7
+
+# Probar SSH manualmente (puede tomar 5-10 minutos)
+ssh -i booky-sandbox-key.pem ubuntu@54.174.40.56
+```
+
+## 🔧 Troubleshooting
+
+### SSH tarda en conectarse
+**Es normal**. La instancia está:
+- Instalando Docker
+- Configurando Nginx
+- Configurando dependencias
+- Puede tomar 5-10 minutos
+
+### ¿Qué hacer si SSH no funciona?
+1. **Esperar más tiempo** (lo más común)
+2. **Usar AWS Console**:
+   - Ve a AWS Console → EC2 → Instances
+   - Selecciona `i-0c84eb49ef31ffac7`
+   - Click "Connect" → "EC2 Instance Connect"
+
+### Verificar logs de la instancia
+En AWS Console:
+- Ve a EC2 → Instances
+- Selecciona tu instancia
+- Actions → Monitor and troubleshoot → Get system log
+
+## 🎯 URLs de tu aplicación
+
+Una vez que el deployment esté completo:
+- **Aplicación**: http://54.174.40.56
+- **API Health**: http://54.174.40.56/actuator/health
+- **Swagger UI**: http://54.174.40.56/swagger-ui.html
+
+## 🔑 Variables de entorno requeridas
+
+Para GitHub Actions, configura estos secrets:
+```
+AWS_ACCESS_KEY_ID=tu_access_key
+AWS_SECRET_ACCESS_KEY=tu_secret_key
+AWS_SESSION_TOKEN=tu_session_token
+DATABASE_PASSWORD=tu_password_db
+JWT_SECRET=tu_jwt_secret
+CLOUDINARY_CLOUD_NAME=tu_cloud_name
+CLOUDINARY_API_KEY=tu_api_key
+CLOUDINARY_API_SECRET=tu_api_secret
+```
+
+## 📝 Comandos útiles
+
+```bash
+# Ver estado de la instancia
+aws ec2 describe-instances --instance-ids i-0c84eb49ef31ffac7
+
+# Conectarse por SSH
+ssh -i booky-sandbox-key.pem ubuntu@54.174.40.56
+
+# Ver logs de la aplicación (una vez conectado)
+cd /opt/booky-app && docker-compose -f docker-compose.prod.yml logs
+
+# Reiniciar aplicación
+cd /opt/booky-app && docker-compose -f docker-compose.prod.yml restart
+
+# Ver contenedores
+docker ps
+```
+
+## 🎉 ¡Listo!
+
+El deployment está configurado. Solo ejecuta:
+```bash
+./scripts/reconnect-deploy.sh
+```
+
+Y tendrás tu aplicación corriendo en AWS! 🚀 

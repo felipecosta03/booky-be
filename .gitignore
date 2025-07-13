@@ -60,3 +60,9 @@ deploy-commands.sh
 docker-compose.prod.yml
 booky-deploy-*.pem
 booky-temp-*.pem
+
+# Deployment files
+*.pem
+github-secrets*.txt
+docker-compose.prod.yml
+deployment-status.txt

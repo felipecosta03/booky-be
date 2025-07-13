@@ -76,7 +76,7 @@ CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 
 # Spring Profile
-SPRING_PROFILES_ACTIVE=production
+SPRING_PROFILES_ACTIVE=local
 
 # Server Configuration
 SERVER_PORT=8080
@@ -117,7 +117,7 @@ services:
       DATABASE_USERNAME: postgres
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-admin}
       DATABASE_NAME: booky
-      SPRING_PROFILES_ACTIVE: production
+      SPRING_PROFILES_ACTIVE: local
       SERVER_PORT: 8080
       JWT_SECRET: ${JWT_SECRET:-your-secret-key-here}
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}

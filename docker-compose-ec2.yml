@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: booky-postgres
+    environment:
+      POSTGRES_DB: booky
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/database_schema_updated.sql:/docker-entrypoint-initdb.d/00-schema.sql
+      - ./scripts/alta_usuarios.sql:/docker-entrypoint-initdb.d/01-users.sql
+      - ./scripts/alta_comunidades.sql:/docker-entrypoint-initdb.d/02-communities.sql
+      - ./scripts/alta_clubes_lectura.sql:/docker-entrypoint-initdb.d/03-reading-clubs.sql
+    networks:
+      - booky-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d booky"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  booky-app:
+    image: bookypfi/booky-backend:latest
+    container_name: booky-backend
+    environment:
+      # Database Configuration (matches booky.sh)
+      DATABASE_URL: jdbc:postgresql://postgres:5432/booky
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: admin
+      DATABASE_NAME: booky
+      SPRING_PROFILES_ACTIVE: local
+    ports:
+      - "8080:8080"
+    networks:
+      - booky-network
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  adminer:
+    image: adminer:4.8.1
+    container_name: booky-adminer
+    ports:
+      - "8081:8080"
+    networks:
+      - booky-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  booky-network:
+    driver: bridge 

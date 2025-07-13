@@ -25,7 +25,7 @@ services:
       retries: 3
 
   booky-app:
-    image: bookypfi/booky-backend:latest
+    image: booky-backend:latest
     container_name: booky-backend
     environment:
       # Database Configuration (matches booky.sh)

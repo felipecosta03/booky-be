@@ -46,10 +46,16 @@ jobs:
         AWS_S3_BASE_URL: ${{ secrets.AWS_S3_BASE_URL }}
       run: |
         echo "Stopping current services..."
-        docker-compose down || true
+        docker-compose down --remove-orphans || true
+        
+        echo "Removing any existing containers with same names..."
+        docker rm -f booky-backend booky-postgres booky-adminer || true
+        
+        echo "Cleaning up networks..."
+        docker network prune -f || true
         
         echo "Starting services with production configuration..."
-        docker-compose up -d
+        docker-compose up -d --force-recreate
         
         echo "Waiting for services to be ready..."
         sleep 30

@@ -31,7 +31,7 @@ logging:
 # Application specific configuration for production
 app:
   security:
-    enabled: ${SECURITY_ENABLED:true} # Enable security by default in production
+    enabled: false # Enable security by default in production
     jwt:
       secret: ${JWT_SECRET:CHANGE_ME_IN_PRODUCTION}
       expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds

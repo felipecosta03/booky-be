@@ -40,7 +40,7 @@ logging:
 # Image Storage Configuration
 image:
   storage:
-    strategy: s3 # Options: cloudinary, s3
+    strategy: cloudinary # Options: cloudinary, s3
 
 # Cloudinary configuration
 cloudinary:

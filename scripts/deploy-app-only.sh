@@ -49,11 +49,14 @@ docker run -d \
   -e DATABASE_USERNAME=postgres \
   -e DATABASE_PASSWORD=admin \
   -e DATABASE_NAME=booky \
-  -e SPRING_PROFILES_ACTIVE=local \
-  -e JWT_SECRET=booky-super-secret-jwt-key-for-development-only-32-chars \
+  -e SPRING_PROFILES_ACTIVE=prod \
+  -e SECURITY_ENABLED=true \
+  -e JWT_SECRET=booky-production-secret-key-change-me-in-production \
   -e JWT_EXPIRATION=86400000 \
-  -e SHOW_SQL=true \
-  -e FORMAT_SQL=true \
+  -e SHOW_SQL=false \
+  -e FORMAT_SQL=false \
+  -e LOG_LEVEL=WARN \
+  -e APP_LOG_LEVEL=INFO \
   booky-backend:latest
 
 # Verificar despliegue

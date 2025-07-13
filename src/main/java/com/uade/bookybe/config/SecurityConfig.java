@@ -1,8 +1,8 @@
 package com.uade.bookybe.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -17,9 +17,12 @@ public class SecurityConfig {
     return new BCryptPasswordEncoder();
   }
 
-  @Profile("prod")
+  @ConditionalOnProperty(
+      name = "app.security.enabled",
+      havingValue = "true",
+      matchIfMissing = false)
   @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http.csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(
             auth ->
@@ -36,9 +39,12 @@ public class SecurityConfig {
     return http.build();
   }
 
-  @Profile("local")
+  @ConditionalOnProperty(
+      name = "app.security.enabled",
+      havingValue = "false",
+      matchIfMissing = true)
   @Bean
-  public SecurityFilterChain filterChainLocal(HttpSecurity http) throws Exception {
+  public SecurityFilterChain noSecurityFilterChain(HttpSecurity http) throws Exception {
     http.csrf(csrf -> csrf.disable()).authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
     return http.build();
   }

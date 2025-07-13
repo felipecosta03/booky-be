@@ -1,0 +1,48 @@
+# ==========================================
+# BOOKY BACKEND - PRODUCTION CONFIGURATION
+# ==========================================
+# This file contains production-specific overrides
+# Values can be overridden with environment variables
+
+# Database configuration for production
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://postgres:5432/booky}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:admin}
+    name: ${DATABASE_NAME:booky}
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:validate} # More conservative in production
+    properties:
+      hibernate:
+        format_sql: ${FORMAT_SQL:false} # Disable SQL formatting in production
+    show-sql: ${SHOW_SQL:false} # Disable SQL logging in production
+
+# Logging configuration for production
+logging:
+  level:
+    root: ${LOG_LEVEL:WARN} # Less verbose in production
+    com.uade.bookybe: ${APP_LOG_LEVEL:INFO}
+    org.springframework.security: ${SECURITY_LOG_LEVEL:WARN}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Application specific configuration for production
+app:
+  security:
+    enabled: ${SECURITY_ENABLED:true} # Enable security by default in production
+    jwt:
+      secret: ${JWT_SECRET:CHANGE_ME_IN_PRODUCTION}
+      expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://your-frontend-domain.com}
+    allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,DELETE,OPTIONS}
+    allowed-headers: ${CORS_ALLOWED_HEADERS:*}
+    allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
+
+# Cloudinary configuration for production
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:your-production-cloud-name}
+  api-key: ${CLOUDINARY_API_KEY:your-production-api-key}
+  api-secret: ${CLOUDINARY_API_SECRET:your-production-api-secret} 

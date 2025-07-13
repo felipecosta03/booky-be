@@ -36,6 +36,10 @@ services:
       DATABASE_PASSWORD: admin
       DATABASE_NAME: booky
       SPRING_PROFILES_ACTIVE: local
+      # Security Configuration
+      SECURITY_ENABLED: false
+      JWT_SECRET: booky-development-secret-key-for-development-only-32-chars
+      JWT_EXPIRATION: 86400000
     ports:
       - "8080:8080"
     networks:

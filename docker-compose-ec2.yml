@@ -33,7 +33,15 @@ services:
       DATABASE_USERNAME: postgres
       DATABASE_PASSWORD: admin
       DATABASE_NAME: booky
-      SPRING_PROFILES_ACTIVE: local
+      SPRING_PROFILES_ACTIVE: prod
+      # Security Configuration
+      SECURITY_ENABLED: true
+      JWT_SECRET: ${JWT_SECRET:-booky-production-secret-key-change-me-in-production}
+      JWT_EXPIRATION: 86400000
+      # Cloudinary Configuration
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-your-production-cloud-name}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-your-production-api-key}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-your-production-api-secret}
     ports:
       - "8080:8080"
     networks:

@@ -15,6 +15,7 @@ services:
       - ./scripts/alta_usuarios.sql:/docker-entrypoint-initdb.d/01-users.sql
       - ./scripts/alta_comunidades.sql:/docker-entrypoint-initdb.d/02-communities.sql
       - ./scripts/alta_clubes_lectura.sql:/docker-entrypoint-initdb.d/03-reading-clubs.sql
+      - ./scripts/alta_posteos.sql:/docker-entrypoint-initdb.d/04-posts.sql
     networks:
       - booky-network
     restart: unless-stopped
@@ -25,27 +26,31 @@ services:
       retries: 3
 
   booky-app:
-    image: booky-be_booky-app:latest
+    image: ${DOCKER_IMAGE:-booky-be_booky-app:latest}
     container_name: booky-backend
     environment:
-      # Database Configuration (matches booky.sh)
+      # Database Configuration
       DATABASE_URL: jdbc:postgresql://postgres:5432/booky
       DATABASE_USERNAME: postgres
       DATABASE_PASSWORD: admin
       DATABASE_NAME: booky
-      SPRING_PROFILES_ACTIVE: local
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
       # Security Configuration
-      SECURITY_ENABLED: false
-      JWT_SECRET: booky-development-secret-key-for-development-only-32-chars
+      SECURITY_ENABLED: ${SECURITY_ENABLED:-false}
+      JWT_SECRET: ${JWT_SECRET:-booky-development-secret-key-for-development-only-32-chars}
       JWT_EXPIRATION: 86400000
       # Image Storage Configuration
-      IMAGE_STORAGE_STRATEGY: cloudinary
-      # Cloudinary Configuration (already set in application.yml defaults)
-      # AWS S3 Configuration (optional for development)
-      # AWS_S3_ACCESS_KEY: your-access-key
-      # AWS_S3_SECRET_KEY: your-secret-key
-      # AWS_S3_REGION: us-east-1
-      # AWS_S3_BUCKET: bucket-user-images-store
+      IMAGE_STORAGE_STRATEGY: ${IMAGE_STORAGE_STRATEGY:-cloudinary}
+      # Cloudinary Configuration
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      # AWS S3 Configuration
+      AWS_S3_ACCESS_KEY: ${AWS_S3_ACCESS_KEY:-}
+      AWS_S3_SECRET_KEY: ${AWS_S3_SECRET_KEY:-}
+      AWS_S3_REGION: ${AWS_S3_REGION:-us-east-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-bucket-user-images-store}
+      AWS_S3_BASE_URL: ${AWS_S3_BASE_URL:-}
     ports:
       - "8080:8080"
     networks:

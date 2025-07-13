@@ -21,44 +21,18 @@ jobs:
     - name: Build Docker image
       run: |
         echo "Building Docker image..."
-        docker build -t booky-backend:latest .
+        docker build -t bookypfi/booky-backend:latest .
         
-    - name: Check if PostgreSQL is running
+    - name: Deploy with unified Docker Compose
       run: |
-        echo "Checking PostgreSQL status..."
-        if ! docker ps | grep -q booky-postgres; then
-          echo "PostgreSQL not running, starting database services..."
-          docker-compose -f docker-compose-ec2.yml up -d postgres adminer
-          echo "Waiting for PostgreSQL to be ready..."
-          sleep 30
-        else
-          echo "PostgreSQL is already running"
-        fi
+        echo "Stopping current services..."
+        docker-compose down || true
         
-    - name: Deploy application
-      run: |
-        echo "Stopping current application container..."
-        docker stop booky-backend || true
-        docker rm booky-backend || true
+        echo "Starting services with production configuration..."
+        docker-compose --env-file env.production up -d
         
-        echo "Starting new application container..."
-        docker run -d \
-          --name booky-backend \
-          --network booky-be_booky-network \
-          -p 8080:8080 \
-          -e DATABASE_URL=jdbc:postgresql://postgres:5432/booky \
-          -e DATABASE_USERNAME=postgres \
-          -e DATABASE_PASSWORD=admin \
-          -e DATABASE_NAME=booky \
-          -e SPRING_PROFILES_ACTIVE=prod \
-          -e SECURITY_ENABLED=false \
-          -e JWT_SECRET=booky-production-secret-key-change-me-in-production \
-          -e JWT_EXPIRATION=86400000 \
-          -e SHOW_SQL=false \
-          -e FORMAT_SQL=false \
-          -e LOG_LEVEL=WARN \
-          -e APP_LOG_LEVEL=INFO \
-          booky-backend:latest
+        echo "Waiting for services to be ready..."
+        sleep 30
           
     - name: Verify deployment
       run: |

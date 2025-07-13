@@ -47,6 +47,8 @@ github-secrets-sandbox.txt
 .env.local
 .env.prod
 .env.production
+env.local
+env.production
 
 # Configuración AWS local
 .aws/

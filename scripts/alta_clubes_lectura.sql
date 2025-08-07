@@ -2,14 +2,6 @@
 -- Script de Alta Masiva de Clubes de Lectura - Booky Backend
 -- =====================================================
 
--- 1. INSERTAR ALGUNOS LIBROS PARA LOS CLUBES
-INSERT INTO books (id, isbn, title, author, overview, pages, publisher, image) VALUES 
-('book-001', '9780060935467', 'To Kill a Mockingbird', 'Harper Lee', 'A classic of modern American literature', 376, 'Harper Perennial', NULL),
-('book-002', '9780747532699', 'Harry Potter and the Philosopher''s Stone', 'J.K. Rowling', 'The first book in the Harry Potter series', 223, 'Bloomsbury', NULL),
-('book-003', '9780451524935', '1984', 'George Orwell', 'A dystopian social science fiction novel', 328, 'Signet Classics', NULL),
-('book-004', '9780060850524', 'Brave New World', 'Aldous Huxley', 'A dystopian novel about a futuristic society', 268, 'Harper Perennial', NULL),
-('book-005', '9780142000281', 'Of Mice and Men', 'John Steinbeck', 'A novella about two displaced migrant ranch workers', 112, 'Penguin Classics', NULL);
-
 -- 2. INSERTAR CLUBES DE LECTURA
 INSERT INTO reading_clubs (id, date_created, description, last_updated, name, book_id, community_id, moderator_id) VALUES 
 

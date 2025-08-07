@@ -18,6 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.uade.bookybe.core.model.constant.ExchangeStatus.ACCEPTED;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -174,6 +176,7 @@ public class BookExchangeServiceImpl implements BookExchangeService {
   private boolean validateStatusUpdatePermission(BookExchangeEntity entity, String userId, ExchangeStatus status) {
     switch (status) {
       case ACCEPTED:
+        return entity.getOwnerId().equals(userId);
       case REJECTED:
         // Only owner can accept or reject
         return entity.getOwnerId().equals(userId);
@@ -182,7 +185,8 @@ public class BookExchangeServiceImpl implements BookExchangeService {
         return entity.getRequesterId().equals(userId);
       case COMPLETED:
         // Both requester and owner can mark as completed
-        return entity.getRequesterId().equals(userId) || entity.getOwnerId().equals(userId);
+        return ACCEPTED.equals(entity.getStatus())
+            && (entity.getRequesterId().equals(userId) || entity.getOwnerId().equals(userId));
       default:
         return false;
     }

@@ -1,5 +1,8 @@
 package com.uade.bookybe.core.usecase.impl;
 
+import static com.uade.bookybe.core.model.constant.ExchangeStatus.ACCEPTED;
+
+import com.uade.bookybe.core.exception.BadRequestException;
 import com.uade.bookybe.core.exception.NotFoundException;
 import com.uade.bookybe.core.model.BookExchange;
 import com.uade.bookybe.core.model.constant.ExchangeStatus;
@@ -17,8 +20,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import static com.uade.bookybe.core.model.constant.ExchangeStatus.ACCEPTED;
 
 @Service
 @RequiredArgsConstructor
@@ -111,34 +112,45 @@ public class BookExchangeServiceImpl implements BookExchangeService {
                                                    List<String> ownerBookIds, List<String> requesterBookIds) {
     log.info("Creating counter offer for exchange: {} by user: {}", exchangeId, userId);
 
-    BookExchangeEntity entity = bookExchangeRepository.findById(exchangeId)
+    BookExchangeEntity originalEntity = bookExchangeRepository.findById(exchangeId)
         .orElseThrow(() -> new NotFoundException("Exchange not found: " + exchangeId));
 
     // Only owner can make counter offers
-    if (!entity.getOwnerId().equals(userId)) {
-      log.warn("Only owner can make counter offers. UserId: {}, OwnerId: {}", userId, entity.getOwnerId());
+    if (!originalEntity.getOwnerId().equals(userId)) {
+      log.warn("Only owner can make counter offers. UserId: {}, OwnerId: {}", userId, originalEntity.getOwnerId());
       return Optional.empty();
     }
 
     // Exchange must be in PENDING status to make counter offer
-    if (entity.getStatus() != ExchangeStatus.PENDING) {
-      log.warn("Cannot make counter offer. Exchange status: {}", entity.getStatus());
+    if (originalEntity.getStatus() != ExchangeStatus.PENDING) {
+      log.warn("Cannot make counter offer. Exchange status: {}", originalEntity.getStatus());
       return Optional.empty();
     }
 
-    // Validate books
-    if (!validateUserBooks(entity.getOwnerId(), ownerBookIds) || 
-        !validateUserBooks(entity.getRequesterId(), requesterBookIds)) {
-      log.warn("Invalid books provided for counter offer");
-      return Optional.empty();
+    // Validate books with inverted roles
+    if (!validateUserBooks(originalEntity.getOwnerId(), requesterBookIds) ||
+        !validateUserBooks(originalEntity.getRequesterId(), ownerBookIds)) {
+      throw new BadRequestException("Invalid books provided for counter offer");
     }
 
-    entity.setStatus(ExchangeStatus.COUNTERED);
-    entity.setOwnerBookIds(ownerBookIds);
-    entity.setRequesterBookIds(requesterBookIds);
-    entity.setDateUpdated(LocalDateTime.now());
+    // Mark original exchange as REJECTED
+    originalEntity.setStatus(ExchangeStatus.REJECTED);
+    originalEntity.setDateUpdated(LocalDateTime.now());
+    bookExchangeRepository.save(originalEntity);
 
-    BookExchangeEntity savedEntity = bookExchangeRepository.save(entity);
+    // Create new exchange with inverted roles
+    BookExchangeEntity newEntity = BookExchangeEntity.builder()
+        .id("exchange-" + UUID.randomUUID().toString().substring(0, 8))
+        .ownerId(originalEntity.getRequesterId()) // Former requester becomes owner
+        .requesterId(originalEntity.getOwnerId()) // Former owner becomes requester
+        .ownerBookIds(requesterBookIds) // Books offered by new owner (former requester)
+        .requesterBookIds(ownerBookIds) // Books requested by new requester (former owner)
+        .status(ExchangeStatus.PENDING)
+        .dateCreated(LocalDateTime.now())
+        .dateUpdated(LocalDateTime.now())
+        .build();
+
+    BookExchangeEntity savedEntity = bookExchangeRepository.save(newEntity);
     return Optional.of(BookExchangeEntityMapper.INSTANCE.toModel(savedEntity));
   }
 
@@ -191,4 +203,4 @@ public class BookExchangeServiceImpl implements BookExchangeService {
         return false;
     }
   }
-} 
+}

@@ -1,5 +1,6 @@
 package com.uade.bookybe.config;
 
+import com.uade.bookybe.core.exception.BadRequestException;
 import com.uade.bookybe.core.exception.NotFoundException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -33,6 +34,23 @@ public class GlobalExceptionHandler {
             .build();
 
     return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(BadRequestException.class)
+  public ResponseEntity<ErrorResponse> handleBadRequestException(
+      Exception ex, WebRequest request) {
+    log.warn("Bad request: {}", ex.getMessage());
+
+    ErrorResponse errorResponse =
+        ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error("Bad request")
+            .message(ex.getMessage())
+            .path(request.getDescription(false))
+            .build();
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)

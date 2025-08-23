@@ -59,7 +59,7 @@ aws:
 # Application specific configuration
 app:
   security:
-    enabled: ${SECURITY_ENABLED:false} # Default: no security for development
+    enabled: ${SECURITY_ENABLED:true} # Default: no security for development
     jwt:
       secret: ${JWT_SECRET:booky-secret-key-for-development-only}
       expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds

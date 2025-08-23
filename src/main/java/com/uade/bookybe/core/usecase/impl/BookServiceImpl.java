@@ -122,6 +122,7 @@ public class BookServiceImpl implements BookService {
       // Generate unique ID for the book
       String bookId = "book-" + java.util.UUID.randomUUID().toString().substring(0, 8);
       bookEntity.setId(bookId);
+      bookEntity.setIsbn(isbn);
       
       bookEntity = bookRepository.save(bookEntity);
 

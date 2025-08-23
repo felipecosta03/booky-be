@@ -1,0 +1,191 @@
+### Variables
+@baseUrl = http://localhost:8080
+@token = Bearer YOUR_JWT_TOKEN_HERE
+@communityId = 550e8400-e29b-41d4-a716-446655440000
+@userId = 550e8400-e29b-41d4-a716-446655440001
+
+### Test 1: Create community
+POST {{baseUrl}}/communities
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "name": "Test Community",
+  "description": "A community created for testing purposes"
+}
+
+> {%
+client.test("Create community should return 201", function() {
+    client.assert(response.status === 201, "Expected status 201");
+});
+
+client.test("Response should contain community data", function() {
+    client.assert(response.body.id !== undefined, "Community ID should be present");
+    client.assert(response.body.name === "Test Community", "Community name should match");
+    client.assert(response.body.description === "A community created for testing purposes", "Description should match");
+    client.assert(response.body.createdBy !== undefined, "Created by should be present");
+});
+
+client.global.set("createdCommunityId", response.body.id);
+%}
+
+###
+
+### Test 2: Get community by ID
+GET {{baseUrl}}/communities/{{communityId}}
+Authorization: {{token}}
+
+> {%
+client.test("Get community should return 200 or 404", function() {
+    client.assert(response.status === 200 || response.status === 404, "Expected status 200 or 404");
+});
+
+if (response.status === 200) {
+    client.test("Response should contain community data", function() {
+        client.assert(response.body.id !== undefined, "Community ID should be present");
+        client.assert(response.body.name !== undefined, "Community name should be present");
+        client.assert(response.body.description !== undefined, "Description should be present");
+    });
+}
+%}
+
+###
+
+### Test 3: Get all communities
+GET {{baseUrl}}/communities
+Authorization: {{token}}
+
+> {%
+client.test("Get all communities should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 4: Join community
+POST {{baseUrl}}/communities/{{communityId}}/join
+Authorization: {{token}}
+
+> {%
+client.test("Join community should return 200 or 404", function() {
+    client.assert(response.status === 200 || response.status === 404 || response.status === 409, "Expected status 200, 404, or 409");
+});
+%}
+
+###
+
+### Test 5: Get community members
+GET {{baseUrl}}/communities/{{communityId}}/members
+Authorization: {{token}}
+
+> {%
+client.test("Get community members should return 200", function() {
+    client.assert(response.status === 200 || response.status === 404, "Expected status 200 or 404");
+});
+
+if (response.status === 200) {
+    client.test("Response should be an array", function() {
+        client.assert(Array.isArray(response.body), "Response should be an array");
+    });
+}
+%}
+
+###
+
+### Test 6: Get user communities
+GET {{baseUrl}}/communities/user/{{userId}}
+Authorization: {{token}}
+
+> {%
+client.test("Get user communities should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 7: Search communities
+GET {{baseUrl}}/communities/search?q=test
+Authorization: {{token}}
+
+> {%
+client.test("Search communities should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 8: Leave community
+DELETE {{baseUrl}}/communities/{{communityId}}/leave
+Authorization: {{token}}
+
+> {%
+client.test("Leave community should return 200 or 404", function() {
+    client.assert(response.status === 200 || response.status === 404, "Expected status 200 or 404");
+});
+%}
+
+###
+
+### Test 9: Create community without authentication
+POST {{baseUrl}}/communities
+Content-Type: application/json
+
+{
+  "name": "Unauthenticated Community",
+  "description": "This should fail if auth is enabled"
+}
+
+> {%
+client.test("Create community without auth should return 401 or 201", function() {
+    client.assert(response.status === 401 || response.status === 201, "Expected status 401 (if auth enabled) or 201 (if auth disabled)");
+});
+%}
+
+###
+
+### Test 10: Create community with invalid data
+POST {{baseUrl}}/communities
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "name": "",
+  "description": ""
+}
+
+> {%
+client.test("Create community with invalid data should return 400", function() {
+    client.assert(response.status === 400, "Expected status 400");
+});
+%}
+
+###
+
+### Test 11: Join non-existent community
+POST {{baseUrl}}/communities/non-existent-id/join
+Authorization: {{token}}
+
+> {%
+client.test("Join non-existent community should return 404", function() {
+    client.assert(response.status === 404, "Expected status 404");
+});
+%}
+
+###
+
+

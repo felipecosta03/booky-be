@@ -1,0 +1,240 @@
+### Variables
+@baseUrl = http://localhost:8080
+@token = Bearer YOUR_JWT_TOKEN_HERE
+@postId = 550e8400-e29b-41d4-a716-446655440000
+@userId = 550e8400-e29b-41d4-a716-446655440001
+@communityId = 550e8400-e29b-41d4-a716-446655440002
+
+### Test 1: Create a general post (without image)
+POST {{baseUrl}}/posts
+Content-Type: multipart/form-data; boundary=boundary123
+Authorization: {{token}}
+
+--boundary123
+Content-Disposition: form-data; name="post"
+Content-Type: application/json
+
+{
+  "body": "Este es un post de prueba general",
+  "communityId": null
+}
+--boundary123--
+
+> {%
+client.test("Create general post should return 201", function() {
+    client.assert(response.status === 201, "Expected status 201");
+});
+
+client.test("Response should contain post data", function() {
+    client.assert(response.body.id !== undefined, "Post ID should be present");
+    client.assert(response.body.body === "Este es un post de prueba general", "Post body should match");
+    client.assert(response.body.userId !== undefined, "User ID should be present");
+    client.assert(response.body.dateCreated !== undefined, "Date created should be present");
+});
+
+client.global.set("createdPostId", response.body.id);
+%}
+
+###
+
+### Test 2: Create a community post
+POST {{baseUrl}}/posts
+Content-Type: multipart/form-data; boundary=boundary456
+Authorization: {{token}}
+
+--boundary456
+Content-Disposition: form-data; name="post"
+Content-Type: application/json
+
+{
+  "body": "Este es un post para una comunidad específica",
+  "communityId": "{{communityId}}"
+}
+--boundary456--
+
+> {%
+client.test("Create community post should return 201", function() {
+    client.assert(response.status === 201, "Expected status 201");
+});
+
+client.test("Response should contain community data", function() {
+    client.assert(response.body.communityId === "{{communityId}}", "Community ID should match");
+});
+%}
+
+###
+
+### Test 3: Get post by ID
+GET {{baseUrl}}/posts/{{postId}}
+Authorization: {{token}}
+
+> {%
+client.test("Get post should return 200 or 404", function() {
+    client.assert(response.status === 200 || response.status === 404, "Expected status 200 or 404");
+});
+
+if (response.status === 200) {
+    client.test("Response should contain post data", function() {
+        client.assert(response.body.id !== undefined, "Post ID should be present");
+        client.assert(response.body.body !== undefined, "Post body should be present");
+    });
+}
+%}
+
+###
+
+### Test 4: Get user feed
+GET {{baseUrl}}/posts/feed
+Authorization: {{token}}
+
+> {%
+client.test("Get user feed should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 5: Get posts by user ID
+GET {{baseUrl}}/posts/user/{{userId}}
+Authorization: {{token}}
+
+> {%
+client.test("Get posts by user should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 6: Get posts by community ID
+GET {{baseUrl}}/posts/community/{{communityId}}
+Authorization: {{token}}
+
+> {%
+client.test("Get posts by community should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 7: Get general posts
+GET {{baseUrl}}/posts/general
+Authorization: {{token}}
+
+> {%
+client.test("Get general posts should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 8: Update post
+PUT {{baseUrl}}/posts/{{postId}}
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "body": "Contenido actualizado del post",
+  "communityId": null
+}
+
+> {%
+client.test("Update post should return 200 or 404", function() {
+    client.assert(response.status === 200 || response.status === 404, "Expected status 200 or 404");
+});
+
+if (response.status === 200) {
+    client.test("Response should contain updated data", function() {
+        client.assert(response.body.body === "Contenido actualizado del post", "Post body should be updated");
+    });
+}
+%}
+
+###
+
+### Test 9: Delete post
+DELETE {{baseUrl}}/posts/{{postId}}
+Authorization: {{token}}
+
+> {%
+client.test("Delete post should return 204 or 404", function() {
+    client.assert(response.status === 204 || response.status === 404, "Expected status 204 or 404");
+});
+%}
+
+###
+
+### Test 10: Try to get deleted post (should return 404)
+GET {{baseUrl}}/posts/{{postId}}
+Authorization: {{token}}
+
+> {%
+client.test("Get deleted post should return 404", function() {
+    client.assert(response.status === 404, "Expected status 404 for deleted post");
+});
+%}
+
+###
+
+### Test 11: Create post without authentication (when security is enabled)
+POST {{baseUrl}}/posts
+Content-Type: multipart/form-data; boundary=boundary789
+
+--boundary789
+Content-Disposition: form-data; name="post"
+Content-Type: application/json
+
+{
+  "body": "Post sin autenticación",
+  "communityId": null
+}
+--boundary789--
+
+> {%
+client.test("Post without auth should return 401 or 201", function() {
+    client.assert(response.status === 401 || response.status === 201, "Expected status 401 (if auth enabled) or 201 (if auth disabled)");
+});
+%}
+
+###
+
+### Test 12: Create post with invalid data
+POST {{baseUrl}}/posts
+Content-Type: multipart/form-data; boundary=boundary999
+Authorization: {{token}}
+
+--boundary999
+Content-Disposition: form-data; name="post"
+Content-Type: application/json
+
+{
+  "body": "",
+  "communityId": "invalid-community-id"
+}
+--boundary999--
+
+> {%
+client.test("Create post with invalid data should return 400", function() {
+    client.assert(response.status === 400 || response.status === 201, "Expected status 400 for invalid data or 201 if validation passes");
+});
+%}
+

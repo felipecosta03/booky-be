@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 @RestControllerAdvice
 @Slf4j
@@ -98,6 +100,39 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(errorResponse, HttpStatus.PAYLOAD_TOO_LARGE);
   }
 
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
+      HttpMessageNotReadableException ex, WebRequest request) {
+    log.warn("Invalid JSON format: {}", ex.getMessage());
+
+    String message = "Invalid request format";
+    
+    // Check if it's an enum validation error
+    if (ex.getCause() instanceof InvalidFormatException) {
+      InvalidFormatException invalidFormatException = (InvalidFormatException) ex.getCause();
+      if (invalidFormatException.getTargetType() != null && 
+          invalidFormatException.getTargetType().isEnum()) {
+        String fieldName = invalidFormatException.getPath().isEmpty() ? 
+            "field" : invalidFormatException.getPath().get(0).getFieldName();
+        String invalidValue = invalidFormatException.getValue().toString();
+        
+        message = String.format("Invalid value '%s' for field '%s'. Must be one of: %s", 
+            invalidValue, fieldName, getEnumValues(invalidFormatException.getTargetType()));
+      }
+    }
+
+    ErrorResponse errorResponse =
+        ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error("Invalid Request Format")
+            .message(message)
+            .path(request.getDescription(false))
+            .build();
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
       IllegalArgumentException ex, WebRequest request) {
@@ -129,6 +164,21 @@ public class GlobalExceptionHandler {
             .build();
 
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  private String getEnumValues(Class<?> enumClass) {
+    if (enumClass.isEnum()) {
+      Object[] enumConstants = enumClass.getEnumConstants();
+      StringBuilder values = new StringBuilder();
+      for (int i = 0; i < enumConstants.length; i++) {
+        values.append(enumConstants[i].toString());
+        if (i < enumConstants.length - 1) {
+          values.append(", ");
+        }
+      }
+      return values.toString();
+    }
+    return "";
   }
 
   @lombok.Data

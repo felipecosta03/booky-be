@@ -1,0 +1,265 @@
+### Variables
+@baseUrl = http://localhost:8080
+@token = Bearer YOUR_JWT_TOKEN_HERE
+@exchangeId = 550e8400-e29b-41d4-a716-446655440000
+@userId = 550e8400-e29b-41d4-a716-446655440001
+@requesterId = 550e8400-e29b-41d4-a716-446655440002
+@ownerId = 550e8400-e29b-41d4-a716-446655440003
+@ownerBookId = 550e8400-e29b-41d4-a716-446655440004
+@requesterBookId = 550e8400-e29b-41d4-a716-446655440005
+
+### Test 1: Create book exchange
+POST {{baseUrl}}/exchanges
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "requesterId": "{{requesterId}}",
+  "ownerId": "{{ownerId}}",
+  "ownerBookIds": ["{{ownerBookId}}"],
+  "requesterBookIds": ["{{requesterBookId}}"]
+}
+
+> {%
+client.test("Create exchange should return 201 or 409", function() {
+    client.assert(response.status === 201 || response.status === 409, "Expected status 201 or 409");
+});
+
+if (response.status === 201) {
+    client.test("Response should contain exchange data", function() {
+        client.assert(response.body.id !== undefined, "Exchange ID should be present");
+        client.assert(response.body.requesterId === "{{requesterId}}", "Requester ID should match");
+        client.assert(response.body.ownerId === "{{ownerId}}", "Owner ID should match");
+        client.assert(response.body.status !== undefined, "Status should be present");
+    });
+    
+    client.global.set("createdExchangeId", response.body.id);
+}
+%}
+
+###
+
+### Test 2: Get exchange by ID
+GET {{baseUrl}}/exchanges/{{exchangeId}}
+Authorization: {{token}}
+
+> {%
+client.test("Get exchange should return 200 or 404", function() {
+    client.assert(response.status === 200 || response.status === 404, "Expected status 200 or 404");
+});
+
+if (response.status === 200) {
+    client.test("Response should contain exchange data", function() {
+        client.assert(response.body.id !== undefined, "Exchange ID should be present");
+        client.assert(response.body.status !== undefined, "Status should be present");
+        client.assert(response.body.offeredBookId !== undefined, "Offered book ID should be present");
+        client.assert(response.body.requestedBookId !== undefined, "Requested book ID should be present");
+    });
+}
+%}
+
+###
+
+### Test 3: Get user's exchanges
+GET {{baseUrl}}/exchanges/users/{{userId}}
+Authorization: {{token}}
+
+> {%
+client.test("Get user exchanges should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 4: Get user's exchanges with status filter
+GET {{baseUrl}}/exchanges/users/{{userId}}?status=PENDING
+Authorization: {{token}}
+
+> {%
+client.test("Get user exchanges by status should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 5: Get exchanges as requester
+GET {{baseUrl}}/exchanges/users/{{userId}}/as-requester
+Authorization: {{token}}
+
+> {%
+client.test("Get exchanges as requester should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 6: Get exchanges as owner
+GET {{baseUrl}}/exchanges/users/{{userId}}/as-owner
+Authorization: {{token}}
+
+> {%
+client.test("Get exchanges as owner should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 7: Update exchange status - Accept
+PUT {{baseUrl}}/exchanges/{{exchangeId}}/status?userId={{userId}}
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "status": "ACCEPTED"
+}
+
+> {%
+client.test("Accept exchange should return 200 or 403", function() {
+    client.assert(response.status === 200 || response.status === 403, "Expected status 200 or 403");
+});
+
+if (response.status === 200) {
+    client.test("Response should contain updated status", function() {
+        client.assert(response.body.status === "ACCEPTED", "Status should be updated to ACCEPTED");
+    });
+}
+%}
+
+###
+
+### Test 8: Update exchange status - Reject
+PUT {{baseUrl}}/exchanges/{{exchangeId}}/status?userId={{userId}}
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "status": "REJECTED"
+}
+
+> {%
+client.test("Reject exchange should return 200 or 403", function() {
+    client.assert(response.status === 200 || response.status === 403, "Expected status 200 or 403");
+});
+
+if (response.status === 200) {
+    client.test("Response should contain updated status", function() {
+        client.assert(response.body.status === "REJECTED", "Status should be updated to REJECTED");
+    });
+}
+%}
+
+###
+
+### Test 9: Create counter offer
+PUT {{baseUrl}}/exchanges/{{exchangeId}}/counter-offer?userId={{userId}}
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "ownerBookIds": ["{{ownerBookId}}"],
+  "requesterBookIds": ["{{requesterBookId}}"]
+}
+
+> {%
+client.test("Create counter offer should return 200 or 403", function() {
+    client.assert(response.status === 200 || response.status === 403, "Expected status 200 or 403");
+});
+
+if (response.status === 200) {
+    client.test("Response should contain counter offer data", function() {
+        client.assert(response.body.id !== undefined, "Counter offer ID should be present");
+    });
+}
+%}
+
+###
+
+### Test 10: Get pending exchanges count
+GET {{baseUrl}}/exchanges/users/{{userId}}/pending-count
+Authorization: {{token}}
+
+> {%
+client.test("Get pending exchanges count should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be a number", function() {
+    client.assert(typeof response.body === 'number', "Response should be a number");
+});
+%}
+
+###
+
+### Test 11: Create exchange with same user
+POST {{baseUrl}}/exchanges
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "requesterId": "{{userId}}",
+  "ownerId": "{{userId}}",
+  "ownerBookIds": ["{{ownerBookId}}"],
+  "requesterBookIds": ["{{requesterBookId}}"]
+}
+
+> {%
+client.test("Exchange with same user should return 409", function() {
+    client.assert(response.status === 409, "Expected status 409");
+});
+%}
+
+###
+
+### Test 12: Create exchange without authentication
+POST {{baseUrl}}/exchanges
+Content-Type: application/json
+
+{
+  "requesterId": "{{requesterId}}",
+  "ownerId": "{{ownerId}}",
+  "ownerBookIds": ["{{ownerBookId}}"],
+  "requesterBookIds": ["{{requesterBookId}}"]
+}
+
+> {%
+client.test("Exchange without auth should return 401 or 201", function() {
+    client.assert(response.status === 401 || response.status === 201, "Expected status 401 (if auth enabled) or 201 (if auth disabled)");
+});
+%}
+
+###
+
+### Test 13: Update exchange with invalid status
+PUT {{baseUrl}}/exchanges/{{exchangeId}}/status?userId={{userId}}
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "status": "INVALID_STATUS"
+}
+
+> {%
+client.test("Invalid status should return 400", function() {
+    client.assert(response.status === 400, "Expected status 400");
+});
+%}

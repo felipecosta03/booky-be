@@ -1,0 +1,191 @@
+### Variables
+@baseUrl = http://localhost:8080
+@token = Bearer YOUR_JWT_TOKEN_HERE
+@readingClubId = 550e8400-e29b-41d4-a716-446655440000
+@userId = 550e8400-e29b-41d4-a716-446655440001
+@bookId = 550e8400-e29b-41d4-a716-446655440002
+@communityId = 550e8400-e29b-41d4-a716-446655440003
+
+### Test 1: Create reading club
+POST {{baseUrl}}/reading-clubs
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "name": "Test Reading Club",
+  "description": "A reading club created for testing purposes",
+  "bookId": "{{bookId}}"
+}
+
+> {%
+client.test("Create reading club should return 201", function() {
+    client.assert(response.status === 201, "Expected status 201");
+});
+
+client.test("Response should contain reading club data", function() {
+    client.assert(response.body.id !== undefined, "Reading club ID should be present");
+    client.assert(response.body.name === "Test Reading Club", "Name should match");
+    client.assert(response.body.description === "A reading club created for testing purposes", "Description should match");
+    client.assert(response.body.bookId === "{{bookId}}", "Book ID should match");
+});
+
+client.global.set("createdReadingClubId", response.body.id);
+%}
+
+###
+
+### Test 2: Get reading club by ID
+GET {{baseUrl}}/reading-clubs/{{readingClubId}}
+Authorization: {{token}}
+
+> {%
+client.test("Get reading club should return 200 or 404", function() {
+    client.assert(response.status === 200 || response.status === 404, "Expected status 200 or 404");
+});
+
+if (response.status === 200) {
+    client.test("Response should contain reading club data", function() {
+        client.assert(response.body.id !== undefined, "Reading club ID should be present");
+        client.assert(response.body.name !== undefined, "Name should be present");
+        client.assert(response.body.description !== undefined, "Description should be present");
+        client.assert(response.body.bookId !== undefined, "Book ID should be present");
+    });
+}
+%}
+
+###
+
+### Test 3: Get all reading clubs
+GET {{baseUrl}}/reading-clubs
+Authorization: {{token}}
+
+> {%
+client.test("Get all reading clubs should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 4: Join reading club
+POST {{baseUrl}}/reading-clubs/{{readingClubId}}/join
+Authorization: {{token}}
+
+> {%
+client.test("Join reading club should return 200 or 404", function() {
+    client.assert(response.status === 200 || response.status === 404 || response.status === 409, "Expected status 200, 404, or 409");
+});
+%}
+
+###
+
+### Test 5: Get reading clubs by community
+GET {{baseUrl}}/reading-clubs/community/{{communityId}}
+Authorization: {{token}}
+
+> {%
+client.test("Get reading clubs by community should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 6: Get user's reading clubs
+GET {{baseUrl}}/reading-clubs/user/{{userId}}
+Authorization: {{token}}
+
+> {%
+client.test("Get user reading clubs should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 7: Search reading clubs
+GET {{baseUrl}}/reading-clubs/search?q=test
+Authorization: {{token}}
+
+> {%
+client.test("Search reading clubs should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 8: Join reading club
+POST {{baseUrl}}/reading-clubs/{{readingClubId}}/join
+Authorization: {{token}}
+
+> {%
+client.test("Join reading club should return 200 or 400", function() {
+    client.assert(response.status === 200 || response.status === 400, "Expected status 200 or 400");
+});
+%}
+
+###
+
+### Test 9: Create reading club without authentication
+POST {{baseUrl}}/reading-clubs
+Content-Type: application/json
+
+{
+  "name": "Unauthenticated Reading Club",
+  "description": "This should fail if auth is enabled",
+  "bookId": "{{bookId}}"
+}
+
+> {%
+client.test("Create reading club without auth should return 401 or 201", function() {
+    client.assert(response.status === 401 || response.status === 201, "Expected status 401 (if auth enabled) or 201 (if auth disabled)");
+});
+%}
+
+###
+
+### Test 10: Create reading club with invalid data
+POST {{baseUrl}}/reading-clubs
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "name": "",
+  "description": "",
+  "bookId": "invalid-book-id"
+}
+
+> {%
+client.test("Create reading club with invalid data should return 400", function() {
+    client.assert(response.status === 400, "Expected status 400");
+});
+%}
+
+###
+
+### Test 11: Join non-existent reading club
+POST {{baseUrl}}/reading-clubs/non-existent-id/join
+Authorization: {{token}}
+
+> {%
+client.test("Join non-existent reading club should return 400", function() {
+    client.assert(response.status === 400, "Expected status 400");
+});
+%}

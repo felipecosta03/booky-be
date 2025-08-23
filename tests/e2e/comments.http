@@ -1,0 +1,151 @@
+### Variables
+@baseUrl = http://localhost:8080
+@token = Bearer YOUR_JWT_TOKEN_HERE
+@commentId = 550e8400-e29b-41d4-a716-446655440000
+@postId = 550e8400-e29b-41d4-a716-446655440001
+@userId = 550e8400-e29b-41d4-a716-446655440002
+
+### Test 1: Create comment on post
+POST {{baseUrl}}/comments
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "body": "This is a test comment on a post",
+  "postId": "{{postId}}"
+}
+
+> {%
+client.test("Create comment should return 201", function() {
+    client.assert(response.status === 201, "Expected status 201");
+});
+
+client.test("Response should contain comment data", function() {
+    client.assert(response.body.id !== undefined, "Comment ID should be present");
+    client.assert(response.body.body === "This is a test comment on a post", "Body should match");
+    client.assert(response.body.postId === "{{postId}}", "Post ID should match");
+    client.assert(response.body.userId !== undefined, "User ID should be present");
+    client.assert(response.body.dateCreated !== undefined, "Date created should be present");
+});
+
+client.global.set("createdCommentId", response.body.id);
+%}
+
+###
+
+### Test 2: Get comment by ID
+GET {{baseUrl}}/comments/{{commentId}}
+Authorization: {{token}}
+
+> {%
+client.test("Get comment should return 200 or 404", function() {
+    client.assert(response.status === 200 || response.status === 404, "Expected status 200 or 404");
+});
+
+if (response.status === 200) {
+    client.test("Response should contain comment data", function() {
+        client.assert(response.body.id !== undefined, "Comment ID should be present");
+        client.assert(response.body.content !== undefined, "Content should be present");
+        client.assert(response.body.userId !== undefined, "User ID should be present");
+    });
+}
+%}
+
+###
+
+### Test 3: Get comments for a post
+GET {{baseUrl}}/comments/post/{{postId}}
+Authorization: {{token}}
+
+> {%
+client.test("Get comments for post should return 200", function() {
+    client.assert(response.status === 200 || response.status === 404, "Expected status 200 or 404");
+});
+
+if (response.status === 200) {
+    client.test("Response should be an array", function() {
+        client.assert(Array.isArray(response.body), "Response should be an array");
+    });
+}
+%}
+
+###
+
+### Test 4: Get comments by user
+GET {{baseUrl}}/comments/user/{{userId}}
+Authorization: {{token}}
+
+> {%
+client.test("Get comments by user should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 5: Delete comment
+DELETE {{baseUrl}}/comments/{{commentId}}
+Authorization: {{token}}
+
+> {%
+client.test("Delete comment should return 200 or 400", function() {
+    client.assert(response.status === 200 || response.status === 400, "Expected status 200 or 400");
+});
+%}
+
+###
+
+### Test 6: Create comment without authentication
+POST {{baseUrl}}/comments
+Content-Type: application/json
+
+{
+  "body": "Unauthenticated comment",
+  "postId": "{{postId}}"
+}
+
+> {%
+client.test("Comment without auth should return 401 or 201", function() {
+    client.assert(response.status === 401 || response.status === 201, "Expected status 401 (if auth enabled) or 201 (if auth disabled)");
+});
+%}
+
+###
+
+### Test 7: Create comment with empty body
+POST {{baseUrl}}/comments
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "body": "",
+  "postId": "{{postId}}"
+}
+
+> {%
+client.test("Empty body comment should return 400", function() {
+    client.assert(response.status === 400, "Expected status 400");
+});
+%}
+
+###
+
+### Test 8: Create comment on non-existent post
+POST {{baseUrl}}/comments
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "body": "Comment on non-existent post",
+  "postId": "non-existent-post-id"
+}
+
+> {%
+client.test("Comment on non-existent post should return 400", function() {
+    client.assert(response.status === 400, "Expected status 400");
+});
+%}

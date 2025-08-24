@@ -33,7 +33,8 @@ public class ReadingClubDtoMapperWithNestedObjects {
     try {
       // Cargar book si bookId existe
       if (model.getBookId() != null) {
-        bookRepository.findById(model.getBookId())
+        bookRepository
+            .findById(model.getBookId())
             .map(BookEntityMapper.INSTANCE::toModel)
             .map(BookDtoMapper.INSTANCE::toDto)
             .ifPresent(dto::setBook);
@@ -41,7 +42,8 @@ public class ReadingClubDtoMapperWithNestedObjects {
 
       // Cargar community si communityId existe (sin memberCount por ahora para evitar ciclos)
       if (model.getCommunityId() != null) {
-        communityRepository.findById(model.getCommunityId())
+        communityRepository
+            .findById(model.getCommunityId())
             .map(CommunityEntityMapper.INSTANCE::toModel)
             .map(CommunityDtoMapper.INSTANCE::toDto)
             .ifPresent(dto::setCommunity);
@@ -49,15 +51,18 @@ public class ReadingClubDtoMapperWithNestedObjects {
 
       // Cargar moderator si moderatorId existe
       if (model.getModeratorId() != null) {
-        userRepository.findById(model.getModeratorId())
+        userRepository
+            .findById(model.getModeratorId())
             .map(UserEntityMapper.INSTANCE::toModel)
             .map(UserDtoMapper.INSTANCE::toPreviewDto)
             .ifPresent(dto::setModerator);
       }
 
     } catch (Exception e) {
-      log.warn("Error enriching ReadingClub DTO with nested objects for ID {}: {}", 
-               model.getId(), e.getMessage());
+      log.warn(
+          "Error enriching ReadingClub DTO with nested objects for ID {}: {}",
+          model.getId(),
+          e.getMessage());
     }
 
     return dto;

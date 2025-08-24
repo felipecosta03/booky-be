@@ -1,6 +1,5 @@
 package com.uade.bookybe.core.usecase.impl;
 
-
 import com.uade.bookybe.core.model.Community;
 import com.uade.bookybe.core.usecase.CommunityService;
 import com.uade.bookybe.infraestructure.entity.CommunityEntity;
@@ -19,7 +18,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

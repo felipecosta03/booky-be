@@ -35,6 +35,4 @@ public class ReadingClubEntity {
 
   @Column(name = "moderator_id", nullable = false)
   private String moderatorId;
-
-
-} 
+}

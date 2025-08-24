@@ -1,33 +1,21 @@
 package com.uade.bookybe.core.model.constant;
 
 public enum ExchangeStatus {
-  /**
-   * Intercambio recién creado, esperando respuesta del propietario
-   */
+  /** Intercambio recién creado, esperando respuesta del propietario */
   PENDING,
-  
-  /**
-   * Intercambio aceptado por el propietario
-   */
+
+  /** Intercambio aceptado por el propietario */
   ACCEPTED,
-  
-  /**
-   * Intercambio rechazado por el propietario
-   */
+
+  /** Intercambio rechazado por el propietario */
   REJECTED,
-  
-  /**
-   * El propietario hizo una contraoferta
-   */
+
+  /** El propietario hizo una contraoferta */
   COUNTERED,
-  
-  /**
-   * Intercambio cancelado por el solicitante
-   */
+
+  /** Intercambio cancelado por el solicitante */
   CANCELLED,
-  
-  /**
-   * Intercambio completado exitosamente
-   */
+
+  /** Intercambio completado exitosamente */
   COMPLETED
-} 
+}

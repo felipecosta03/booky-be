@@ -11,11 +11,12 @@ import org.springframework.stereotype.Repository;
 public interface CommentRepository extends JpaRepository<CommentEntity, String> {
 
   List<CommentEntity> findByPostIdOrderByDateCreatedDesc(String postId);
-  
+
   List<CommentEntity> findByUserIdOrderByDateCreatedDesc(String userId);
-  
-  @Query("SELECT c FROM CommentEntity c JOIN FETCH c.user WHERE c.postId = :postId ORDER BY c.dateCreated DESC")
+
+  @Query(
+      "SELECT c FROM CommentEntity c JOIN FETCH c.user WHERE c.postId = :postId ORDER BY c.dateCreated DESC")
   List<CommentEntity> findByPostIdWithUserOrderByDateCreatedDesc(@Param("postId") String postId);
-  
+
   long countByPostId(String postId);
-} 
+}

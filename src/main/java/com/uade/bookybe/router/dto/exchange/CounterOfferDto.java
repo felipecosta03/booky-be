@@ -12,10 +12,10 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CounterOfferDto {
-  
+
   @NotEmpty(message = "At least one owner book is required")
   private List<String> ownerBookIds;
-  
+
   @NotEmpty(message = "At least one requester book is required")
   private List<String> requesterBookIds;
-} 
+}

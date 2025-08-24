@@ -1,6 +1,5 @@
 package com.uade.bookybe.core.model;
 
-import com.uade.bookybe.core.model.constant.BookStatus;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

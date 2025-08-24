@@ -31,8 +31,11 @@ public class BookExchangeServiceImpl implements BookExchangeService {
   private final UserBookRepository userBookRepository;
 
   @Override
-  public Optional<BookExchange> createExchange(String requesterId, String ownerId, 
-                                               List<String> ownerBookIds, List<String> requesterBookIds) {
+  public Optional<BookExchange> createExchange(
+      String requesterId,
+      String ownerId,
+      List<String> ownerBookIds,
+      List<String> requesterBookIds) {
     log.info("Creating exchange. RequesterId: {}, OwnerId: {}", requesterId, ownerId);
 
     // Validate that requester and owner are different
@@ -42,21 +45,23 @@ public class BookExchangeServiceImpl implements BookExchangeService {
     }
 
     // Validate that all books exist and belong to the respective users
-    if (!validateUserBooks(ownerId, ownerBookIds) || !validateUserBooks(requesterId, requesterBookIds)) {
+    if (!validateUserBooks(ownerId, ownerBookIds)
+        || !validateUserBooks(requesterId, requesterBookIds)) {
       log.warn("Invalid books provided for exchange");
       return Optional.empty();
     }
 
-    BookExchangeEntity entity = BookExchangeEntity.builder()
-        .id("exchange-" + UUID.randomUUID().toString().substring(0, 8))
-        .requesterId(requesterId)
-        .ownerId(ownerId)
-        .status(ExchangeStatus.PENDING)
-        .dateCreated(LocalDateTime.now())
-        .dateUpdated(LocalDateTime.now())
-        .ownerBookIds(ownerBookIds)
-        .requesterBookIds(requesterBookIds)
-        .build();
+    BookExchangeEntity entity =
+        BookExchangeEntity.builder()
+            .id("exchange-" + UUID.randomUUID().toString().substring(0, 8))
+            .requesterId(requesterId)
+            .ownerId(ownerId)
+            .status(ExchangeStatus.PENDING)
+            .dateCreated(LocalDateTime.now())
+            .dateUpdated(LocalDateTime.now())
+            .ownerBookIds(ownerBookIds)
+            .requesterBookIds(requesterBookIds)
+            .build();
 
     BookExchangeEntity savedEntity = bookExchangeRepository.save(entity);
     return Optional.of(BookExchangeEntityMapper.INSTANCE.toModel(savedEntity));
@@ -65,8 +70,7 @@ public class BookExchangeServiceImpl implements BookExchangeService {
   @Override
   public List<BookExchange> getUserExchanges(String userId) {
     log.info("Getting all exchanges for user: {}", userId);
-    return bookExchangeRepository.findByUserIdOrderByDateCreatedDesc(userId)
-        .stream()
+    return bookExchangeRepository.findByUserIdOrderByDateCreatedDesc(userId).stream()
         .map(BookExchangeEntityMapper.INSTANCE::toModel)
         .collect(Collectors.toList());
   }
@@ -74,7 +78,8 @@ public class BookExchangeServiceImpl implements BookExchangeService {
   @Override
   public List<BookExchange> getUserExchangesByStatus(String userId, ExchangeStatus status) {
     log.info("Getting exchanges for user: {} with status: {}", userId, status);
-    return bookExchangeRepository.findByUserIdAndStatusOrderByDateCreatedDesc(userId, status)
+    return bookExchangeRepository
+        .findByUserIdAndStatusOrderByDateCreatedDesc(userId, status)
         .stream()
         .map(BookExchangeEntityMapper.INSTANCE::toModel)
         .collect(Collectors.toList());
@@ -83,20 +88,28 @@ public class BookExchangeServiceImpl implements BookExchangeService {
   @Override
   public Optional<BookExchange> getExchangeById(String exchangeId) {
     log.info("Getting exchange by ID: {}", exchangeId);
-    return bookExchangeRepository.findByIdWithUsers(exchangeId)
+    return bookExchangeRepository
+        .findByIdWithUsers(exchangeId)
         .map(BookExchangeEntityMapper.INSTANCE::toModel);
   }
 
   @Override
-  public Optional<BookExchange> updateExchangeStatus(String exchangeId, String userId, ExchangeStatus status) {
+  public Optional<BookExchange> updateExchangeStatus(
+      String exchangeId, String userId, ExchangeStatus status) {
     log.info("Updating exchange {} status to {} by user {}", exchangeId, status, userId);
 
-    BookExchangeEntity entity = bookExchangeRepository.findById(exchangeId)
-        .orElseThrow(() -> new NotFoundException("Exchange not found: " + exchangeId));
+    BookExchangeEntity entity =
+        bookExchangeRepository
+            .findById(exchangeId)
+            .orElseThrow(() -> new NotFoundException("Exchange not found: " + exchangeId));
 
     // Validate user permissions based on status
     if (!validateStatusUpdatePermission(entity, userId, status)) {
-      log.warn("User {} does not have permission to update exchange {} to status {}", userId, exchangeId, status);
+      log.warn(
+          "User {} does not have permission to update exchange {} to status {}",
+          userId,
+          exchangeId,
+          status);
       return Optional.empty();
     }
 
@@ -108,16 +121,21 @@ public class BookExchangeServiceImpl implements BookExchangeService {
   }
 
   @Override
-  public Optional<BookExchange> createCounterOffer(String exchangeId, String userId, 
-                                                   List<String> ownerBookIds, List<String> requesterBookIds) {
+  public Optional<BookExchange> createCounterOffer(
+      String exchangeId, String userId, List<String> ownerBookIds, List<String> requesterBookIds) {
     log.info("Creating counter offer for exchange: {} by user: {}", exchangeId, userId);
 
-    BookExchangeEntity originalEntity = bookExchangeRepository.findById(exchangeId)
-        .orElseThrow(() -> new NotFoundException("Exchange not found: " + exchangeId));
+    BookExchangeEntity originalEntity =
+        bookExchangeRepository
+            .findById(exchangeId)
+            .orElseThrow(() -> new NotFoundException("Exchange not found: " + exchangeId));
 
     // Only owner can make counter offers
     if (!originalEntity.getOwnerId().equals(userId)) {
-      log.warn("Only owner can make counter offers. UserId: {}, OwnerId: {}", userId, originalEntity.getOwnerId());
+      log.warn(
+          "Only owner can make counter offers. UserId: {}, OwnerId: {}",
+          userId,
+          originalEntity.getOwnerId());
       return Optional.empty();
     }
 
@@ -128,8 +146,8 @@ public class BookExchangeServiceImpl implements BookExchangeService {
     }
 
     // Validate books with inverted roles
-    if (!validateUserBooks(originalEntity.getOwnerId(), requesterBookIds) ||
-        !validateUserBooks(originalEntity.getRequesterId(), ownerBookIds)) {
+    if (!validateUserBooks(originalEntity.getOwnerId(), requesterBookIds)
+        || !validateUserBooks(originalEntity.getRequesterId(), ownerBookIds)) {
       throw new BadRequestException("Invalid books provided for counter offer");
     }
 
@@ -139,16 +157,17 @@ public class BookExchangeServiceImpl implements BookExchangeService {
     bookExchangeRepository.save(originalEntity);
 
     // Create new exchange with inverted roles
-    BookExchangeEntity newEntity = BookExchangeEntity.builder()
-        .id("exchange-" + UUID.randomUUID().toString().substring(0, 8))
-        .ownerId(originalEntity.getRequesterId()) // Former requester becomes owner
-        .requesterId(originalEntity.getOwnerId()) // Former owner becomes requester
-        .ownerBookIds(requesterBookIds) // Books offered by new owner (former requester)
-        .requesterBookIds(ownerBookIds) // Books requested by new requester (former owner)
-        .status(ExchangeStatus.PENDING)
-        .dateCreated(LocalDateTime.now())
-        .dateUpdated(LocalDateTime.now())
-        .build();
+    BookExchangeEntity newEntity =
+        BookExchangeEntity.builder()
+            .id("exchange-" + UUID.randomUUID().toString().substring(0, 8))
+            .ownerId(originalEntity.getRequesterId()) // Former requester becomes owner
+            .requesterId(originalEntity.getOwnerId()) // Former owner becomes requester
+            .ownerBookIds(requesterBookIds) // Books offered by new owner (former requester)
+            .requesterBookIds(ownerBookIds) // Books requested by new requester (former owner)
+            .status(ExchangeStatus.PENDING)
+            .dateCreated(LocalDateTime.now())
+            .dateUpdated(LocalDateTime.now())
+            .build();
 
     BookExchangeEntity savedEntity = bookExchangeRepository.save(newEntity);
     return Optional.of(BookExchangeEntityMapper.INSTANCE.toModel(savedEntity));
@@ -157,8 +176,7 @@ public class BookExchangeServiceImpl implements BookExchangeService {
   @Override
   public List<BookExchange> getExchangesAsRequester(String userId) {
     log.info("Getting exchanges where user {} is requester", userId);
-    return bookExchangeRepository.findByRequesterIdOrderByDateCreatedDesc(userId)
-        .stream()
+    return bookExchangeRepository.findByRequesterIdOrderByDateCreatedDesc(userId).stream()
         .map(BookExchangeEntityMapper.INSTANCE::toModel)
         .collect(Collectors.toList());
   }
@@ -166,8 +184,7 @@ public class BookExchangeServiceImpl implements BookExchangeService {
   @Override
   public List<BookExchange> getExchangesAsOwner(String userId) {
     log.info("Getting exchanges where user {} is owner", userId);
-    return bookExchangeRepository.findByOwnerIdOrderByDateCreatedDesc(userId)
-        .stream()
+    return bookExchangeRepository.findByOwnerIdOrderByDateCreatedDesc(userId).stream()
         .map(BookExchangeEntityMapper.INSTANCE::toModel)
         .collect(Collectors.toList());
   }
@@ -185,7 +202,8 @@ public class BookExchangeServiceImpl implements BookExchangeService {
         .allMatch(bookId -> userBookRepository.existsByUserIdAndBookId(userId, bookId));
   }
 
-  private boolean validateStatusUpdatePermission(BookExchangeEntity entity, String userId, ExchangeStatus status) {
+  private boolean validateStatusUpdatePermission(
+      BookExchangeEntity entity, String userId, ExchangeStatus status) {
     switch (status) {
       case ACCEPTED:
         return entity.getOwnerId().equals(userId);

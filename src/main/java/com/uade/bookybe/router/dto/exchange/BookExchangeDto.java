@@ -2,12 +2,12 @@ package com.uade.bookybe.router.dto.exchange;
 
 import com.uade.bookybe.core.model.constant.ExchangeStatus;
 import com.uade.bookybe.router.dto.user.UserPreviewDto;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Getter
 @Setter

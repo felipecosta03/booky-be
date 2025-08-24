@@ -28,7 +28,6 @@ public class GlobalExceptionHandler {
       NotFoundException ex, WebRequest request) {
     log.error("Resource not found: {}.", ex.getMessage(), ex);
 
-
     ErrorResponse errorResponse =
         ErrorResponse.builder()
             .timestamp(LocalDateTime.now())
@@ -43,43 +42,40 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(ConflictException.class)
   public ResponseEntity<ErrorResponse> handleConflictException(
-          ConflictException ex, WebRequest request) {
+      ConflictException ex, WebRequest request) {
     log.error("Conflict: {}.", ex.getMessage(), ex);
 
-
     ErrorResponse errorResponse =
-            ErrorResponse.builder()
-                    .timestamp(LocalDateTime.now())
-                    .status(HttpStatus.CONFLICT.value())
-                    .error("Conflict")
-                    .message(ex.getMessage())
-                    .path(request.getDescription(false))
-                    .build();
+        ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.CONFLICT.value())
+            .error("Conflict")
+            .message(ex.getMessage())
+            .path(request.getDescription(false))
+            .build();
 
     return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
   }
 
   @ExceptionHandler(UnauthorizedException.class)
   public ResponseEntity<ErrorResponse> handleUnauthorizedException(
-          Exception ex, WebRequest request) {
+      Exception ex, WebRequest request) {
     log.warn("Unauthorized: {}", ex.getMessage());
 
     ErrorResponse errorResponse =
-            ErrorResponse.builder()
-                    .timestamp(LocalDateTime.now())
-                    .status(HttpStatus.UNAUTHORIZED.value())
-                    .error("Unauthorized")
-                    .message(ex.getMessage())
-                    .path(request.getDescription(false))
-                    .build();
+        ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.UNAUTHORIZED.value())
+            .error("Unauthorized")
+            .message(ex.getMessage())
+            .path(request.getDescription(false))
+            .build();
 
     return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
   }
 
-
   @ExceptionHandler(BadRequestException.class)
-  public ResponseEntity<ErrorResponse> handleBadRequestException(
-      Exception ex, WebRequest request) {
+  public ResponseEntity<ErrorResponse> handleBadRequestException(Exception ex, WebRequest request) {
     log.warn("Bad request: {}", ex.getMessage());
 
     ErrorResponse errorResponse =
@@ -145,18 +141,21 @@ public class GlobalExceptionHandler {
     log.warn("Invalid JSON format: {}", ex.getMessage());
 
     String message = "Invalid request format";
-    
+
     // Check if it's an enum validation error
-    if (ex.getCause() instanceof InvalidFormatException) {
-      InvalidFormatException invalidFormatException = (InvalidFormatException) ex.getCause();
-      if (invalidFormatException.getTargetType() != null && 
-          invalidFormatException.getTargetType().isEnum()) {
-        String fieldName = invalidFormatException.getPath().isEmpty() ? 
-            "field" : invalidFormatException.getPath().get(0).getFieldName();
+    if (ex.getCause() instanceof InvalidFormatException invalidFormatException) {
+        if (invalidFormatException.getTargetType() != null
+          && invalidFormatException.getTargetType().isEnum()) {
+        String fieldName =
+            invalidFormatException.getPath().isEmpty()
+                ? "field"
+                : invalidFormatException.getPath().get(0).getFieldName();
         String invalidValue = invalidFormatException.getValue().toString();
-        
-        message = String.format("Invalid value '%s' for field '%s'. Must be one of: %s", 
-            invalidValue, fieldName, getEnumValues(invalidFormatException.getTargetType()));
+
+        message =
+            String.format(
+                "Invalid value '%s' for field '%s'. Must be one of: %s",
+                invalidValue, fieldName, getEnumValues(invalidFormatException.getTargetType()));
       }
     }
 

@@ -16,7 +16,10 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "image.storage.strategy", havingValue = "cloudinary", matchIfMissing = true)
+@ConditionalOnProperty(
+    name = "image.storage.strategy",
+    havingValue = "cloudinary",
+    matchIfMissing = true)
 public class CloudinaryImageStorageAdapter implements ImageStoragePort {
 
   private final Cloudinary cloudinary;

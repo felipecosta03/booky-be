@@ -21,4 +21,4 @@ public class PostDto {
   private String communityId;
   private UserPreviewDto user;
   private CommunityDto community;
-} 
+}

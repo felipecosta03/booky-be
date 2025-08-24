@@ -11,4 +11,4 @@ import lombok.NoArgsConstructor;
 public class CommunityMemberId implements Serializable {
   private String communityId;
   private String userId;
-} 
+}

@@ -13,4 +13,4 @@ public interface PostDtoMapper {
   PostDto toDto(Post model);
 
   Post toModel(PostDto dto);
-} 
+}

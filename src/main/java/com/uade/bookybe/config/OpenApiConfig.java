@@ -32,7 +32,7 @@ public class OpenApiConfig {
   public OpenAPI bookiOpenAPI() {
     // Determinar qué servidor mostrar basado en el perfil activo
     boolean isProduction = List.of(environment.getActiveProfiles()).contains("prod");
-    
+
     Server currentServer = new Server();
     if (isProduction) {
       currentServer.setUrl(prodUrl);

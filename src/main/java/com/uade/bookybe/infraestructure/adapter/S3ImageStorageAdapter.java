@@ -59,8 +59,10 @@ public class S3ImageStorageAdapter implements ImageStoragePort {
               .contentLength(file.getSize())
               .metadata(
                   java.util.Map.of(
-                      "original-filename", file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown",
-                      "upload-timestamp", String.valueOf(System.currentTimeMillis())))
+                      "original-filename",
+                      file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown",
+                      "upload-timestamp",
+                      String.valueOf(System.currentTimeMillis())))
               .build();
 
       // Subir el archivo
@@ -127,7 +129,7 @@ public class S3ImageStorageAdapter implements ImageStoragePort {
       // Para S3, generamos una URL presigned con tiempo de expiración
       // Nota: S3 no tiene transformación de imágenes nativa como Cloudinary
       // Para optimización real necesitarías usar CloudFront + Lambda@Edge o similares
-      
+
       String objectKey = extractObjectKeyFromUrl(imageUrl);
       if (objectKey == null) {
         return imageUrl;
@@ -151,12 +153,10 @@ public class S3ImageStorageAdapter implements ImageStoragePort {
     }
   }
 
-  /**
-   * Genera un nombre único para el archivo
-   */
+  /** Genera un nombre único para el archivo */
   private String generateUniqueFileName(String originalFileName) {
     String uuid = UUID.randomUUID().toString();
-    
+
     if (originalFileName == null || originalFileName.isBlank()) {
       return uuid + ".jpg"; // Extensión por defecto
     }
@@ -168,17 +168,15 @@ public class S3ImageStorageAdapter implements ImageStoragePort {
     return uuid + extension;
   }
 
-  /**
-   * Construye la key del objeto S3
-   */
+  /** Construye la key del objeto S3 */
   private String buildObjectKey(String folder, String fileName) {
     String normalizedFolder = folder != null && !folder.isBlank() ? folder.trim() : "images";
-    
+
     // Asegurar que no empiece con /
     if (normalizedFolder.startsWith("/")) {
       normalizedFolder = normalizedFolder.substring(1);
     }
-    
+
     // Asegurar que termine con /
     if (!normalizedFolder.endsWith("/")) {
       normalizedFolder += "/";
@@ -187,12 +185,10 @@ public class S3ImageStorageAdapter implements ImageStoragePort {
     return normalizedFolder + fileName;
   }
 
-  /**
-   * Determina el content type del archivo
-   */
+  /** Determina el content type del archivo */
   private String determineContentType(MultipartFile file) {
     String contentType = file.getContentType();
-    
+
     if (contentType != null && contentType.startsWith("image/")) {
       return contentType;
     }
@@ -215,9 +211,7 @@ public class S3ImageStorageAdapter implements ImageStoragePort {
     return "image/jpeg"; // Por defecto
   }
 
-  /**
-   * Genera la URL pública del objeto
-   */
+  /** Genera la URL pública del objeto */
   private String generatePublicUrl(String objectKey) {
     if (baseUrl != null && !baseUrl.isBlank()) {
       // Usar URL base personalizada (ej: CloudFront)
@@ -225,17 +219,12 @@ public class S3ImageStorageAdapter implements ImageStoragePort {
     }
 
     // Usar URL directa de S3
-    GetUrlRequest getUrlRequest = GetUrlRequest.builder()
-        .bucket(bucketName)
-        .key(objectKey)
-        .build();
+    GetUrlRequest getUrlRequest = GetUrlRequest.builder().bucket(bucketName).key(objectKey).build();
 
     return s3Client.utilities().getUrl(getUrlRequest).toString();
   }
 
-  /**
-   * Extrae la key del objeto desde la URL
-   */
+  /** Extrae la key del objeto desde la URL */
   private String extractObjectKeyFromUrl(String imageUrl) {
     try {
       if (baseUrl != null && imageUrl.startsWith(baseUrl)) {
@@ -250,12 +239,12 @@ public class S3ImageStorageAdapter implements ImageStoragePort {
         String[] parts = imageUrl.split(".amazonaws.com/", 2);
         if (parts.length == 2) {
           String path = parts[1];
-          
+
           // Si la URL incluye el bucket en el path, removerlo
           if (path.startsWith(bucketName + "/")) {
             return path.substring(bucketName.length() + 1);
           }
-          
+
           return path;
         }
       }
@@ -267,4 +256,4 @@ public class S3ImageStorageAdapter implements ImageStoragePort {
       return null;
     }
   }
-} 
+}

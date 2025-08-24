@@ -11,7 +11,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreatePostDto {
-  @NotEmpty
-  private String body;
+  @NotEmpty private String body;
   private String communityId; // Opcional - si no se proporciona, es un post general
-} 
+}

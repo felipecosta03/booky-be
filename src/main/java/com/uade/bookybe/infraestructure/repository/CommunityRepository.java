@@ -11,13 +11,14 @@ import org.springframework.stereotype.Repository;
 public interface CommunityRepository extends JpaRepository<CommunityEntity, String> {
 
   List<CommunityEntity> findByAdminIdOrderByDateCreatedDesc(String adminId);
-  
-  @Query("SELECT c FROM CommunityEntity c WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) " +
-         "OR LOWER(c.description) LIKE LOWER(CONCAT('%', :query, '%')) ORDER BY c.dateCreated DESC")
+
+  @Query(
+      "SELECT c FROM CommunityEntity c WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) "
+          + "OR LOWER(c.description) LIKE LOWER(CONCAT('%', :query, '%')) ORDER BY c.dateCreated DESC")
   List<CommunityEntity> searchCommunities(@Param("query") String query);
-  
+
   @Query("SELECT c FROM CommunityEntity c JOIN FETCH c.admin ORDER BY c.dateCreated DESC")
   List<CommunityEntity> findAllWithAdminOrderByDateCreatedDesc();
-  
+
   boolean existsByName(String name);
-} 
+}

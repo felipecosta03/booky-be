@@ -13,11 +13,12 @@ public interface BookRepository extends JpaRepository<BookEntity, String> {
 
   Optional<BookEntity> findByIsbn(String isbn);
 
-  @Query("""
-      SELECT DISTINCT b FROM BookEntity b LEFT JOIN b.categories c 
-      WHERE LOWER(b.title) LIKE LOWER(CONCAT('%', :query, '%')) 
-         OR LOWER(b.author) LIKE LOWER(CONCAT('%', :query, '%')) 
+  @Query(
+      """
+      SELECT DISTINCT b FROM BookEntity b LEFT JOIN b.categories c
+      WHERE LOWER(b.title) LIKE LOWER(CONCAT('%', :query, '%'))
+         OR LOWER(b.author) LIKE LOWER(CONCAT('%', :query, '%'))
          OR LOWER(c) LIKE LOWER(CONCAT('%', :query, '%'))
       """)
   List<BookEntity> searchBooks(@Param("query") String query);
-} 
+}

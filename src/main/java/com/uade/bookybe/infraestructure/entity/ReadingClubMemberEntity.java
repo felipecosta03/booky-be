@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "reading_club_members")
 @IdClass(ReadingClubMemberId.class)
 public class ReadingClubMemberEntity {
-  
+
   @Id
   @Column(name = "reading_club_id")
   private String readingClubId;
@@ -30,4 +30,4 @@ public class ReadingClubMemberEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", insertable = false, updatable = false)
   private UserEntity user;
-} 
+}

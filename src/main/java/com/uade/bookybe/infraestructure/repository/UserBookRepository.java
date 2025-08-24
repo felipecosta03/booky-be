@@ -24,14 +24,17 @@ public interface UserBookRepository extends JpaRepository<UserBookEntity, String
   @Query("SELECT ub FROM UserBookEntity ub JOIN FETCH ub.book WHERE ub.userId = :userId")
   List<UserBookEntity> findByUserIdWithBook(@Param("userId") String userId);
 
-  @Query("SELECT ub FROM UserBookEntity ub JOIN FETCH ub.book WHERE ub.userId = :userId AND ub.favorite = true")
+  @Query(
+      "SELECT ub FROM UserBookEntity ub JOIN FETCH ub.book WHERE ub.userId = :userId AND ub.favorite = true")
   List<UserBookEntity> findByUserIdAndIsFavoriteTrueWithBook(@Param("userId") String userId);
 
   @Query("SELECT ub FROM UserBookEntity ub JOIN FETCH ub.book WHERE ub.wantsToExchange = true")
   List<UserBookEntity> findByWantsToExchangeTrueWithBook();
 
-  @Query("SELECT ub FROM UserBookEntity ub JOIN FETCH ub.book WHERE ub.userId = :userId AND ub.bookId = :bookId")
-  Optional<UserBookEntity> findByUserIdAndBookIdWithBook(@Param("userId") String userId, @Param("bookId") String bookId);
+  @Query(
+      "SELECT ub FROM UserBookEntity ub JOIN FETCH ub.book WHERE ub.userId = :userId AND ub.bookId = :bookId")
+  Optional<UserBookEntity> findByUserIdAndBookIdWithBook(
+      @Param("userId") String userId, @Param("bookId") String bookId);
 
   boolean existsByUserIdAndBookId(String userId, String bookId);
-} 
+}

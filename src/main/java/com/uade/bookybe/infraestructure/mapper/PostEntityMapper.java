@@ -13,4 +13,4 @@ public interface PostEntityMapper {
   Post toModel(PostEntity entity);
 
   PostEntity toEntity(Post model);
-} 
+}

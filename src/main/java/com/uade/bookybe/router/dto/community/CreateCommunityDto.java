@@ -12,4 +12,4 @@ import lombok.Setter;
 public class CreateCommunityDto {
   private String name;
   private String description;
-} 
+}

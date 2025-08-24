@@ -13,12 +13,12 @@ import lombok.Setter;
 public class CreateReadingClubDto {
   @NotBlank(message = "Name is required")
   private String name;
-  
+
   private String description;
-  
+
   @NotBlank(message = "Community ID is required")
   private String communityId; // OBLIGATORIO - el club debe pertenecer a una comunidad
-  
+
   @NotBlank(message = "Book ID is required")
   private String bookId; // OBLIGATORIO - el libro sobre el que será el club
-} 
+}

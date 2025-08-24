@@ -19,4 +19,4 @@ public class Post {
   private String communityId;
   private User user;
   private Community community;
-} 
+}

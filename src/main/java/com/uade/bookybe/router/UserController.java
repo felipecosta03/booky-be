@@ -2,8 +2,8 @@ package com.uade.bookybe.router;
 
 import com.uade.bookybe.core.model.User;
 import com.uade.bookybe.core.model.UserSignUp;
-import com.uade.bookybe.core.usecase.UserService;
 import com.uade.bookybe.core.service.JwtService;
+import com.uade.bookybe.core.usecase.UserService;
 import com.uade.bookybe.router.dto.user.*;
 import com.uade.bookybe.router.mapper.UserDtoMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -133,19 +133,21 @@ public class UserController {
 
     return userService
         .signIn(userSignInDto.getEmail(), userSignInDto.getPassword())
-        .map(user -> {
-          // Generate JWT token
-          String token = jwtService.generateToken(user.getId(), user.getEmail());
-          
-          // Create response with token and user data
-          UserSignInResponseDto response = UserSignInResponseDto.builder()
-              .token(token)
-              .user(UserDtoMapper.INSTANCE.toDto(user))
-              .build();
-          
-          log.info("User logged in successfully: {}", user.getUsername());
-          return ResponseEntity.ok(response);
-        })
+        .map(
+            user -> {
+              // Generate JWT token
+              String token = jwtService.generateToken(user.getId(), user.getEmail());
+
+              // Create response with token and user data
+              UserSignInResponseDto response =
+                  UserSignInResponseDto.builder()
+                      .token(token)
+                      .user(UserDtoMapper.INSTANCE.toDto(user))
+                      .build();
+
+              log.info("User logged in successfully: {}", user.getUsername());
+              return ResponseEntity.ok(response);
+            })
         .orElseGet(
             () -> {
               log.warn("Failed login attempt for email: {}", userSignInDto.getEmail());

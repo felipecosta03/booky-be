@@ -13,10 +13,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AddBookToLibraryDto {
-  
+
   @NotBlank(message = "ISBN is required")
   private String isbn;
-  
+
   @NotNull(message = "Status is required")
   private BookStatus status;
-} 
+}

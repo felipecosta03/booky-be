@@ -51,25 +51,31 @@ public class PostController {
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<PostDto> createPost(
       @Parameter(description = "Datos de la publicación", required = true)
-          @RequestPart("post") @Valid CreatePostDto createPostDto,
+          @RequestPart("post")
+          @Valid
+          CreatePostDto createPostDto,
       @Parameter(description = "Imagen opcional de la publicación")
-          @RequestPart(value = "image", required = false) MultipartFile image,
+          @RequestPart(value = "image", required = false)
+          MultipartFile image,
       Authentication authentication) {
 
     log.info("Creating post for user: {}", authentication.getName());
 
     String userId = authentication.getName();
-    
-    return postService.createPost(userId, createPostDto.getBody(), createPostDto.getCommunityId(), image)
+
+    return postService
+        .createPost(userId, createPostDto.getBody(), createPostDto.getCommunityId(), image)
         .map(PostDtoMapper.INSTANCE::toDto)
-        .map(postDto -> {
-          log.info("Post created successfully with ID: {}", postDto.getId());
-          return ResponseEntity.status(HttpStatus.CREATED).body(postDto);
-        })
-        .orElseGet(() -> {
-          log.warn("Failed to create post for user: {}", userId);
-          return ResponseEntity.badRequest().build();
-        });
+        .map(
+            postDto -> {
+              log.info("Post created successfully with ID: {}", postDto.getId());
+              return ResponseEntity.status(HttpStatus.CREATED).body(postDto);
+            })
+        .orElseGet(
+            () -> {
+              log.warn("Failed to create post for user: {}", userId);
+              return ResponseEntity.badRequest().build();
+            });
   }
 
   @Operation(
@@ -84,21 +90,27 @@ public class PostController {
                 @Content(
                     mediaType = "application/json",
                     schema = @Schema(implementation = PostDto.class))),
-        @ApiResponse(responseCode = "404", description = "Publicación no encontrada", content = @Content)
+        @ApiResponse(
+            responseCode = "404",
+            description = "Publicación no encontrada",
+            content = @Content)
       })
   @GetMapping("/{postId}")
   public ResponseEntity<PostDto> getPostById(
-      @Parameter(description = "ID de la publicación", required = true) @PathVariable String postId) {
+      @Parameter(description = "ID de la publicación", required = true) @PathVariable
+          String postId) {
 
     log.info("Getting post by ID: {}", postId);
 
-    return postService.getPostById(postId)
+    return postService
+        .getPostById(postId)
         .map(PostDtoMapper.INSTANCE::toDto)
         .map(ResponseEntity::ok)
-        .orElseGet(() -> {
-          log.warn("Post not found with ID: {}", postId);
-          return ResponseEntity.notFound().build();
-        });
+        .orElseGet(
+            () -> {
+              log.warn("Post not found with ID: {}", postId);
+              return ResponseEntity.notFound().build();
+            });
   }
 
   @Operation(
@@ -119,10 +131,9 @@ public class PostController {
 
     String userId = authentication.getName();
     List<Post> posts = postService.getUserFeed(userId);
-    
-    List<PostDto> postDtos = posts.stream()
-        .map(PostDtoMapper.INSTANCE::toDto)
-        .collect(Collectors.toList());
+
+    List<PostDto> postDtos =
+        posts.stream().map(PostDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
 
     log.info("Retrieved {} posts for user feed", postDtos.size());
     return ResponseEntity.ok(postDtos);
@@ -145,9 +156,8 @@ public class PostController {
     log.info("Getting posts for user: {}", userId);
 
     List<Post> posts = postService.getPostsByUserId(userId);
-    List<PostDto> postDtos = posts.stream()
-        .map(PostDtoMapper.INSTANCE::toDto)
-        .collect(Collectors.toList());
+    List<PostDto> postDtos =
+        posts.stream().map(PostDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
 
     log.info("Retrieved {} posts for user: {}", postDtos.size(), userId);
     return ResponseEntity.ok(postDtos);
@@ -165,14 +175,14 @@ public class PostController {
       })
   @GetMapping("/community/{communityId}")
   public ResponseEntity<List<PostDto>> getPostsByCommunityId(
-      @Parameter(description = "ID de la comunidad", required = true) @PathVariable String communityId) {
+      @Parameter(description = "ID de la comunidad", required = true) @PathVariable
+          String communityId) {
 
     log.info("Getting posts for community: {}", communityId);
 
     List<Post> posts = postService.getPostsByCommunityId(communityId);
-    List<PostDto> postDtos = posts.stream()
-        .map(PostDtoMapper.INSTANCE::toDto)
-        .collect(Collectors.toList());
+    List<PostDto> postDtos =
+        posts.stream().map(PostDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
 
     log.info("Retrieved {} posts for community: {}", postDtos.size(), communityId);
     return ResponseEntity.ok(postDtos);
@@ -194,9 +204,8 @@ public class PostController {
     log.info("Getting general posts");
 
     List<Post> posts = postService.getGeneralPosts();
-    List<PostDto> postDtos = posts.stream()
-        .map(PostDtoMapper.INSTANCE::toDto)
-        .collect(Collectors.toList());
+    List<PostDto> postDtos =
+        posts.stream().map(PostDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
 
     log.info("Retrieved {} general posts", postDtos.size());
     return ResponseEntity.ok(postDtos);
@@ -216,39 +225,48 @@ public class PostController {
                     schema = @Schema(implementation = PostDto.class))),
         @ApiResponse(responseCode = "400", description = "Datos inválidos", content = @Content),
         @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Publicación no encontrada", content = @Content)
+        @ApiResponse(
+            responseCode = "404",
+            description = "Publicación no encontrada",
+            content = @Content)
       })
   @PutMapping("/{postId}")
   public ResponseEntity<PostDto> updatePost(
       @Parameter(description = "ID de la publicación", required = true) @PathVariable String postId,
       @Parameter(description = "Nuevo contenido de la publicación", required = true)
-          @RequestBody @Valid CreatePostDto updatePostDto,
+          @RequestBody
+          @Valid
+          CreatePostDto updatePostDto,
       Authentication authentication) {
 
     log.info("Updating post: {} by user: {}", postId, authentication.getName());
 
     String userId = authentication.getName();
-    
-    return postService.updatePost(postId, userId, updatePostDto.getBody())
+
+    return postService
+        .updatePost(postId, userId, updatePostDto.getBody())
         .map(PostDtoMapper.INSTANCE::toDto)
-        .map(postDto -> {
-          log.info("Post updated successfully: {}", postId);
-          return ResponseEntity.ok(postDto);
-        })
-        .orElseGet(() -> {
-          log.warn("Failed to update post: {} by user: {}", postId, userId);
-          return ResponseEntity.notFound().build();
-        });
+        .map(
+            postDto -> {
+              log.info("Post updated successfully: {}", postId);
+              return ResponseEntity.ok(postDto);
+            })
+        .orElseGet(
+            () -> {
+              log.warn("Failed to update post: {} by user: {}", postId, userId);
+              return ResponseEntity.notFound().build();
+            });
   }
 
-  @Operation(
-      summary = "Eliminar publicación",
-      description = "Elimina una publicación existente")
+  @Operation(summary = "Eliminar publicación", description = "Elimina una publicación existente")
   @ApiResponses(
       value = {
         @ApiResponse(responseCode = "204", description = "Publicación eliminada exitosamente"),
         @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Publicación no encontrada", content = @Content)
+        @ApiResponse(
+            responseCode = "404",
+            description = "Publicación no encontrada",
+            content = @Content)
       })
   @DeleteMapping("/{postId}")
   public ResponseEntity<Void> deletePost(
@@ -258,7 +276,7 @@ public class PostController {
     log.info("Deleting post: {} by user: {}", postId, authentication.getName());
 
     String userId = authentication.getName();
-    
+
     if (postService.deletePost(postId, userId)) {
       log.info("Post deleted successfully: {}", postId);
       return ResponseEntity.noContent().build();
@@ -267,4 +285,4 @@ public class PostController {
       return ResponseEntity.notFound().build();
     }
   }
-} 
+}

@@ -13,4 +13,4 @@ public interface CommentDtoMapper {
   CommentDto toDto(Comment model);
 
   Comment toModel(CommentDto dto);
-} 
+}

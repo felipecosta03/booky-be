@@ -35,4 +35,4 @@ public class CommentEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "post_id", insertable = false, updatable = false)
   private PostEntity post;
-} 
+}

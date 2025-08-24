@@ -11,16 +11,15 @@ import org.springframework.stereotype.Repository;
 public interface ReadingClubRepository extends JpaRepository<ReadingClubEntity, String> {
 
   List<ReadingClubEntity> findByCommunityIdOrderByDateCreatedDesc(String communityId);
-  
-  List<ReadingClubEntity> findByModeratorIdOrderByDateCreatedDesc(String moderatorId);
-  
-  List<ReadingClubEntity> findByBookIdOrderByDateCreatedDesc(String bookId);
-  
 
-  
-  @Query("SELECT rc FROM ReadingClubEntity rc WHERE LOWER(rc.name) LIKE LOWER(CONCAT('%', :query, '%')) " +
-         "OR LOWER(rc.description) LIKE LOWER(CONCAT('%', :query, '%')) ORDER BY rc.dateCreated DESC")
+  List<ReadingClubEntity> findByModeratorIdOrderByDateCreatedDesc(String moderatorId);
+
+  List<ReadingClubEntity> findByBookIdOrderByDateCreatedDesc(String bookId);
+
+  @Query(
+      "SELECT rc FROM ReadingClubEntity rc WHERE LOWER(rc.name) LIKE LOWER(CONCAT('%', :query, '%')) "
+          + "OR LOWER(rc.description) LIKE LOWER(CONCAT('%', :query, '%')) ORDER BY rc.dateCreated DESC")
   List<ReadingClubEntity> searchReadingClubs(@Param("query") String query);
-  
+
   boolean existsByName(String name);
-} 
+}

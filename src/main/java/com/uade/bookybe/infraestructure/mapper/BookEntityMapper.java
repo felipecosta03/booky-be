@@ -13,4 +13,4 @@ public interface BookEntityMapper {
   Book toModel(BookEntity entity);
 
   BookEntity toEntity(Book model);
-} 
+}

@@ -18,4 +18,4 @@ public class CommentDto {
   private String userId;
   private String postId;
   private UserPreviewDto user;
-} 
+}

@@ -19,21 +19,21 @@ public class ReadingClubDto {
   private LocalDateTime dateCreated;
   private String description;
   private LocalDateTime lastUpdated;
-  
+
   @NotBlank(message = "Name is required")
   private String name;
-  
+
   @NotBlank(message = "Book ID is required")
   private String bookId; // OBLIGATORIO
-  
+
   @NotBlank(message = "Community ID is required")
   private String communityId; // OBLIGATORIO
-  
+
   @NotBlank(message = "Moderator ID is required")
   private String moderatorId;
-  
+
   private BookDto book; // OBLIGATORIO (enriquecido)
   private CommunityDto community; // OBLIGATORIO (enriquecido)
   private UserPreviewDto moderator; // OBLIGATORIO (enriquecido)
   private long memberCount;
-} 
+}

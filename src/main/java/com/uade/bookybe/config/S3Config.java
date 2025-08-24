@@ -32,14 +32,15 @@ public class S3Config {
   @ConditionalOnProperty(name = "image.storage.strategy", havingValue = "s3")
   public S3Client s3Client() {
     AwsCredentialsProvider credentialsProvider;
-    
+
     if (accessKey != null && secretKey != null) {
       // Usar credenciales explícitas
-      credentialsProvider = StaticCredentialsProvider.create(
-          AwsBasicCredentials.create(accessKey, secretKey));
+      credentialsProvider =
+          StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey));
     } else {
       // Usar el default credentials provider chain (IAM roles, etc.)
-      credentialsProvider = software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider.create();
+      credentialsProvider =
+          software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider.create();
     }
 
     return S3Client.builder()
@@ -53,12 +54,13 @@ public class S3Config {
   @ConditionalOnProperty(name = "image.storage.strategy", havingValue = "s3")
   public S3Presigner s3Presigner() {
     AwsCredentialsProvider credentialsProvider;
-    
+
     if (accessKey != null && secretKey != null) {
-      credentialsProvider = StaticCredentialsProvider.create(
-          AwsBasicCredentials.create(accessKey, secretKey));
+      credentialsProvider =
+          StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey));
     } else {
-      credentialsProvider = software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider.create();
+      credentialsProvider =
+          software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider.create();
     }
 
     return S3Presigner.builder()
@@ -72,4 +74,4 @@ public class S3Config {
   public String s3BucketName() {
     return bucketName;
   }
-} 
+}

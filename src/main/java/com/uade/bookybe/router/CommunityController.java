@@ -31,9 +31,7 @@ public class CommunityController {
 
   private final CommunityService communityService;
 
-  @Operation(
-      summary = "Crear nueva comunidad",
-      description = "Crea una nueva comunidad literaria")
+  @Operation(summary = "Crear nueva comunidad", description = "Crea una nueva comunidad literaria")
   @ApiResponses(
       value = {
         @ApiResponse(
@@ -48,24 +46,30 @@ public class CommunityController {
       })
   @PostMapping
   public ResponseEntity<CommunityDto> createCommunity(
-      @Parameter(description = "Datos de la comunidad", required = true)
-          @RequestBody @Valid CreateCommunityDto createCommunityDto,
+      @Parameter(description = "Datos de la comunidad", required = true) @RequestBody @Valid
+          CreateCommunityDto createCommunityDto,
       Authentication authentication) {
 
-    log.info("Creating community: {} by user: {}", createCommunityDto.getName(), authentication.getName());
+    log.info(
+        "Creating community: {} by user: {}",
+        createCommunityDto.getName(),
+        authentication.getName());
 
     String adminId = authentication.getName();
-    
-    return communityService.createCommunity(adminId, createCommunityDto.getName(), createCommunityDto.getDescription())
+
+    return communityService
+        .createCommunity(adminId, createCommunityDto.getName(), createCommunityDto.getDescription())
         .map(CommunityDtoMapper.INSTANCE::toDto)
-        .map(communityDto -> {
-          log.info("Community created successfully with ID: {}", communityDto.getId());
-          return ResponseEntity.status(HttpStatus.CREATED).body(communityDto);
-        })
-        .orElseGet(() -> {
-          log.warn("Failed to create community: {}", createCommunityDto.getName());
-          return ResponseEntity.badRequest().build();
-        });
+        .map(
+            communityDto -> {
+              log.info("Community created successfully with ID: {}", communityDto.getId());
+              return ResponseEntity.status(HttpStatus.CREATED).body(communityDto);
+            })
+        .orElseGet(
+            () -> {
+              log.warn("Failed to create community: {}", createCommunityDto.getName());
+              return ResponseEntity.badRequest().build();
+            });
   }
 
   @Operation(
@@ -83,9 +87,8 @@ public class CommunityController {
     log.info("Getting all communities");
 
     List<Community> communities = communityService.getAllCommunities();
-    List<CommunityDto> communityDtos = communities.stream()
-        .map(CommunityDtoMapper.INSTANCE::toDto)
-        .collect(Collectors.toList());
+    List<CommunityDto> communityDtos =
+        communities.stream().map(CommunityDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
 
     log.info("Retrieved {} communities", communityDtos.size());
     return ResponseEntity.ok(communityDtos);
@@ -100,7 +103,10 @@ public class CommunityController {
             responseCode = "200",
             description = "Comunidad encontrada",
             content = @Content(mediaType = "application/json")),
-        @ApiResponse(responseCode = "404", description = "Comunidad no encontrada", content = @Content)
+        @ApiResponse(
+            responseCode = "404",
+            description = "Comunidad no encontrada",
+            content = @Content)
       })
   @GetMapping("/{id}")
   public ResponseEntity<CommunityDto> getCommunityById(
@@ -108,13 +114,15 @@ public class CommunityController {
 
     log.info("Getting community by ID: {}", id);
 
-    return communityService.getCommunityById(id)
+    return communityService
+        .getCommunityById(id)
         .map(CommunityDtoMapper.INSTANCE::toDto)
         .map(ResponseEntity::ok)
-        .orElseGet(() -> {
-          log.warn("Community not found with ID: {}", id);
-          return ResponseEntity.notFound().build();
-        });
+        .orElseGet(
+            () -> {
+              log.warn("Community not found with ID: {}", id);
+              return ResponseEntity.notFound().build();
+            });
   }
 
   @Operation(
@@ -134,9 +142,8 @@ public class CommunityController {
     log.info("Getting communities for user: {}", userId);
 
     List<Community> communities = communityService.getUserCommunities(userId);
-    List<CommunityDto> communityDtos = communities.stream()
-        .map(CommunityDtoMapper.INSTANCE::toDto)
-        .collect(Collectors.toList());
+    List<CommunityDto> communityDtos =
+        communities.stream().map(CommunityDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
 
     log.info("Retrieved {} communities for user: {}", communityDtos.size(), userId);
     return ResponseEntity.ok(communityDtos);
@@ -148,19 +155,26 @@ public class CommunityController {
   @ApiResponses(
       value = {
         @ApiResponse(responseCode = "200", description = "Unido a la comunidad exitosamente"),
-        @ApiResponse(responseCode = "400", description = "Error al unirse a la comunidad", content = @Content),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Error al unirse a la comunidad",
+            content = @Content),
         @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Comunidad no encontrada", content = @Content)
+        @ApiResponse(
+            responseCode = "404",
+            description = "Comunidad no encontrada",
+            content = @Content)
       })
   @PostMapping("/{communityId}/join")
   public ResponseEntity<Void> joinCommunity(
-      @Parameter(description = "ID de la comunidad", required = true) @PathVariable String communityId,
+      @Parameter(description = "ID de la comunidad", required = true) @PathVariable
+          String communityId,
       Authentication authentication) {
 
     log.info("User {} joining community: {}", authentication.getName(), communityId);
 
     String userId = authentication.getName();
-    
+
     if (communityService.joinCommunity(communityId, userId)) {
       log.info("User {} successfully joined community: {}", userId, communityId);
       return ResponseEntity.ok().build();
@@ -176,19 +190,26 @@ public class CommunityController {
   @ApiResponses(
       value = {
         @ApiResponse(responseCode = "200", description = "Salió de la comunidad exitosamente"),
-        @ApiResponse(responseCode = "400", description = "Error al salir de la comunidad", content = @Content),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Error al salir de la comunidad",
+            content = @Content),
         @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Comunidad no encontrada", content = @Content)
+        @ApiResponse(
+            responseCode = "404",
+            description = "Comunidad no encontrada",
+            content = @Content)
       })
   @DeleteMapping("/{communityId}/leave")
   public ResponseEntity<Void> leaveCommunity(
-      @Parameter(description = "ID de la comunidad", required = true) @PathVariable String communityId,
+      @Parameter(description = "ID de la comunidad", required = true) @PathVariable
+          String communityId,
       Authentication authentication) {
 
     log.info("User {} leaving community: {}", authentication.getName(), communityId);
 
     String userId = authentication.getName();
-    
+
     if (communityService.leaveCommunity(communityId, userId)) {
       log.info("User {} successfully left community: {}", userId, communityId);
       return ResponseEntity.ok().build();
@@ -215,9 +236,8 @@ public class CommunityController {
     log.info("Searching communities with query: {}", q);
 
     List<Community> communities = communityService.searchCommunities(q);
-    List<CommunityDto> communityDtos = communities.stream()
-        .map(CommunityDtoMapper.INSTANCE::toDto)
-        .collect(Collectors.toList());
+    List<CommunityDto> communityDtos =
+        communities.stream().map(CommunityDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
 
     log.info("Found {} communities for query: {}", communityDtos.size(), q);
     return ResponseEntity.ok(communityDtos);
@@ -225,29 +245,36 @@ public class CommunityController {
 
   @Operation(
       summary = "Eliminar comunidad",
-      description = "Elimina una comunidad y todas sus relaciones (posts, comentarios, miembros). Solo el administrador puede eliminar la comunidad.")
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "204", description = "Comunidad eliminada exitosamente"),
-      @ApiResponse(responseCode = "403", description = "No tienes permisos para eliminar esta comunidad"),
-      @ApiResponse(responseCode = "404", description = "Comunidad no encontrada"),
-      @ApiResponse(responseCode = "500", description = "Error interno del servidor")
-  })
+      description =
+          "Elimina una comunidad y todas sus relaciones (posts, comentarios, miembros). Solo el administrador puede eliminar la comunidad.")
+  @ApiResponses(
+      value = {
+        @ApiResponse(responseCode = "204", description = "Comunidad eliminada exitosamente"),
+        @ApiResponse(
+            responseCode = "403",
+            description = "No tienes permisos para eliminar esta comunidad"),
+        @ApiResponse(responseCode = "404", description = "Comunidad no encontrada"),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+      })
   @DeleteMapping("/{communityId}")
   public ResponseEntity<Void> deleteCommunity(
       @Parameter(description = "ID de la comunidad a eliminar") @PathVariable String communityId,
       Authentication authentication) {
-    
+
     String userId = authentication.getName();
     log.info("User {} attempting to delete community: {}", userId, communityId);
-    
+
     boolean deleted = communityService.deleteCommunity(communityId, userId);
-    
+
     if (deleted) {
       log.info("Community {} successfully deleted by user {}", communityId, userId);
       return ResponseEntity.noContent().build();
     } else {
-      log.warn("Failed to delete community {} by user {} - either not found or no permissions", communityId, userId);
+      log.warn(
+          "Failed to delete community {} by user {} - either not found or no permissions",
+          communityId,
+          userId);
       return ResponseEntity.notFound().build();
     }
   }
-} 
+}

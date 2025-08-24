@@ -19,4 +19,4 @@ public class CommunityDto {
   private String adminId;
   private UserPreviewDto admin;
   private long memberCount;
-} 
+}

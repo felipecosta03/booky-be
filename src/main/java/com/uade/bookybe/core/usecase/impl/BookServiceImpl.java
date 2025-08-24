@@ -35,7 +35,9 @@ public class BookServiceImpl implements BookService {
     log.info("Adding book to user library. UserId: {}, ISBN: {}, Status: {}", userId, isbn, status);
 
     // Get or create the book using existing method
-    Book book = getBookByIsbn(isbn).orElseThrow(() -> new NotFoundException("Book not found with ISBN: " + isbn));
+    Book book =
+        getBookByIsbn(isbn)
+            .orElseThrow(() -> new NotFoundException("Book not found with ISBN: " + isbn));
 
     String bookId = book.getId();
 
@@ -49,19 +51,21 @@ public class BookServiceImpl implements BookService {
     String userBookId = "user-book-" + java.util.UUID.randomUUID().toString().substring(0, 8);
 
     // Add book to user's library
-    UserBookEntity userBookEntity = UserBookEntity.builder()
-        .id(userBookId)
-        .userId(userId)
-        .bookId(bookId)
-        .status(status)
-        .favorite(false)
-        .wantsToExchange(false)
-        .build();
+    UserBookEntity userBookEntity =
+        UserBookEntity.builder()
+            .id(userBookId)
+            .userId(userId)
+            .bookId(bookId)
+            .status(status)
+            .favorite(false)
+            .wantsToExchange(false)
+            .build();
 
     userBookEntity = userBookRepository.save(userBookEntity);
 
     // Reload with book information
-    Optional<UserBookEntity> savedWithBook = userBookRepository.findByUserIdAndBookIdWithBook(userId, bookId);
+    Optional<UserBookEntity> savedWithBook =
+        userBookRepository.findByUserIdAndBookIdWithBook(userId, bookId);
     if (savedWithBook.isEmpty()) {
       log.error("Failed to reload saved user book with book information");
       return Optional.empty();
@@ -110,7 +114,8 @@ public class BookServiceImpl implements BookService {
       log.info("Checking if book with Google Books ISBN {} already exists", googleBookIsbn);
       Optional<BookEntity> existingGoogleBook = bookRepository.findByIsbn(googleBookIsbn);
       if (existingGoogleBook.isPresent()) {
-        log.info("Found existing book with Google Books ISBN: {}", existingGoogleBook.get().getTitle());
+        log.info(
+            "Found existing book with Google Books ISBN: {}", existingGoogleBook.get().getTitle());
         return Optional.of(BookEntityMapper.INSTANCE.toModel(existingGoogleBook.get()));
       }
     }
@@ -118,37 +123,40 @@ public class BookServiceImpl implements BookService {
     try {
       // Save book to database
       BookEntity bookEntity = BookEntityMapper.INSTANCE.toEntity(googleBook.get());
-      
+
       // Generate unique ID for the book
       String bookId = "book-" + java.util.UUID.randomUUID().toString().substring(0, 8);
       bookEntity.setId(bookId);
       bookEntity.setIsbn(isbn);
-      
+
       bookEntity = bookRepository.save(bookEntity);
 
       Book savedBook = BookEntityMapper.INSTANCE.toModel(bookEntity);
       log.info("Book fetched from Google Books API and saved: {}", savedBook.getTitle());
       return Optional.of(savedBook);
-      
+
     } catch (Exception e) {
       // Handle ISBN conflict - try to find by the Google Books returned ISBN
-      if (e.getMessage() != null && e.getMessage().contains("duplicate key value violates unique constraint")) {
-        log.warn("ISBN conflict detected, searching for existing book with Google Books ISBN: {}", googleBook.get().getIsbn());
-        
+      if (e.getMessage() != null
+          && e.getMessage().contains("duplicate key value violates unique constraint")) {
+        log.warn(
+            "ISBN conflict detected, searching for existing book with Google Books ISBN: {}",
+            googleBook.get().getIsbn());
+
         // Try to find with Google Books ISBN
         Optional<BookEntity> conflictBook = bookRepository.findByIsbn(googleBook.get().getIsbn());
         if (conflictBook.isPresent()) {
           log.info("Found existing book with conflicting ISBN: {}", conflictBook.get().getTitle());
           return Optional.of(BookEntityMapper.INSTANCE.toModel(conflictBook.get()));
         }
-        
+
         // Also try with original ISBN in case of format differences
         Optional<BookEntity> originalBook = bookRepository.findByIsbn(isbn);
         if (originalBook.isPresent()) {
           log.info("Found existing book with original ISBN: {}", originalBook.get().getTitle());
           return Optional.of(BookEntityMapper.INSTANCE.toModel(originalBook.get()));
         }
-        
+
         // If still not found, log and return empty instead of throwing
         log.error("Book exists (ISBN conflict) but could not be retrieved: {}", e.getMessage());
         return Optional.empty();
@@ -162,7 +170,8 @@ public class BookServiceImpl implements BookService {
   public Optional<UserBook> updateBookStatus(String userId, String bookId, BookStatus status) {
     log.info("Updating book status. UserId: {}, BookId: {}, Status: {}", userId, bookId, status);
 
-    Optional<UserBookEntity> userBookEntity = userBookRepository.findByUserIdAndBookId(userId, bookId);
+    Optional<UserBookEntity> userBookEntity =
+        userBookRepository.findByUserIdAndBookId(userId, bookId);
 
     if (userBookEntity.isEmpty()) {
       log.warn("User book not found. UserId: {}, BookId: {}", userId, bookId);
@@ -179,10 +188,16 @@ public class BookServiceImpl implements BookService {
   }
 
   @Override
-  public Optional<UserBook> updateBookExchangePreference(String userId, String bookId, boolean wantsToExchange) {
-    log.info("Updating book exchange preference. UserId: {}, BookId: {}, WantsToExchange: {}", userId, bookId, wantsToExchange);
+  public Optional<UserBook> updateBookExchangePreference(
+      String userId, String bookId, boolean wantsToExchange) {
+    log.info(
+        "Updating book exchange preference. UserId: {}, BookId: {}, WantsToExchange: {}",
+        userId,
+        bookId,
+        wantsToExchange);
 
-    Optional<UserBookEntity> userBookEntity = userBookRepository.findByUserIdAndBookId(userId, bookId);
+    Optional<UserBookEntity> userBookEntity =
+        userBookRepository.findByUserIdAndBookId(userId, bookId);
 
     if (userBookEntity.isEmpty()) {
       log.warn("User book not found. UserId: {}, BookId: {}", userId, bookId);
@@ -202,7 +217,8 @@ public class BookServiceImpl implements BookService {
   public Optional<UserBook> toggleBookFavorite(String userId, String bookId) {
     log.info("Toggling book favorite. UserId: {}, BookId: {}", userId, bookId);
 
-    Optional<UserBookEntity> userBookEntity = userBookRepository.findByUserIdAndBookId(userId, bookId);
+    Optional<UserBookEntity> userBookEntity =
+        userBookRepository.findByUserIdAndBookId(userId, bookId);
 
     if (userBookEntity.isEmpty()) {
       log.warn("User book not found. UserId: {}, BookId: {}", userId, bookId);
@@ -235,7 +251,8 @@ public class BookServiceImpl implements BookService {
   public List<UserBook> getUserFavoriteBooks(String userId) {
     log.info("Getting user favorite books for userId: {}", userId);
 
-    List<UserBookEntity> userBookEntities = userBookRepository.findByUserIdAndIsFavoriteTrueWithBook(userId);
+    List<UserBookEntity> userBookEntities =
+        userBookRepository.findByUserIdAndIsFavoriteTrueWithBook(userId);
 
     return userBookEntities.stream()
         .map(UserBookEntityMapper.INSTANCE::toModel)
@@ -253,6 +270,4 @@ public class BookServiceImpl implements BookService {
         .map(UserBookEntityMapper.INSTANCE::toModel)
         .collect(Collectors.toList());
   }
-
-
 }

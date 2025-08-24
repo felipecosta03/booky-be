@@ -49,24 +49,33 @@ public class CommentController {
       })
   @PostMapping
   public ResponseEntity<CommentDto> createComment(
-      @Parameter(description = "Datos del comentario", required = true)
-          @RequestBody @Valid CreateCommentDto createCommentDto,
+      @Parameter(description = "Datos del comentario", required = true) @RequestBody @Valid
+          CreateCommentDto createCommentDto,
       Authentication authentication) {
 
-    log.info("Creating comment on post: {} by user: {}", createCommentDto.getPostId(), authentication.getName());
+    log.info(
+        "Creating comment on post: {} by user: {}",
+        createCommentDto.getPostId(),
+        authentication.getName());
 
     String userId = authentication.getName();
-    
-    return commentService.createComment(userId, createCommentDto.getPostId(), createCommentDto.getBody())
+
+    return commentService
+        .createComment(userId, createCommentDto.getPostId(), createCommentDto.getBody())
         .map(CommentDtoMapper.INSTANCE::toDto)
-        .map(commentDto -> {
-          log.info("Comment created successfully with ID: {}", commentDto.getId());
-          return ResponseEntity.status(HttpStatus.CREATED).body(commentDto);
-        })
-        .orElseGet(() -> {
-          log.warn("Failed to create comment on post: {} for user: {}", createCommentDto.getPostId(), userId);
-          return ResponseEntity.badRequest().build();
-        });
+        .map(
+            commentDto -> {
+              log.info("Comment created successfully with ID: {}", commentDto.getId());
+              return ResponseEntity.status(HttpStatus.CREATED).body(commentDto);
+            })
+        .orElseGet(
+            () -> {
+              log.warn(
+                  "Failed to create comment on post: {} for user: {}",
+                  createCommentDto.getPostId(),
+                  userId);
+              return ResponseEntity.badRequest().build();
+            });
   }
 
   @Operation(
@@ -86,9 +95,8 @@ public class CommentController {
     log.info("Getting comments for post: {}", postId);
 
     List<Comment> comments = commentService.getCommentsByPostId(postId);
-    List<CommentDto> commentDtos = comments.stream()
-        .map(CommentDtoMapper.INSTANCE::toDto)
-        .collect(Collectors.toList());
+    List<CommentDto> commentDtos =
+        comments.stream().map(CommentDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
 
     log.info("Retrieved {} comments for post: {}", commentDtos.size(), postId);
     return ResponseEntity.ok(commentDtos);
@@ -103,7 +111,10 @@ public class CommentController {
             responseCode = "200",
             description = "Comentario encontrado",
             content = @Content(mediaType = "application/json")),
-        @ApiResponse(responseCode = "404", description = "Comentario no encontrado", content = @Content)
+        @ApiResponse(
+            responseCode = "404",
+            description = "Comentario no encontrado",
+            content = @Content)
       })
   @GetMapping("/{id}")
   public ResponseEntity<CommentDto> getCommentById(
@@ -111,13 +122,15 @@ public class CommentController {
 
     log.info("Getting comment by ID: {}", id);
 
-    return commentService.getCommentById(id)
+    return commentService
+        .getCommentById(id)
         .map(CommentDtoMapper.INSTANCE::toDto)
         .map(ResponseEntity::ok)
-        .orElseGet(() -> {
-          log.warn("Comment not found with ID: {}", id);
-          return ResponseEntity.notFound().build();
-        });
+        .orElseGet(
+            () -> {
+              log.warn("Comment not found with ID: {}", id);
+              return ResponseEntity.notFound().build();
+            });
   }
 
   @Operation(
@@ -137,9 +150,8 @@ public class CommentController {
     log.info("Getting comments for user: {}", userId);
 
     List<Comment> comments = commentService.getCommentsByUserId(userId);
-    List<CommentDto> commentDtos = comments.stream()
-        .map(CommentDtoMapper.INSTANCE::toDto)
-        .collect(Collectors.toList());
+    List<CommentDto> commentDtos =
+        comments.stream().map(CommentDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
 
     log.info("Retrieved {} comments for user: {}", commentDtos.size(), userId);
     return ResponseEntity.ok(commentDtos);
@@ -151,8 +163,14 @@ public class CommentController {
   @ApiResponses(
       value = {
         @ApiResponse(responseCode = "200", description = "Comentario eliminado exitosamente"),
-        @ApiResponse(responseCode = "403", description = "No tienes permisos para eliminar este comentario", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Comentario no encontrado", content = @Content),
+        @ApiResponse(
+            responseCode = "403",
+            description = "No tienes permisos para eliminar este comentario",
+            content = @Content),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Comentario no encontrado",
+            content = @Content),
         @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content)
       })
   @DeleteMapping("/{id}")
@@ -163,7 +181,7 @@ public class CommentController {
     log.info("Deleting comment: {} by user: {}", id, authentication.getName());
 
     String userId = authentication.getName();
-    
+
     if (commentService.deleteComment(id, userId)) {
       log.info("Comment {} deleted successfully by user: {}", id, userId);
       return ResponseEntity.ok().build();
@@ -172,4 +190,4 @@ public class CommentController {
       return ResponseEntity.badRequest().build();
     }
   }
-} 
+}

@@ -18,4 +18,4 @@ public class Comment {
   private String postId;
   private User user;
   private Post post;
-} 
+}

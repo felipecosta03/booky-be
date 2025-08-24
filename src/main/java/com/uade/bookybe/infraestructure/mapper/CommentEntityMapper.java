@@ -13,4 +13,4 @@ public interface CommentEntityMapper {
   Comment toModel(CommentEntity entity);
 
   CommentEntity toEntity(Comment model);
-} 
+}

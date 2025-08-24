@@ -30,4 +30,4 @@ public class CommunityEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "admin_id", insertable = false, updatable = false)
   private UserEntity admin;
-} 
+}

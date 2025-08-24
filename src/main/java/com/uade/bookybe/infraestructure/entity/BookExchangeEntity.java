@@ -2,12 +2,12 @@ package com.uade.bookybe.infraestructure.entity;
 
 import com.uade.bookybe.core.model.constant.ExchangeStatus;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @Builder
@@ -16,8 +16,7 @@ import java.util.List;
 @Entity
 @Table(name = "book_exchanges")
 public class BookExchangeEntity {
-  @Id
-  private String id;
+  @Id private String id;
 
   @Column(name = "requester_id", nullable = false)
   private String requesterId;
@@ -36,18 +35,14 @@ public class BookExchangeEntity {
   private LocalDateTime dateUpdated;
 
   @ElementCollection
-  @CollectionTable(
-    name = "exchange_owner_books",
-    joinColumns = @JoinColumn(name = "exchange_id")
-  )
+  @CollectionTable(name = "exchange_owner_books", joinColumns = @JoinColumn(name = "exchange_id"))
   @Column(name = "user_book_id")
   private List<String> ownerBookIds;
 
   @ElementCollection
   @CollectionTable(
-    name = "exchange_requester_books",
-    joinColumns = @JoinColumn(name = "exchange_id")
-  )
+      name = "exchange_requester_books",
+      joinColumns = @JoinColumn(name = "exchange_id"))
   @Column(name = "user_book_id")
   private List<String> requesterBookIds;
 
@@ -58,4 +53,4 @@ public class BookExchangeEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "owner_id", insertable = false, updatable = false)
   private UserEntity owner;
-} 
+}

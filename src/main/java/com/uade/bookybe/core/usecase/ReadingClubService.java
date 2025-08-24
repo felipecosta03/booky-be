@@ -14,7 +14,8 @@ public interface ReadingClubService {
 
   List<ReadingClub> getReadingClubsByCommunityId(String communityId);
 
-  Optional<ReadingClub> createReadingClub(String moderatorId, String name, String description, String communityId, String bookId);
+  Optional<ReadingClub> createReadingClub(
+      String moderatorId, String name, String description, String communityId, String bookId);
 
   boolean joinReadingClub(String clubId, String userId);
 
@@ -27,4 +28,4 @@ public interface ReadingClubService {
   List<ReadingClub> getReadingClubsByBookId(String bookId);
 
   long getMemberCount(String clubId);
-} 
+}

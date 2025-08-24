@@ -11,8 +11,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateCommentDto {
-  @NotEmpty
-  private String body;
-  @NotEmpty
-  private String postId;
-} 
+  @NotEmpty private String body;
+  @NotEmpty private String postId;
+}

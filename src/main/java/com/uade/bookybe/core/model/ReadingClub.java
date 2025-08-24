@@ -16,18 +16,18 @@ public class ReadingClub {
   private LocalDateTime dateCreated;
   private String description;
   private LocalDateTime lastUpdated;
-  
+
   @NotBlank(message = "Name is required")
   private String name;
-  
+
   @NotBlank(message = "Book ID is required")
   private String bookId; // OBLIGATORIO - todo reading club debe tener un libro específico
-  
+
   @NotBlank(message = "Community ID is required")
   private String communityId; // OBLIGATORIO - todo reading club debe pertenecer a una comunidad
-  
+
   @NotBlank(message = "Moderator ID is required")
   private String moderatorId;
-  
+
   private long memberCount;
-} 
+}

@@ -2,8 +2,8 @@ package com.uade.bookybe.router.mapper;
 
 import com.uade.bookybe.core.model.BookExchange;
 import com.uade.bookybe.router.dto.exchange.BookExchangeDto;
-import com.uade.bookybe.router.dto.exchange.CreateBookExchangeDto;
 import com.uade.bookybe.router.dto.exchange.CounterOfferDto;
+import com.uade.bookybe.router.dto.exchange.CreateBookExchangeDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;

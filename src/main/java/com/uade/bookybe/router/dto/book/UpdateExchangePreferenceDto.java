@@ -12,8 +12,8 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdateExchangePreferenceDto {
-  
+
   @NotNull(message = "Exchange preference is required")
   @JsonProperty("wants_to_exchange")
   private Boolean wantsToExchange;
-} 
+}

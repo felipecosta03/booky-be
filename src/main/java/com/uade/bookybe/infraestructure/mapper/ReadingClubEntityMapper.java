@@ -13,4 +13,4 @@ public interface ReadingClubEntityMapper {
   ReadingClub toModel(ReadingClubEntity entity);
 
   ReadingClubEntity toEntity(ReadingClub model);
-} 
+}

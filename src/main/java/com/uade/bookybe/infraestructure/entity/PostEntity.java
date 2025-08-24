@@ -37,4 +37,4 @@ public class PostEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "community_id", insertable = false, updatable = false)
   private CommunityEntity community;
-} 
+}

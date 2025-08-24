@@ -18,4 +18,4 @@ public interface ReadingClubDtoMapper {
 
   @Mapping(target = "memberCount", ignore = true)
   ReadingClub toModel(ReadingClubDto dto);
-} 
+}

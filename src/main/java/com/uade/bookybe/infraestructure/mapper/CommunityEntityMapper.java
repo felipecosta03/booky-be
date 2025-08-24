@@ -13,4 +13,4 @@ public interface CommunityEntityMapper {
   Community toModel(CommunityEntity entity);
 
   CommunityEntity toEntity(Community model);
-} 
+}

@@ -13,4 +13,4 @@ public interface BookExchangeEntityMapper {
   BookExchange toModel(BookExchangeEntity entity);
 
   BookExchangeEntity toEntity(BookExchange model);
-} 
+}

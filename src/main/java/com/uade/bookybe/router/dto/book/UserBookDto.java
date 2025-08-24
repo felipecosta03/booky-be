@@ -17,4 +17,4 @@ public class UserBookDto {
   private boolean favorite;
   private boolean wantsToExchange;
   private BookDto book;
-} 
+}

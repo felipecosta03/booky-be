@@ -12,7 +12,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdateExchangeStatusDto {
-  
+
   @NotNull(message = "Status is required")
   private ExchangeStatus status;
-} 
+}

@@ -191,8 +191,13 @@ client.log("✅ User is following " + response.body.length + " users");
 ###
 
 ### Test 8: Follow user
-POST {{baseUrl}}/users/{{testUserId}}/follow/{{userId}}
+POST {{baseUrl}}/users/follow
+Content-Type: application/json
 Authorization: {{testAuthToken}}
+
+{
+  "target_user_id": "{{userId}}"
+}
 
 > {%
 client.test("Follow user should return 202 or 400", function() {
@@ -209,8 +214,13 @@ if (response.status === 202) {
 ###
 
 ### Test 9: Unfollow user
-DELETE {{baseUrl}}/users/{{testUserId}}/follow/{{userId}}
+DELETE {{baseUrl}}/users/follow
+Content-Type: application/json
 Authorization: {{testAuthToken}}
+
+{
+  "target_user_id": "{{userId}}"
+}
 
 > {%
 client.test("Unfollow user should return 204 or 400", function() {

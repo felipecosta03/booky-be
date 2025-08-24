@@ -21,6 +21,9 @@ public interface PostService {
 
   List<Post> getUserFeed(String userId);
 
+  /** Gets posts with optional filters */
+  List<Post> getPostsFiltered(String type, String userId, String communityId, String requestingUserId);
+
   Optional<Post> updatePost(String postId, String userId, String body);
 
   boolean deletePost(String postId, String userId);

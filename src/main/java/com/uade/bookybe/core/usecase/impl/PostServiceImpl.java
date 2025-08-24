@@ -133,6 +133,26 @@ public class PostServiceImpl implements PostService {
   }
 
   @Override
+  @Transactional(readOnly = true)
+  public List<Post> getPostsFiltered(String type, String userId, String communityId, String requestingUserId) {
+    log.info("Getting posts with filters - type: {}, userId: {}, communityId: {}, requestingUserId: {}", 
+             type, userId, communityId, requestingUserId);
+
+    if ("feed".equals(type) && requestingUserId != null) {
+      return getUserFeed(requestingUserId);
+    } else if ("general".equals(type)) {
+      return getGeneralPosts();
+    } else if (userId != null) {
+      return getPostsByUserId(userId);
+    } else if (communityId != null) {
+      return getPostsByCommunityId(communityId);
+    } else {
+      // Default: return all posts
+      return getAllPosts();
+    }
+  }
+
+  @Override
   public Optional<Post> updatePost(String postId, String userId, String body) {
     log.info("Updating post: {} by user: {}", postId, userId);
 

@@ -114,100 +114,33 @@ public class PostController {
   }
 
   @Operation(
-      summary = "Obtener feed del usuario",
-      description = "Obtiene las publicaciones de los usuarios seguidos por el usuario actual")
+      summary = "Get posts with filters",
+      description = "Gets posts with optional filters: type (feed/general), userId, or communityId")
   @ApiResponses(
       value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Feed obtenido exitosamente",
+            description = "Posts retrieved successfully",
             content = @Content(mediaType = "application/json")),
-        @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content)
+        @ApiResponse(responseCode = "401", description = "Unauthorized (for feed type)", content = @Content)
       })
-  @GetMapping("/feed")
-  public ResponseEntity<List<PostDto>> getUserFeed(Authentication authentication) {
+  @GetMapping
+  public ResponseEntity<List<PostDto>> getPosts(
+      @Parameter(description = "Type of posts: 'feed' or 'general'") @RequestParam(required = false) String type,
+      @Parameter(description = "Filter by user ID") @RequestParam(required = false) String userId,
+      @Parameter(description = "Filter by community ID") @RequestParam(required = false) String communityId,
+      Authentication authentication) {
 
-    log.info("Getting feed for user: {}", authentication.getName());
+    String requestingUserId = authentication != null ? authentication.getName() : null;
+    
+    log.info("Getting posts with filters - type: {}, userId: {}, communityId: {}, requestingUserId: {}", 
+             type, userId, communityId, requestingUserId);
 
-    String userId = authentication.getName();
-    List<Post> posts = postService.getUserFeed(userId);
-
+    List<Post> posts = postService.getPostsFiltered(type, userId, communityId, requestingUserId);
     List<PostDto> postDtos =
         posts.stream().map(PostDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
 
-    log.info("Retrieved {} posts for user feed", postDtos.size());
-    return ResponseEntity.ok(postDtos);
-  }
-
-  @Operation(
-      summary = "Obtener publicaciones de un usuario",
-      description = "Obtiene todas las publicaciones de un usuario específico")
-  @ApiResponses(
-      value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Publicaciones obtenidas exitosamente",
-            content = @Content(mediaType = "application/json"))
-      })
-  @GetMapping("/user/{userId}")
-  public ResponseEntity<List<PostDto>> getPostsByUserId(
-      @Parameter(description = "ID del usuario", required = true) @PathVariable String userId) {
-
-    log.info("Getting posts for user: {}", userId);
-
-    List<Post> posts = postService.getPostsByUserId(userId);
-    List<PostDto> postDtos =
-        posts.stream().map(PostDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
-
-    log.info("Retrieved {} posts for user: {}", postDtos.size(), userId);
-    return ResponseEntity.ok(postDtos);
-  }
-
-  @Operation(
-      summary = "Obtener publicaciones de una comunidad",
-      description = "Obtiene todas las publicaciones de una comunidad específica")
-  @ApiResponses(
-      value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Publicaciones obtenidas exitosamente",
-            content = @Content(mediaType = "application/json"))
-      })
-  @GetMapping("/community/{communityId}")
-  public ResponseEntity<List<PostDto>> getPostsByCommunityId(
-      @Parameter(description = "ID de la comunidad", required = true) @PathVariable
-          String communityId) {
-
-    log.info("Getting posts for community: {}", communityId);
-
-    List<Post> posts = postService.getPostsByCommunityId(communityId);
-    List<PostDto> postDtos =
-        posts.stream().map(PostDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
-
-    log.info("Retrieved {} posts for community: {}", postDtos.size(), communityId);
-    return ResponseEntity.ok(postDtos);
-  }
-
-  @Operation(
-      summary = "Obtener publicaciones generales",
-      description = "Obtiene todas las publicaciones que no pertenecen a ninguna comunidad")
-  @ApiResponses(
-      value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Publicaciones obtenidas exitosamente",
-            content = @Content(mediaType = "application/json"))
-      })
-  @GetMapping("/general")
-  public ResponseEntity<List<PostDto>> getGeneralPosts() {
-
-    log.info("Getting general posts");
-
-    List<Post> posts = postService.getGeneralPosts();
-    List<PostDto> postDtos =
-        posts.stream().map(PostDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
-
-    log.info("Retrieved {} general posts", postDtos.size());
+    log.info("Retrieved {} posts with filters", postDtos.size());
     return ResponseEntity.ok(postDtos);
   }
 

@@ -88,7 +88,7 @@ if (response.status === 200) {
 ###
 
 ### Test 4: Get user feed
-GET {{baseUrl}}/posts/feed
+GET {{baseUrl}}/posts?type=feed
 Authorization: {{token}}
 
 > {%
@@ -104,7 +104,7 @@ client.test("Response should be an array", function() {
 ###
 
 ### Test 5: Get posts by user ID
-GET {{baseUrl}}/posts/user/{{userId}}
+GET {{baseUrl}}/posts?userId={{userId}}
 Authorization: {{token}}
 
 > {%
@@ -120,7 +120,7 @@ client.test("Response should be an array", function() {
 ###
 
 ### Test 6: Get posts by community ID
-GET {{baseUrl}}/posts/community/{{communityId}}
+GET {{baseUrl}}/posts?communityId={{communityId}}
 Authorization: {{token}}
 
 > {%
@@ -136,7 +136,7 @@ client.test("Response should be an array", function() {
 ###
 
 ### Test 7: Get general posts
-GET {{baseUrl}}/posts/general
+GET {{baseUrl}}/posts?type=general
 Authorization: {{token}}
 
 > {%

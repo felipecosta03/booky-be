@@ -251,20 +251,22 @@ public class UserController {
 
   @Operation(
       summary = "Follow user",
-      description = "Creates a follow relationship between two users")
+      description = "Creates a follow relationship with the specified user")
   @ApiResponses(
       value = {
         @ApiResponse(responseCode = "202", description = "Follow successful"),
         @ApiResponse(
             responseCode = "400",
-            description = "Follow failed (user already followed or invalid IDs)")
+            description = "Follow failed (user already followed or invalid ID)")
       })
-  @PostMapping("/users/{followerId}/follow/{followedId}")
+  @PostMapping("/users/follow")
   public ResponseEntity<Void> followUser(
-      @Parameter(description = "ID of the user who wants to follow", required = true) @PathVariable
-          String followerId,
-      @Parameter(description = "ID of the user to be followed", required = true) @PathVariable
-          String followedId) {
+      @Parameter(description = "Follow request data", required = true) @Valid @RequestBody FollowUserDto followDto,
+      Authentication authentication) {
+    
+    String followerId = authentication.getName();
+    String followedId = followDto.getTargetUserId();
+    
     log.info("User {} attempting to follow user {}", followerId, followedId);
 
     boolean followed = userService.followUser(followerId, followedId);
@@ -279,7 +281,7 @@ public class UserController {
 
   @Operation(
       summary = "Unfollow user",
-      description = "Removes a follow relationship between two users")
+      description = "Removes a follow relationship with the specified user")
   @ApiResponses(
       value = {
         @ApiResponse(responseCode = "204", description = "Unfollow successful"),
@@ -287,13 +289,14 @@ public class UserController {
             responseCode = "400",
             description = "Unfollow failed (user was not being followed)")
       })
-  @DeleteMapping("/users/{followerId}/follow/{followedId}")
+  @DeleteMapping("/users/follow")
   public ResponseEntity<Void> unfollowUser(
-      @Parameter(description = "ID of the user who wants to unfollow", required = true)
-          @PathVariable
-          String followerId,
-      @Parameter(description = "ID of the user to be unfollowed", required = true) @PathVariable
-          String followedId) {
+      @Parameter(description = "Unfollow request data", required = true) @Valid @RequestBody FollowUserDto followDto,
+      Authentication authentication) {
+    
+    String followerId = authentication.getName();
+    String followedId = followDto.getTargetUserId();
+    
     log.info("User {} attempting to unfollow user {}", followerId, followedId);
 
     boolean unfollowed = userService.unfollowUser(followerId, followedId);

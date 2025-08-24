@@ -1,0 +1,10 @@
+### Test mínimo para communities
+POST http://localhost:8080/communities
+Content-Type: application/json
+
+{
+  "name": "Test Simple",
+  "description": "Test description"
+}
+
+###

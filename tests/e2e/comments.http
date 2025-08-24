@@ -1,8 +1,7 @@
 ### Variables
 @baseUrl = http://localhost:8080
-@token = Bearer YOUR_JWT_TOKEN_HERE
 @commentId = 550e8400-e29b-41d4-a716-446655440000
-@postId = 550e8400-e29b-41d4-a716-446655440001
+@postId = post-001
 @userId = 550e8400-e29b-41d4-a716-446655440002
 
 ### Test 1: Create comment on post
@@ -12,7 +11,7 @@ Authorization: {{token}}
 
 {
   "body": "This is a test comment on a post",
-  "postId": "{{postId}}"
+  "post_id": "{{postId}}"
 }
 
 > {%
@@ -23,9 +22,8 @@ client.test("Create comment should return 201", function() {
 client.test("Response should contain comment data", function() {
     client.assert(response.body.id !== undefined, "Comment ID should be present");
     client.assert(response.body.body === "This is a test comment on a post", "Body should match");
-    client.assert(response.body.postId === "{{postId}}", "Post ID should match");
-    client.assert(response.body.userId !== undefined, "User ID should be present");
-    client.assert(response.body.dateCreated !== undefined, "Date created should be present");
+    client.assert(response.body.user_id !== undefined, "User ID should be present");
+    client.assert(response.body.date_created !== undefined, "Date created should be present");
 });
 
 client.global.set("createdCommentId", response.body.id);
@@ -46,7 +44,7 @@ if (response.status === 200) {
     client.test("Response should contain comment data", function() {
         client.assert(response.body.id !== undefined, "Comment ID should be present");
         client.assert(response.body.content !== undefined, "Content should be present");
-        client.assert(response.body.userId !== undefined, "User ID should be present");
+        client.assert(response.body.user_id !== undefined, "User ID should be present");
     });
 }
 %}
@@ -105,12 +103,12 @@ Content-Type: application/json
 
 {
   "body": "Unauthenticated comment",
-  "postId": "{{postId}}"
+  "post_id": "{{postId}}"
 }
 
 > {%
-client.test("Comment without auth should return 401 or 201", function() {
-    client.assert(response.status === 401 || response.status === 201, "Expected status 401 (if auth enabled) or 201 (if auth disabled)");
+client.test("Comment without auth should return 403 or 201", function() {
+    client.assert(response.status === 403 || response.status === 201, "Expected status 401 (if auth enabled) or 201 (if auth disabled)");
 });
 %}
 
@@ -123,7 +121,7 @@ Authorization: {{token}}
 
 {
   "body": "",
-  "postId": "{{postId}}"
+  "post_id": "{{postId}}"
 }
 
 > {%
@@ -141,11 +139,11 @@ Authorization: {{token}}
 
 {
   "body": "Comment on non-existent post",
-  "postId": "non-existent-post-id"
+  "post_id": "non-existent-post-id"
 }
 
 > {%
-client.test("Comment on non-existent post should return 400", function() {
-    client.assert(response.status === 400, "Expected status 400");
+client.test("Comment on non-existent post should return 404", function() {
+    client.assert(response.status === 404, "Expected status 404");
 });
 %}

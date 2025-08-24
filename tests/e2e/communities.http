@@ -1,17 +1,16 @@
 ### Variables
 @baseUrl = http://localhost:8080
-@token = Bearer YOUR_JWT_TOKEN_HERE
-@communityId = 550e8400-e29b-41d4-a716-446655440000
+@communityId = 71e4feee-dd9e-4f79-a2c3-14c2780e7ef2
 @userId = 550e8400-e29b-41d4-a716-446655440001
 
-### Test 1: Create community
+### Test 1: Create community with random data
 POST {{baseUrl}}/communities
 Content-Type: application/json
 Authorization: {{token}}
 
 {
-  "name": "Test Community",
-  "description": "A community created for testing purposes"
+  "name": "Test Community {{$timestamp}}",
+  "description": "A community created for testing purposes - {{$timestamp}}"
 }
 
 > {%
@@ -21,12 +20,14 @@ client.test("Create community should return 201", function() {
 
 client.test("Response should contain community data", function() {
     client.assert(response.body.id !== undefined, "Community ID should be present");
-    client.assert(response.body.name === "Test Community", "Community name should match");
-    client.assert(response.body.description === "A community created for testing purposes", "Description should match");
-    client.assert(response.body.createdBy !== undefined, "Created by should be present");
+    client.assert(response.body.name !== undefined, "Community name should be present");
+    client.assert(response.body.name.includes("Test Community"), "Community name should contain 'Test Community'");
+    client.assert(response.body.description !== undefined, "Description should be present");
+    client.assert(response.body.date_created !== undefined, "Created by should be present");
 });
 
 client.global.set("createdCommunityId", response.body.id);
+client.global.set("createdCommunityName", response.body.name);
 %}
 
 ###
@@ -184,6 +185,52 @@ Authorization: {{token}}
 client.test("Join non-existent community should return 404", function() {
     client.assert(response.status === 404, "Expected status 404");
 });
+%}
+
+###
+
+### Test 12: Get created community by ID (verify it exists before cleanup)
+GET {{baseUrl}}/communities/{{createdCommunityId}}
+Authorization: {{token}}
+
+> {%
+client.test("Get created community should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+if (response.status === 200) {
+    client.test("Response should contain the created community", function() {
+        client.assert(response.body.id === client.global.get("createdCommunityId"), "Community ID should match");
+        client.assert(response.body.name === client.global.get("createdCommunityName"), "Community name should match");
+    });
+}
+%}
+
+###
+
+### Test 13: CLEANUP - Delete created community (if delete endpoint exists)
+# Note: This test assumes there's a DELETE endpoint for communities
+# If not available, this test will fail gracefully
+DELETE {{baseUrl}}/communities/{{createdCommunityId}}
+Authorization: {{token}}
+
+> {%
+client.test("Delete community should return 204 or 404", function() {
+    client.assert(response.status === 204 || response.status === 404 || response.status === 405, 
+                 "Expected status 204 (deleted), 404 (not found), or 405 (method not allowed)");
+});
+
+if (response.status === 204) {
+    client.log("✅ Community successfully deleted: " + client.global.get("createdCommunityName"));
+} else if (response.status === 405) {
+    client.log("⚠️ Delete endpoint not implemented - community will remain: " + client.global.get("createdCommunityName"));
+} else {
+    client.log("⚠️ Could not delete community: " + client.global.get("createdCommunityName"));
+}
+
+// Clear global variables
+client.global.clear("createdCommunityId");
+client.global.clear("createdCommunityName");
 %}
 
 ###

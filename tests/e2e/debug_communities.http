@@ -1,0 +1,89 @@
+### Variables para Debug
+@baseUrl = http://localhost:8080
+
+### DEBUG 1: Test básico de conectividad
+GET {{baseUrl}}/actuator/health
+
+> {%
+client.log("=== DEBUG: Conectividad ===");
+client.log("Status: " + response.status);
+client.log("Response: " + JSON.stringify(response.body));
+%}
+
+###
+
+### DEBUG 2: Test de variables
+GET {{baseUrl}}/communities
+
+> {%
+client.log("=== DEBUG: Variables ===");
+client.log("baseUrl: " + "{{baseUrl}}");
+client.log("timestamp: " + "{{$timestamp}}");
+client.log("Status GET communities: " + response.status);
+%}
+
+###
+
+### DEBUG 3: Test con token del env
+GET {{baseUrl}}/communities
+Authorization: {{token}}
+
+> {%
+client.log("=== DEBUG: Con Token ===");
+client.log("Token usado: " + "{{token}}");
+client.log("Status con token: " + response.status);
+if (response.body) {
+    client.log("Response body: " + JSON.stringify(response.body));
+}
+%}
+
+###
+
+### DEBUG 4: Test POST mínimo
+POST {{baseUrl}}/communities
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "name": "Debug Test",
+  "description": "Debug description"
+}
+
+> {%
+client.log("=== DEBUG: POST Mínimo ===");
+client.log("POST Status: " + response.status);
+client.log("POST Response: " + JSON.stringify(response.body));
+
+if (response.status === 400) {
+    client.log("❌ Bad Request - Revisar formato de datos");
+} else if (response.status === 401) {
+    client.log("❌ No autorizado - Problema con token");
+} else if (response.status === 403) {
+    client.log("❌ Prohibido - Token válido pero sin permisos");
+} else if (response.status === 500) {
+    client.log("❌ Error del servidor");
+} else if (response.status === 201) {
+    client.log("✅ Éxito!");
+}
+%}
+
+###
+
+### DEBUG 5: Test POST con timestamp
+POST {{baseUrl}}/communities
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "name": "Debug {{$timestamp}}",
+  "description": "Debug with timestamp {{$timestamp}}"
+}
+
+> {%
+client.log("=== DEBUG: POST con Timestamp ===");
+client.log("Timestamp usado: " + "{{$timestamp}}");
+client.log("Status: " + response.status);
+client.log("Response: " + JSON.stringify(response.body));
+%}
+
+###

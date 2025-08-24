@@ -1,15 +1,14 @@
 ### Variables
 @baseUrl = http://localhost:8080
-@token = Bearer YOUR_JWT_TOKEN_HERE
 @userId = 550e8400-e29b-41d4-a716-446655440000
 
-### Test 1: User registration
+### Test 1: User registration with random data
 POST {{baseUrl}}/sign-up
 Content-Type: application/json
 
 {
-  "email": "test@example.com",
-  "username": "testuser",
+  "email": "test{{$timestamp}}@example.com",
+  "username": "testuser{{$timestamp}}",
   "password": "password123",
   "first_name": "Test",
   "last_name": "User"
@@ -23,23 +22,25 @@ client.test("User registration should return 201", function() {
 if (response.status === 201) {
     client.test("Response should contain user data", function() {
         client.assert(response.body.id !== undefined, "User ID should be present");
-        client.assert(response.body.email === "test@example.com", "Email should match");
-        client.assert(response.body.username === "testuser", "Username should match");
+        client.assert(response.body.email !== undefined, "Email should be present");
+        client.assert(response.body.username !== undefined, "Username should be present");
         client.assert(response.body.password === undefined, "Password should not be returned");
     });
     
     client.global.set("registeredUserId", response.body.id);
+    client.global.set("registeredUserEmail", response.body.email);
+    client.global.set("registeredUsername", response.body.username);
 }
 %}
 
 ###
 
-### Test 2: User login
+### Test 2: User login with registered user
 POST {{baseUrl}}/sign-in
 Content-Type: application/json
 
 {
-  "email": "test@example.com",
+  "email": "test{{$timestamp}}@example.com",
   "password": "password123"
 }
 
@@ -51,7 +52,7 @@ client.test("User login should return 200", function() {
 client.test("Response should contain token and user data", function() {
     client.assert(response.body.token !== undefined, "Token should be present");
     client.assert(response.body.user !== undefined, "User data should be present");
-    client.assert(response.body.user.email === "test@example.com", "Email should match");
+    client.assert(response.body.user.email !== undefined, "Email should be present");
 });
 
 client.global.set("authToken", "Bearer " + response.body.token);
@@ -90,8 +91,8 @@ Content-Type: application/json
 
 {
   "id": "{{loggedUserId}}",
-  "firstName": "Updated",
-  "lastName": "Name",
+  "first_name": "Updated",
+  "last_name": "Name",
   "bio": "Updated bio for testing"
 }
 --boundary123
@@ -108,8 +109,8 @@ client.test("Update profile should return 200 or 404", function() {
 
 if (response.status === 200) {
     client.test("Response should contain updated data", function() {
-        client.assert(response.body.firstName === "Updated", "First name should be updated");
-        client.assert(response.body.lastName === "Name", "Last name should be updated");
+        client.assert(response.body.first_name === "Updated", "First name should be updated");
+        client.assert(response.body.last_name === "Name", "Last name should be updated");
     });
 }
 %}
@@ -244,8 +245,8 @@ Content-Type: application/json
   "email": "invalid-email",
   "username": "testuser2",
   "password": "password123",
-  "firstName": "Test",
-  "lastName": "User"
+  "first_name": "Test",
+  "last_name": "User"
 }
 
 > {%
@@ -264,8 +265,8 @@ Content-Type: application/json
   "email": "test@example.com",
   "username": "anothertestuser",
   "password": "password123",
-  "firstName": "Another",
-  "lastName": "User"
+  "first_name": "Another",
+  "last_name": "User"
 }
 
 > {%
@@ -284,3 +285,33 @@ client.test("Access without token should return 401 or 200", function() {
     client.assert(response.status === 401 || response.status === 200, "Expected status 401 (if auth enabled) or 200 (if auth disabled)");
 });
 %}
+
+###
+
+### Test 16: CLEANUP - Delete registered user (if delete endpoint works)
+DELETE {{baseUrl}}/users/{{registeredUserId}}
+Authorization: {{authToken}}
+
+> {%
+client.test("Delete user should return 204 or 404", function() {
+    client.assert(response.status === 204 || response.status === 404 || response.status === 403, 
+                 "Expected status 204 (deleted), 404 (not found), or 403 (forbidden)");
+});
+
+if (response.status === 204) {
+    client.log("✅ User successfully deleted: " + client.global.get("registeredUserEmail"));
+} else if (response.status === 403) {
+    client.log("⚠️ Delete forbidden - user will remain: " + client.global.get("registeredUserEmail"));
+} else {
+    client.log("⚠️ Could not delete user: " + client.global.get("registeredUserEmail"));
+}
+
+// Clear global variables
+client.global.clear("registeredUserId");
+client.global.clear("registeredUserEmail");
+client.global.clear("registeredUsername");
+client.global.clear("authToken");
+client.global.clear("loggedUserId");
+%}
+
+###

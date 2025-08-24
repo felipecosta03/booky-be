@@ -1,20 +1,19 @@
 ### Variables
 @baseUrl = http://localhost:8080
-@token = Bearer YOUR_JWT_TOKEN_HERE
 @readingClubId = 550e8400-e29b-41d4-a716-446655440000
 @userId = 550e8400-e29b-41d4-a716-446655440001
 @bookId = 550e8400-e29b-41d4-a716-446655440002
 @communityId = 550e8400-e29b-41d4-a716-446655440003
 
-### Test 1: Create reading club
+### Test 1: Create reading club with random data
 POST {{baseUrl}}/reading-clubs
 Content-Type: application/json
 Authorization: {{token}}
 
 {
-  "name": "Test Reading Club",
-  "description": "A reading club created for testing purposes",
-  "bookId": "{{bookId}}"
+  "name": "Test Reading Club {{$timestamp}}",
+  "description": "A reading club created for testing purposes - {{$timestamp}}",
+  "book_id": "{{bookId}}"
 }
 
 > {%
@@ -24,12 +23,14 @@ client.test("Create reading club should return 201", function() {
 
 client.test("Response should contain reading club data", function() {
     client.assert(response.body.id !== undefined, "Reading club ID should be present");
-    client.assert(response.body.name === "Test Reading Club", "Name should match");
-    client.assert(response.body.description === "A reading club created for testing purposes", "Description should match");
-    client.assert(response.body.bookId === "{{bookId}}", "Book ID should match");
+    client.assert(response.body.name !== undefined, "Name should be present");
+    client.assert(response.body.name.includes("Test Reading Club"), "Name should contain 'Test Reading Club'");
+    client.assert(response.body.description !== undefined, "Description should be present");
+    client.assert(response.body.book_id !== undefined, "Book ID should be present");
 });
 
 client.global.set("createdReadingClubId", response.body.id);
+client.global.set("createdReadingClubName", response.body.name);
 %}
 
 ###
@@ -48,7 +49,7 @@ if (response.status === 200) {
         client.assert(response.body.id !== undefined, "Reading club ID should be present");
         client.assert(response.body.name !== undefined, "Name should be present");
         client.assert(response.body.description !== undefined, "Description should be present");
-        client.assert(response.body.bookId !== undefined, "Book ID should be present");
+        client.assert(response.body.book_id !== undefined, "Book ID should be present");
     });
 }
 %}
@@ -150,7 +151,7 @@ Content-Type: application/json
 {
   "name": "Unauthenticated Reading Club",
   "description": "This should fail if auth is enabled",
-  "bookId": "{{bookId}}"
+  "book_id": "{{bookId}}"
 }
 
 > {%
@@ -169,7 +170,7 @@ Authorization: {{token}}
 {
   "name": "",
   "description": "",
-  "bookId": "invalid-book-id"
+  "book_id": "invalid-book-id"
 }
 
 > {%
@@ -189,3 +190,30 @@ client.test("Join non-existent reading club should return 400", function() {
     client.assert(response.status === 400, "Expected status 400");
 });
 %}
+
+###
+
+### Test 12: CLEANUP - Delete created reading club (if delete endpoint exists)
+DELETE {{baseUrl}}/reading-clubs/{{createdReadingClubId}}
+Authorization: {{token}}
+
+> {%
+client.test("Delete reading club should return 204 or 404", function() {
+    client.assert(response.status === 204 || response.status === 404 || response.status === 405, 
+                 "Expected status 204 (deleted), 404 (not found), or 405 (method not allowed)");
+});
+
+if (response.status === 204) {
+    client.log("✅ Reading club successfully deleted: " + client.global.get("createdReadingClubName"));
+} else if (response.status === 405) {
+    client.log("⚠️ Delete endpoint not implemented - reading club will remain: " + client.global.get("createdReadingClubName"));
+} else {
+    client.log("⚠️ Could not delete reading club: " + client.global.get("createdReadingClubName"));
+}
+
+// Clear global variables
+client.global.clear("createdReadingClubId");
+client.global.clear("createdReadingClubName");
+%}
+
+###

@@ -1,6 +1,5 @@
 ### Variables
 @baseUrl = http://localhost:8080
-@token = Bearer YOUR_JWT_TOKEN_HERE
 @exchangeId = 550e8400-e29b-41d4-a716-446655440000
 @userId = 550e8400-e29b-41d4-a716-446655440001
 @requesterId = 550e8400-e29b-41d4-a716-446655440002
@@ -14,10 +13,10 @@ Content-Type: application/json
 Authorization: {{token}}
 
 {
-  "requesterId": "{{requesterId}}",
-  "ownerId": "{{ownerId}}",
-  "ownerBookIds": ["{{ownerBookId}}"],
-  "requesterBookIds": ["{{requesterBookId}}"]
+  "requester_id": "{{requesterId}}",
+  "owner_id": "{{ownerId}}",
+  "owner_book_ids": ["{{ownerBookId}}"],
+  "requester_book_ids": ["{{requesterBookId}}"]
 }
 
 > {%
@@ -28,8 +27,8 @@ client.test("Create exchange should return 201 or 409", function() {
 if (response.status === 201) {
     client.test("Response should contain exchange data", function() {
         client.assert(response.body.id !== undefined, "Exchange ID should be present");
-        client.assert(response.body.requesterId === "{{requesterId}}", "Requester ID should match");
-        client.assert(response.body.ownerId === "{{ownerId}}", "Owner ID should match");
+        client.assert(response.body.requester_id === "{{requesterId}}", "Requester ID should match");
+        client.assert(response.body.owner_id === "{{ownerId}}", "Owner ID should match");
         client.assert(response.body.status !== undefined, "Status should be present");
     });
     
@@ -52,8 +51,8 @@ if (response.status === 200) {
     client.test("Response should contain exchange data", function() {
         client.assert(response.body.id !== undefined, "Exchange ID should be present");
         client.assert(response.body.status !== undefined, "Status should be present");
-        client.assert(response.body.offeredBookId !== undefined, "Offered book ID should be present");
-        client.assert(response.body.requestedBookId !== undefined, "Requested book ID should be present");
+        client.assert(response.body.offered_book_id !== undefined, "Offered book ID should be present");
+        client.assert(response.body.requested_book_id !== undefined, "Requested book ID should be present");
     });
 }
 %}
@@ -176,8 +175,8 @@ Content-Type: application/json
 Authorization: {{token}}
 
 {
-  "ownerBookIds": ["{{ownerBookId}}"],
-  "requesterBookIds": ["{{requesterBookId}}"]
+  "owner_book_ids": ["{{ownerBookId}}"],
+  "requester_book_ids": ["{{requesterBookId}}"]
 }
 
 > {%
@@ -216,10 +215,10 @@ Content-Type: application/json
 Authorization: {{token}}
 
 {
-  "requesterId": "{{userId}}",
-  "ownerId": "{{userId}}",
-  "ownerBookIds": ["{{ownerBookId}}"],
-  "requesterBookIds": ["{{requesterBookId}}"]
+  "requester_id": "{{userId}}",
+  "owner_id": "{{userId}}",
+  "owner_book_ids": ["{{ownerBookId}}"],
+  "requester_book_ids": ["{{requesterBookId}}"]
 }
 
 > {%
@@ -235,10 +234,10 @@ POST {{baseUrl}}/exchanges
 Content-Type: application/json
 
 {
-  "requesterId": "{{requesterId}}",
-  "ownerId": "{{ownerId}}",
-  "ownerBookIds": ["{{ownerBookId}}"],
-  "requesterBookIds": ["{{requesterBookId}}"]
+  "requester_id": "{{requesterId}}",
+  "owner_id": "{{ownerId}}",
+  "owner_book_ids": ["{{ownerBookId}}"],
+  "requester_book_ids": ["{{requesterBookId}}"]
 }
 
 > {%

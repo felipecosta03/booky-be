@@ -1,6 +1,5 @@
 ### Variables
 @baseUrl = http://localhost:8080
-@token = Bearer YOUR_JWT_TOKEN_HERE
 @userId = user-004
 @bookId = 550e8400-e29b-41d4-a716-446655440001
 @isbn = 9781234567890
@@ -169,7 +168,7 @@ client.test("Update exchange preference should return 200 or 404", function() {
 
 if (response.status === 200) {
     client.test("Response should contain updated preference", function() {
-        client.assert(response.body.wantsToExchange === false, "Exchange preference should be updated");
+        client.assert(response.body.wants_to_exchange === false, "Exchange preference should be updated");
     });
 }
 %}
@@ -245,7 +244,7 @@ client.test("Update with invalid status should return 400", function() {
 GET {{baseUrl}}/books/search?q=test
 
 > {%
-client.test("Search without auth should return 401 or 200", function() {
-    client.assert(response.status === 401 || response.status === 200, "Expected status 401 (if auth enabled) or 200 (if auth disabled)");
+client.test("Search without auth should return 403or 200", function() {
+    client.assert(response.status === 403 || response.status === 200, "Expected status 403 (if auth enabled) or 200 (if auth disabled)");
 });
 %}

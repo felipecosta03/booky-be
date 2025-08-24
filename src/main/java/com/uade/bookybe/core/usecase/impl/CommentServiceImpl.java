@@ -1,5 +1,6 @@
 package com.uade.bookybe.core.usecase.impl;
 
+import com.uade.bookybe.core.exception.NotFoundException;
 import com.uade.bookybe.core.model.Comment;
 import com.uade.bookybe.core.usecase.CommentService;
 import com.uade.bookybe.infraestructure.entity.CommentEntity;
@@ -32,24 +33,25 @@ public class CommentServiceImpl implements CommentService {
     // Verificar que el post existe
     if (!postRepository.existsById(postId)) {
       log.warn("Post not found with ID: {}", postId);
-      return Optional.empty();
+      throw new NotFoundException("Post not found with ID: " + postId);
     }
 
     try {
-      CommentEntity commentEntity = CommentEntity.builder()
-          .id(UUID.randomUUID().toString())
-          .body(body)
-          .userId(userId)
-          .postId(postId)
-          .dateCreated(LocalDateTime.now())
-          .build();
+      CommentEntity commentEntity =
+          CommentEntity.builder()
+              .id(UUID.randomUUID().toString())
+              .body(body)
+              .userId(userId)
+              .postId(postId)
+              .dateCreated(LocalDateTime.now())
+              .build();
 
       CommentEntity savedComment = commentRepository.save(commentEntity);
       Comment comment = CommentEntityMapper.INSTANCE.toModel(savedComment);
-      
+
       log.info("Comment created successfully with ID: {}", savedComment.getId());
       return Optional.of(comment);
-      
+
     } catch (Exception e) {
       log.error("Error creating comment for post: {} by user: {}", postId, userId, e);
       return Optional.empty();
@@ -60,18 +62,16 @@ public class CommentServiceImpl implements CommentService {
   @Transactional(readOnly = true)
   public Optional<Comment> getCommentById(String commentId) {
     log.info("Getting comment by ID: {}", commentId);
-    
-    return commentRepository.findById(commentId)
-        .map(CommentEntityMapper.INSTANCE::toModel);
+
+    return commentRepository.findById(commentId).map(CommentEntityMapper.INSTANCE::toModel);
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<Comment> getCommentsByPostId(String postId) {
     log.info("Getting comments for post: {}", postId);
-    
-    return commentRepository.findByPostIdWithUserOrderByDateCreatedDesc(postId)
-        .stream()
+
+    return commentRepository.findByPostIdWithUserOrderByDateCreatedDesc(postId).stream()
         .map(CommentEntityMapper.INSTANCE::toModel)
         .collect(Collectors.toList());
   }
@@ -80,9 +80,8 @@ public class CommentServiceImpl implements CommentService {
   @Transactional(readOnly = true)
   public List<Comment> getCommentsByUserId(String userId) {
     log.info("Getting comments for user: {}", userId);
-    
-    return commentRepository.findByUserIdOrderByDateCreatedDesc(userId)
-        .stream()
+
+    return commentRepository.findByUserIdOrderByDateCreatedDesc(userId).stream()
         .map(CommentEntityMapper.INSTANCE::toModel)
         .collect(Collectors.toList());
   }
@@ -98,7 +97,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     CommentEntity commentEntity = commentEntityOpt.get();
-    
+
     // Verificar que el usuario es el autor del comentario
     if (!commentEntity.getUserId().equals(userId)) {
       log.warn("User {} tried to update comment {} but is not the author", userId, commentId);
@@ -107,7 +106,7 @@ public class CommentServiceImpl implements CommentService {
 
     commentEntity.setBody(body);
     CommentEntity updatedComment = commentRepository.save(commentEntity);
-    
+
     log.info("Comment updated successfully: {}", commentId);
     return Optional.of(CommentEntityMapper.INSTANCE.toModel(updatedComment));
   }
@@ -123,7 +122,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     CommentEntity commentEntity = commentEntityOpt.get();
-    
+
     // Verificar que el usuario es el autor del comentario
     if (!commentEntity.getUserId().equals(userId)) {
       log.warn("User {} tried to delete comment {} but is not the author", userId, commentId);
@@ -139,4 +138,4 @@ public class CommentServiceImpl implements CommentService {
       return false;
     }
   }
-} 
+}

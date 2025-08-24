@@ -1,11 +1,10 @@
 ### Variables
 @baseUrl = http://localhost:8080
-@token = Bearer YOUR_JWT_TOKEN_HERE
 @postId = 550e8400-e29b-41d4-a716-446655440000
 @userId = 550e8400-e29b-41d4-a716-446655440001
 @communityId = 550e8400-e29b-41d4-a716-446655440002
 
-### Test 1: Create a general post (without image)
+### Test 1: Create a general post with random content (without image)
 POST {{baseUrl}}/posts
 Content-Type: multipart/form-data; boundary=boundary123
 Authorization: {{token}}
@@ -15,8 +14,8 @@ Content-Disposition: form-data; name="post"
 Content-Type: application/json
 
 {
-  "body": "Este es un post de prueba general",
-  "communityId": null
+  "body": "Este es un post de prueba general - {{$timestamp}}",
+  "community_id": null
 }
 --boundary123--
 
@@ -27,12 +26,14 @@ client.test("Create general post should return 201", function() {
 
 client.test("Response should contain post data", function() {
     client.assert(response.body.id !== undefined, "Post ID should be present");
-    client.assert(response.body.body === "Este es un post de prueba general", "Post body should match");
-    client.assert(response.body.userId !== undefined, "User ID should be present");
-    client.assert(response.body.dateCreated !== undefined, "Date created should be present");
+    client.assert(response.body.body !== undefined, "Post body should be present");
+    client.assert(response.body.body.includes("Este es un post de prueba general"), "Post body should contain expected text");
+    client.assert(response.body.user_id !== undefined, "User ID should be present");
+    client.assert(response.body.date_created !== undefined, "Date created should be present");
 });
 
 client.global.set("createdPostId", response.body.id);
+client.global.set("createdPostBody", response.body.body);
 %}
 
 ###
@@ -48,7 +49,7 @@ Content-Type: application/json
 
 {
   "body": "Este es un post para una comunidad específica",
-  "communityId": "{{communityId}}"
+  "community_id": "{{communityId}}"
 }
 --boundary456--
 
@@ -58,7 +59,7 @@ client.test("Create community post should return 201", function() {
 });
 
 client.test("Response should contain community data", function() {
-    client.assert(response.body.communityId === "{{communityId}}", "Community ID should match");
+    client.assert(response.body.community_id === "{{communityId}}", "Community ID should match");
 });
 %}
 
@@ -154,7 +155,7 @@ Authorization: {{token}}
 
 {
   "body": "Contenido actualizado del post",
-  "communityId": null
+  "community_id": null
 }
 
 > {%
@@ -205,7 +206,7 @@ Content-Type: application/json
 
 {
   "body": "Post sin autenticación",
-  "communityId": null
+  "community_id": null
 }
 --boundary789--
 
@@ -228,7 +229,7 @@ Content-Type: application/json
 
 {
   "body": "",
-  "communityId": "invalid-community-id"
+  "community_id": "invalid-community-id"
 }
 --boundary999--
 
@@ -237,4 +238,31 @@ client.test("Create post with invalid data should return 400", function() {
     client.assert(response.status === 400 || response.status === 201, "Expected status 400 for invalid data or 201 if validation passes");
 });
 %}
+
+###
+
+### Test 13: CLEANUP - Delete created post
+DELETE {{baseUrl}}/posts/{{createdPostId}}
+Authorization: {{token}}
+
+> {%
+client.test("Delete post should return 204 or 404", function() {
+    client.assert(response.status === 204 || response.status === 404 || response.status === 403, 
+                 "Expected status 204 (deleted), 404 (not found), or 403 (forbidden)");
+});
+
+if (response.status === 204) {
+    client.log("✅ Post successfully deleted: " + client.global.get("createdPostBody"));
+} else if (response.status === 403) {
+    client.log("⚠️ Delete forbidden - post will remain: " + client.global.get("createdPostBody"));
+} else {
+    client.log("⚠️ Could not delete post: " + client.global.get("createdPostBody"));
+}
+
+// Clear global variables
+client.global.clear("createdPostId");
+client.global.clear("createdPostBody");
+%}
+
+###
 

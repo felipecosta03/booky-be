@@ -53,12 +53,14 @@ public class UserServiceImpl implements UserService {
 
     // Actualizar dirección si se proporciona
     if (user.getAddress() != null) {
-      AddressEntity addressEntity = new AddressEntity();
-      addressEntity.setId(user.getAddress().getId());
-      addressEntity.setState(user.getAddress().getState());
-      addressEntity.setCountry(user.getAddress().getCountry());
-      addressEntity.setLongitude(user.getAddress().getLongitude());
-      addressEntity.setLatitude(user.getAddress().getLatitude());
+      AddressEntity addressEntity =
+          AddressEntity.builder()
+              .id(UUID.randomUUID().toString())
+              .state(user.getAddress().getState())
+              .country(user.getAddress().getCountry())
+              .longitude(user.getAddress().getLongitude())
+              .latitude(user.getAddress().getLatitude())
+              .build();
       existing.setAddress(addressEntity);
     }
 

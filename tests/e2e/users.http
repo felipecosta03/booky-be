@@ -122,7 +122,13 @@ Content-Type: application/json
   "id": "{{testUserId}}",
   "name": "UpdatedName",
   "lastname": "UpdatedLastname",
-  "description": "Updated bio for testing"
+  "description": "Updated bio for testing",
+  "address": {
+    "state": "TestState",
+    "country": "TestCountry",
+    "longitude": -58.3816,
+    "latitude": -34.6037
+  }
 }
 --boundary123--
 
@@ -136,6 +142,11 @@ if (response.status === 200) {
         client.assert(response.body.name === "UpdatedName", "Name should be updated");
         client.assert(response.body.lastname === "UpdatedLastname", "Lastname should be updated");
         client.assert(response.body.description === "Updated bio for testing", "Description should be updated");
+        client.assert(response.body.address.id != undefined, "Address ID should be present");
+        client.assert(response.body.address.state === "TestState", "State should be updated");
+        client.assert(response.body.address.country === "TestCountry", "Country should be updated");
+        client.assert(response.body.address.longitude === -58.3816, "Longitude should be updated");
+        client.assert(response.body.address.latitude === -34.6037, "Latitude should be updated");
     });
     client.log("✅ User profile updated: " + response.body.username);
 }

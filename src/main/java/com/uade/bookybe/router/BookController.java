@@ -2,6 +2,7 @@ package com.uade.bookybe.router;
 
 import com.uade.bookybe.core.model.Book;
 import com.uade.bookybe.core.model.UserBook;
+import com.uade.bookybe.core.model.constant.BookStatus;
 import com.uade.bookybe.core.usecase.BookService;
 import com.uade.bookybe.router.dto.book.*;
 import com.uade.bookybe.router.mapper.BookDtoMapper;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -45,10 +47,12 @@ public class BookController {
         @ApiResponse(responseCode = "404", description = "Book not found", content = @Content),
         @ApiResponse(responseCode = "409", description = "Book already in library", content = @Content)
       })
-  @PostMapping("/users/{userId}/library")
+  @PostMapping("/library")
   public ResponseEntity<UserBookDto> addBookToUserLibrary(
-      @Parameter(description = "User ID", required = true) @PathVariable String userId,
-      @Parameter(description = "Book data", required = true) @Valid @RequestBody AddBookToLibraryDto dto) {
+      @Parameter(description = "Book data", required = true) @Valid @RequestBody AddBookToLibraryDto dto,
+      Authentication authentication) {
+    
+    String userId = authentication.getName();
     
     log.info("Adding book to library for user: {}", userId);
     
@@ -67,7 +71,7 @@ public class BookController {
 
   @Operation(
       summary = "Get user library",
-      description = "Retrieves all books in user's library")
+      description = "Retrieves books from user's library with optional filters for favorites and status")
   @ApiResponses(
       value = {
         @ApiResponse(
@@ -75,37 +79,15 @@ public class BookController {
             description = "Library retrieved successfully",
             content = @Content(mediaType = "application/json"))
       })
-  @GetMapping("/users/{userId}/library")
+  @GetMapping("/library/{userId}")
   public ResponseEntity<List<UserBookDto>> getUserLibrary(
-      @Parameter(description = "User ID", required = true) @PathVariable String userId) {
+      @Parameter(description = "User ID", required = true) @PathVariable String userId,
+      @Parameter(description = "Filter by favorites only") @RequestParam(required = false) Boolean favorites,
+      @Parameter(description = "Filter by book status") @RequestParam(required = false) BookStatus status) {
     
-    log.info("Getting library for user: {}", userId);
+    log.info("Getting library for user: {} with filters - favorites: {}, status: {}", userId, favorites, status);
     
-    List<UserBook> userBooks = bookService.getUserLibrary(userId);
-    List<UserBookDto> userBookDtos = userBooks.stream()
-        .map(BookDtoMapper.INSTANCE::toUserBookDto)
-        .collect(Collectors.toList());
-    
-    return ResponseEntity.ok(userBookDtos);
-  }
-
-  @Operation(
-      summary = "Get user favorite books",
-      description = "Retrieves all favorite books of a user")
-  @ApiResponses(
-      value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Favorite books retrieved successfully",
-            content = @Content(mediaType = "application/json"))
-      })
-  @GetMapping("/users/{userId}/favorites")
-  public ResponseEntity<List<UserBookDto>> getUserFavoriteBooks(
-      @Parameter(description = "User ID", required = true) @PathVariable String userId) {
-    
-    log.info("Getting favorite books for user: {}", userId);
-    
-    List<UserBook> userBooks = bookService.getUserFavoriteBooks(userId);
+    List<UserBook> userBooks = bookService.getUserLibraryFiltered(userId, favorites, status);
     List<UserBookDto> userBookDtos = userBooks.stream()
         .map(BookDtoMapper.INSTANCE::toUserBookDto)
         .collect(Collectors.toList());
@@ -149,11 +131,13 @@ public class BookController {
                 schema = @Schema(implementation = UserBookDto.class))),
         @ApiResponse(responseCode = "404", description = "Book not found in user library", content = @Content)
       })
-  @PutMapping("/users/{userId}/books/{bookId}/status")
+  @PutMapping("/{bookId}/status")
   public ResponseEntity<UserBookDto> updateBookStatus(
-      @Parameter(description = "User ID", required = true) @PathVariable String userId,
       @Parameter(description = "Book ID", required = true) @PathVariable String bookId,
-      @Parameter(description = "Status update data", required = true) @Valid @RequestBody UpdateStatusDto dto) {
+      @Parameter(description = "Status update data", required = true) @Valid @RequestBody UpdateStatusDto dto,
+      Authentication authentication) {
+    
+    String userId = authentication.getName();
     
     log.info("Updating book status for user: {}, book: {}", userId, bookId);
     
@@ -182,11 +166,13 @@ public class BookController {
                 schema = @Schema(implementation = UserBookDto.class))),
         @ApiResponse(responseCode = "404", description = "Book not found in user library", content = @Content)
       })
-  @PutMapping("/users/{userId}/books/{bookId}/exchange")
+  @PutMapping("/{bookId}/exchange")
   public ResponseEntity<UserBookDto> updateExchangePreference(
-      @Parameter(description = "User ID", required = true) @PathVariable String userId,
       @Parameter(description = "Book ID", required = true) @PathVariable String bookId,
-      @Parameter(description = "Exchange preference data", required = true) @Valid @RequestBody UpdateExchangePreferenceDto dto) {
+      @Parameter(description = "Exchange preference data", required = true) @Valid @RequestBody UpdateExchangePreferenceDto dto,
+      Authentication authentication) {
+    
+    String userId = authentication.getName();
     
     log.info("Updating exchange preference for user: {}, book: {}", userId, bookId);
     
@@ -215,10 +201,12 @@ public class BookController {
                 schema = @Schema(implementation = UserBookDto.class))),
         @ApiResponse(responseCode = "404", description = "Book not found in user library", content = @Content)
       })
-  @PutMapping("/users/{userId}/books/{bookId}/favorite")
+  @PutMapping("/{bookId}/favorite")
   public ResponseEntity<UserBookDto> toggleBookFavorite(
-      @Parameter(description = "User ID", required = true) @PathVariable String userId,
-      @Parameter(description = "Book ID", required = true) @PathVariable String bookId) {
+      @Parameter(description = "Book ID", required = true) @PathVariable String bookId,
+      Authentication authentication) {
+    
+    String userId = authentication.getName();
     
     log.info("Toggling favorite for user: {}, book: {}", userId, bookId);
     

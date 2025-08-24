@@ -55,7 +55,7 @@ if (response.status === 200) {
 ###
 
 ### Test 4: Add book to user library
-POST {{baseUrl}}/books/users/{{userId}}/library
+POST {{baseUrl}}/books/library
 Content-Type: application/json
 Authorization: {{token}}
 
@@ -81,8 +81,8 @@ if (response.status === 200) {
 
 ###
 
-### Test 5: Get user library
-GET {{baseUrl}}/books/users/{{userId}}/library
+### Test 5: Get user library (all books)
+GET {{baseUrl}}/books/library/{{userId}}
 Authorization: {{token}}
 
 > {%
@@ -98,11 +98,43 @@ client.test("Response should be an array", function() {
 ###
 
 ### Test 6: Get user favorite books
-GET {{baseUrl}}/books/users/{{userId}}/favorites
+GET {{baseUrl}}/books/library/{{userId}}?favorites=true
 Authorization: {{token}}
 
 > {%
 client.test("Get user favorites should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 6.1: Get user books by status
+GET {{baseUrl}}/books/library/{{userId}}?status=READING
+Authorization: {{token}}
+
+> {%
+client.test("Get books by status should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should be an array", function() {
+    client.assert(Array.isArray(response.body), "Response should be an array");
+});
+%}
+
+###
+
+### Test 6.2: Get user favorite books that are being read
+GET {{baseUrl}}/books/library/{{userId}}?favorites=true&status=READING
+Authorization: {{token}}
+
+> {%
+client.test("Get favorite books being read should return 200", function() {
     client.assert(response.status === 200, "Expected status 200");
 });
 
@@ -130,7 +162,7 @@ client.test("Response should be an array", function() {
 ###
 
 ### Test 8: Update book status
-PUT {{baseUrl}}/books/users/{{userId}}/books/{{bookId}}/status
+PUT {{baseUrl}}/books/{{bookId}}/status
 Content-Type: application/json
 Authorization: {{token}}
 
@@ -153,7 +185,7 @@ if (response.status === 200) {
 ###
 
 ### Test 9: Update exchange preference
-PUT {{baseUrl}}/books/users/{{userId}}/books/{{bookId}}/exchange
+PUT {{baseUrl}}/books/{{bookId}}/exchange
 Content-Type: application/json
 Authorization: {{token}}
 
@@ -176,7 +208,7 @@ if (response.status === 200) {
 ###
 
 ### Test 10: Toggle book favorite
-PUT {{baseUrl}}/books/users/{{userId}}/books/{{bookId}}/favorite
+PUT {{baseUrl}}/books/{{bookId}}/favorite
 Authorization: {{token}}
 
 > {%
@@ -206,7 +238,7 @@ client.test("Search with empty query should return 400 or 200", function() {
 ###
 
 ### Test 12: Add book with invalid ISBN
-POST {{baseUrl}}/books/users/{{userId}}/library
+POST {{baseUrl}}/books/library
 Content-Type: application/json
 Authorization: {{token}}
 
@@ -224,7 +256,7 @@ client.test("Add invalid book should return 400 or 404", function() {
 ###
 
 ### Test 13: Update book status with invalid status
-PUT {{baseUrl}}/books/users/{{userId}}/books/{{bookId}}/status
+PUT {{baseUrl}}/books/{{bookId}}/status
 Content-Type: application/json
 Authorization: {{token}}
 

@@ -1,5 +1,6 @@
 package com.uade.bookybe.infraestructure.repository;
 
+import com.uade.bookybe.core.model.constant.BookStatus;
 import com.uade.bookybe.infraestructure.entity.UserBookEntity;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +29,17 @@ public interface UserBookRepository extends JpaRepository<UserBookEntity, String
   @Query(
       "SELECT ub FROM UserBookEntity ub JOIN FETCH ub.book WHERE ub.userId = :userId AND ub.favorite = true")
   List<UserBookEntity> findByUserIdAndIsFavoriteTrueWithBook(@Param("userId") String userId);
+
+  @Query("""
+    SELECT ub FROM UserBookEntity ub JOIN FETCH ub.book 
+    WHERE ub.userId = :userId 
+    AND (:favorites IS NULL OR ub.favorite = :favorites)
+    AND (:status IS NULL OR ub.status = :status)
+    """)
+  List<UserBookEntity> findByUserIdWithFilters(
+      @Param("userId") String userId,
+      @Param("favorites") Boolean favorites,
+      @Param("status") BookStatus status);
 
   @Query("SELECT ub FROM UserBookEntity ub JOIN FETCH ub.book WHERE ub.wantsToExchange = true")
   List<UserBookEntity> findByWantsToExchangeTrueWithBook();

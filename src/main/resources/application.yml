@@ -71,3 +71,10 @@ app:
   openapi:
     dev-url: ${OPENAPI_DEV_URL:http://localhost:8080}
     prod-url: ${OPENAPI_PROD_URL:http://52.15.181.167:8080}
+
+# Swagger/OpenAPI configuration
+springdoc:
+  swagger-ui:
+    operationsSorter: method
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json

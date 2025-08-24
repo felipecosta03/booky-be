@@ -214,7 +214,7 @@ if (response.status === 202) {
 ###
 
 ### Test 9: Unfollow user
-DELETE {{baseUrl}}/users/follow
+POST {{baseUrl}}/users/unfollow
 Content-Type: application/json
 Authorization: {{testAuthToken}}
 

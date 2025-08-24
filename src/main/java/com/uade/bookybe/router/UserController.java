@@ -289,7 +289,7 @@ public class UserController {
             responseCode = "400",
             description = "Unfollow failed (user was not being followed)")
       })
-  @DeleteMapping("/users/follow")
+  @PostMapping("/users/unfollow")
   public ResponseEntity<Void> unfollowUser(
       @Parameter(description = "Unfollow request data", required = true) @Valid @RequestBody FollowUserDto followDto,
       Authentication authentication) {

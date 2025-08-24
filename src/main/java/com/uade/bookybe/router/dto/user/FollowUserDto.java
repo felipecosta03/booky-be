@@ -1,5 +1,6 @@
 package com.uade.bookybe.router.dto.user;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -12,6 +13,7 @@ import lombok.*;
 @Schema(description = "Request to follow/unfollow a user")
 public class FollowUserDto {
     
+    @JsonProperty("target_user_id")
     @NotBlank(message = "Target user ID is required")
     @Schema(description = "ID of the user to follow/unfollow", example = "user-123", required = true)
     private String targetUserId;

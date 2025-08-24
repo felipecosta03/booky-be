@@ -17,4 +17,5 @@ public class Community {
   private String name;
   private String adminId;
   private User admin;
+  private long memberCount; // Campo calculado dinámicamente por el service
 } 

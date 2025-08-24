@@ -11,8 +11,6 @@ import org.mapstruct.factory.Mappers;
 public interface CommunityDtoMapper {
   CommunityDtoMapper INSTANCE = Mappers.getMapper(CommunityDtoMapper.class);
 
-  @Mapping(target = "memberCount", ignore = true)
-  @Mapping(target = "admin", source = "admin")
   CommunityDto toDto(Community model);
 
   Community toModel(CommunityDto dto);

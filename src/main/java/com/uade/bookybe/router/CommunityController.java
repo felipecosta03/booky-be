@@ -4,7 +4,7 @@ import com.uade.bookybe.core.model.Community;
 import com.uade.bookybe.core.usecase.CommunityService;
 import com.uade.bookybe.router.dto.community.CommunityDto;
 import com.uade.bookybe.router.dto.community.CreateCommunityDto;
-import com.uade.bookybe.router.mapper.CommunityDtoMapperWithMemberCount;
+import com.uade.bookybe.router.mapper.CommunityDtoMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.*;
 public class CommunityController {
 
   private final CommunityService communityService;
-  private final CommunityDtoMapperWithMemberCount communityDtoMapperWithMemberCount;
 
   @Operation(
       summary = "Crear nueva comunidad",
@@ -58,7 +57,7 @@ public class CommunityController {
     String adminId = authentication.getName();
     
     return communityService.createCommunity(adminId, createCommunityDto.getName(), createCommunityDto.getDescription())
-        .map(communityDtoMapperWithMemberCount::toDtoWithMemberCount)
+        .map(CommunityDtoMapper.INSTANCE::toDto)
         .map(communityDto -> {
           log.info("Community created successfully with ID: {}", communityDto.getId());
           return ResponseEntity.status(HttpStatus.CREATED).body(communityDto);
@@ -85,7 +84,7 @@ public class CommunityController {
 
     List<Community> communities = communityService.getAllCommunities();
     List<CommunityDto> communityDtos = communities.stream()
-        .map(communityDtoMapperWithMemberCount::toDtoWithMemberCount)
+        .map(CommunityDtoMapper.INSTANCE::toDto)
         .collect(Collectors.toList());
 
     log.info("Retrieved {} communities", communityDtos.size());
@@ -110,7 +109,7 @@ public class CommunityController {
     log.info("Getting community by ID: {}", id);
 
     return communityService.getCommunityById(id)
-        .map(communityDtoMapperWithMemberCount::toDtoWithMemberCount)
+        .map(CommunityDtoMapper.INSTANCE::toDto)
         .map(ResponseEntity::ok)
         .orElseGet(() -> {
           log.warn("Community not found with ID: {}", id);
@@ -136,7 +135,7 @@ public class CommunityController {
 
     List<Community> communities = communityService.getUserCommunities(userId);
     List<CommunityDto> communityDtos = communities.stream()
-        .map(communityDtoMapperWithMemberCount::toDtoWithMemberCount)
+        .map(CommunityDtoMapper.INSTANCE::toDto)
         .collect(Collectors.toList());
 
     log.info("Retrieved {} communities for user: {}", communityDtos.size(), userId);
@@ -217,10 +216,38 @@ public class CommunityController {
 
     List<Community> communities = communityService.searchCommunities(q);
     List<CommunityDto> communityDtos = communities.stream()
-        .map(communityDtoMapperWithMemberCount::toDtoWithMemberCount)
+        .map(CommunityDtoMapper.INSTANCE::toDto)
         .collect(Collectors.toList());
 
     log.info("Found {} communities for query: {}", communityDtos.size(), q);
     return ResponseEntity.ok(communityDtos);
+  }
+
+  @Operation(
+      summary = "Eliminar comunidad",
+      description = "Elimina una comunidad y todas sus relaciones (posts, comentarios, miembros). Solo el administrador puede eliminar la comunidad.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "204", description = "Comunidad eliminada exitosamente"),
+      @ApiResponse(responseCode = "403", description = "No tienes permisos para eliminar esta comunidad"),
+      @ApiResponse(responseCode = "404", description = "Comunidad no encontrada"),
+      @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+  })
+  @DeleteMapping("/{communityId}")
+  public ResponseEntity<Void> deleteCommunity(
+      @Parameter(description = "ID de la comunidad a eliminar") @PathVariable String communityId,
+      Authentication authentication) {
+    
+    String userId = authentication.getName();
+    log.info("User {} attempting to delete community: {}", userId, communityId);
+    
+    boolean deleted = communityService.deleteCommunity(communityId, userId);
+    
+    if (deleted) {
+      log.info("Community {} successfully deleted by user {}", communityId, userId);
+      return ResponseEntity.noContent().build();
+    } else {
+      log.warn("Failed to delete community {} by user {} - either not found or no permissions", communityId, userId);
+      return ResponseEntity.notFound().build();
+    }
   }
 } 

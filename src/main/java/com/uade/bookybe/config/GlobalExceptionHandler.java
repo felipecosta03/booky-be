@@ -1,23 +1,23 @@
 package com.uade.bookybe.config;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.uade.bookybe.core.exception.BadRequestException;
+import com.uade.bookybe.core.exception.ConflictException;
 import com.uade.bookybe.core.exception.NotFoundException;
+import com.uade.bookybe.core.exception.UnauthorizedException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.uade.bookybe.core.exception.UnauthorizedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 @RestControllerAdvice
 @Slf4j
@@ -26,7 +26,8 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(NotFoundException.class)
   public ResponseEntity<ErrorResponse> handleNotFoundException(
       NotFoundException ex, WebRequest request) {
-    log.warn("Resource not found: {}", ex.getMessage());
+    log.error("Resource not found: {}.", ex.getMessage(), ex);
+
 
     ErrorResponse errorResponse =
         ErrorResponse.builder()
@@ -38,6 +39,24 @@ public class GlobalExceptionHandler {
             .build();
 
     return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(ConflictException.class)
+  public ResponseEntity<ErrorResponse> handleConflictException(
+          ConflictException ex, WebRequest request) {
+    log.error("Conflict: {}.", ex.getMessage(), ex);
+
+
+    ErrorResponse errorResponse =
+            ErrorResponse.builder()
+                    .timestamp(LocalDateTime.now())
+                    .status(HttpStatus.CONFLICT.value())
+                    .error("Conflict")
+                    .message(ex.getMessage())
+                    .path(request.getDescription(false))
+                    .build();
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
   }
 
   @ExceptionHandler(UnauthorizedException.class)

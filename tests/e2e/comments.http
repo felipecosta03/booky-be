@@ -1,8 +1,9 @@
 ### Variables
 @baseUrl = http://localhost:8080
-@commentId = 550e8400-e29b-41d4-a716-446655440000
+# Usando IDs que sabemos que existen en la base de datos
+@commentId = comment-001
 @postId = post-001
-@userId = 550e8400-e29b-41d4-a716-446655440002
+@userId = 01284fa7-8a1e-463c-8b6c-c4fbaf13ca43
 
 ### Test 1: Create comment on post
 POST {{baseUrl}}/comments

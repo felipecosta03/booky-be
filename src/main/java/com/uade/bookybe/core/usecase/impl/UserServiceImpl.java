@@ -1,5 +1,6 @@
 package com.uade.bookybe.core.usecase.impl;
 
+import com.uade.bookybe.core.exception.ConflictException;
 import com.uade.bookybe.core.exception.NotFoundException;
 import com.uade.bookybe.core.model.User;
 import com.uade.bookybe.core.model.UserSignUp;
@@ -129,6 +130,13 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public Optional<User> signUp(UserSignUp userSignUp) {
+    userRepository
+        .findByEmail(userSignUp.getEmail())
+        .ifPresent(
+            (a) -> {
+              throw new ConflictException("User already exists");
+            });
+
     User user = buildUserBySignUp(userSignUp);
     UserEntity entity = UserEntityMapper.INSTANCE.toEntity(user);
     UserEntity saved = userRepository.save(entity);

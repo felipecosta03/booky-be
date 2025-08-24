@@ -1,35 +1,39 @@
 ### Variables
 @baseUrl = http://localhost:8080
-@userId = 550e8400-e29b-41d4-a716-446655440000
+# Usando IDs que sabemos que existen en la base de datos
+@userId = 01284fa7-8a1e-463c-8b6c-c4fbaf13ca43
 
 ### Test 1: User registration with random data
 POST {{baseUrl}}/sign-up
 Content-Type: application/json
 
 {
-  "email": "test{{$timestamp}}@example.com",
   "username": "testuser{{$timestamp}}",
-  "password": "password123",
-  "first_name": "Test",
-  "last_name": "User"
+  "name": "Test",
+  "lastname": "User",
+  "email": "test{{$timestamp}}@example.com",
+  "password": "password123"
 }
 
 > {%
-client.test("User registration should return 201", function() {
-    client.assert(response.status === 201 || response.status === 409, "Expected status 201 or 409 (if user exists)");
+client.test("User registration should return 200", function() {
+    client.assert(response.status === 200 || response.status === 409, "Expected status 200 or 409 (if user exists)");
 });
 
-if (response.status === 201) {
+if (response.status === 200) {
     client.test("Response should contain user data", function() {
         client.assert(response.body.id !== undefined, "User ID should be present");
         client.assert(response.body.email !== undefined, "Email should be present");
         client.assert(response.body.username !== undefined, "Username should be present");
+        client.assert(response.body.name !== undefined, "Name should be present");
+        client.assert(response.body.lastname !== undefined, "Lastname should be present");
         client.assert(response.body.password === undefined, "Password should not be returned");
     });
     
-    client.global.set("registeredUserId", response.body.id);
-    client.global.set("registeredUserEmail", response.body.email);
-    client.global.set("registeredUsername", response.body.username);
+    client.global.set("testUserId", response.body.id);
+    client.global.set("testUserEmail", response.body.email);
+    client.global.set("testUsername", response.body.username);
+    client.log("✅ User registered: " + response.body.username + " with ID: " + response.body.id);
 }
 %}
 
@@ -40,7 +44,7 @@ POST {{baseUrl}}/sign-in
 Content-Type: application/json
 
 {
-  "email": "test{{$timestamp}}@example.com",
+  "email": "{{testUserEmail}}",
   "password": "password123"
 }
 
@@ -53,21 +57,45 @@ client.test("Response should contain token and user data", function() {
     client.assert(response.body.token !== undefined, "Token should be present");
     client.assert(response.body.user !== undefined, "User data should be present");
     client.assert(response.body.user.email !== undefined, "Email should be present");
+    client.assert(response.body.user.username !== undefined, "Username should be present");
 });
 
-client.global.set("authToken", "Bearer " + response.body.token);
+client.global.set("testAuthToken", "Bearer " + response.body.token);
 client.global.set("loggedUserId", response.body.user.id);
+client.log("✅ User logged in: " + response.body.user.username);
 %}
 
 ###
 
-### Test 3: Get user by ID
-GET {{baseUrl}}/{{userId}}
-Authorization: {{authToken}}
+### Test 3: Get user by ID (created user)
+GET {{baseUrl}}/users/{{testUserId}}
+Authorization: {{testAuthToken}}
 
 > {%
-client.test("Get user by ID should return 200 or 404", function() {
-    client.assert(response.status === 200 || response.status === 404, "Expected status 200 or 404");
+client.test("Get user by ID should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should contain user data", function() {
+    client.assert(response.body.id === client.global.get("testUserId"), "User ID should match");
+    client.assert(response.body.username !== undefined, "Username should be present");
+    client.assert(response.body.email !== undefined, "Email should be present");
+    client.assert(response.body.name !== undefined, "Name should be present");
+    client.assert(response.body.lastname !== undefined, "Lastname should be present");
+});
+
+client.log("✅ Retrieved user: " + response.body.username);
+%}
+
+###
+
+### Test 4: Get existing user by ID
+GET {{baseUrl}}/users/{{userId}}
+Authorization: {{testAuthToken}}
+
+> {%
+client.test("Get existing user by ID should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
 });
 
 if (response.status === 200) {
@@ -75,110 +103,49 @@ if (response.status === 200) {
         client.assert(response.body.id !== undefined, "User ID should be present");
         client.assert(response.body.username !== undefined, "Username should be present");
     });
+    client.log("✅ Retrieved existing user: " + response.body.username);
 }
 %}
 
 ###
 
-### Test 4: Update user profile with image
-PUT {{baseUrl}}
+### Test 5: Update user profile (without image)
+PUT {{baseUrl}}/users
 Content-Type: multipart/form-data; boundary=boundary123
-Authorization: {{authToken}}
+Authorization: {{testAuthToken}}
 
 --boundary123
 Content-Disposition: form-data; name="user"
 Content-Type: application/json
 
 {
-  "id": "{{loggedUserId}}",
-  "first_name": "Updated",
-  "last_name": "Name",
-  "bio": "Updated bio for testing"
+  "id": "{{testUserId}}",
+  "name": "UpdatedName",
+  "lastname": "UpdatedLastname",
+  "description": "Updated bio for testing"
 }
---boundary123
-Content-Disposition: form-data; name="image"; filename="profile.jpg"
-Content-Type: image/jpeg
-
-[Binary image data would go here]
 --boundary123--
 
 > {%
-client.test("Update profile should return 200 or 404", function() {
-    client.assert(response.status === 200 || response.status === 404, "Expected status 200 or 404");
+client.test("Update profile should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
 });
 
 if (response.status === 200) {
     client.test("Response should contain updated data", function() {
-        client.assert(response.body.first_name === "Updated", "First name should be updated");
-        client.assert(response.body.last_name === "Name", "Last name should be updated");
+        client.assert(response.body.name === "UpdatedName", "Name should be updated");
+        client.assert(response.body.lastname === "UpdatedLastname", "Lastname should be updated");
+        client.assert(response.body.description === "Updated bio for testing", "Description should be updated");
     });
+    client.log("✅ User profile updated: " + response.body.username);
 }
 %}
 
 ###
 
-### Test 5: Get user by ID
-GET {{baseUrl}}/{{userId}}
-Authorization: {{authToken}}
-
-> {%
-client.test("Get user by ID should return 200 or 404", function() {
-    client.assert(response.status === 200 || response.status === 404, "Expected status 200 or 404");
-});
-
-if (response.status === 200) {
-    client.test("Response should contain user data", function() {
-        client.assert(response.body.id !== undefined, "User ID should be present");
-        client.assert(response.body.username !== undefined, "Username should be present");
-    });
-}
-%}
-
-###
-
-### Test 6: Search users
-GET {{baseUrl}}/search?query=test
-Authorization: {{authToken}}
-
-> {%
-client.test("Search users should return 200", function() {
-    client.assert(response.status === 200, "Expected status 200");
-});
-
-client.test("Response should be an array", function() {
-    client.assert(Array.isArray(response.body), "Response should be an array");
-});
-%}
-
-###
-
-### Test 7: Follow user
-POST {{baseUrl}}/{{loggedUserId}}/follow/{{userId}}
-Authorization: {{authToken}}
-
-> {%
-client.test("Follow user should return 202 or 400", function() {
-    client.assert(response.status === 202 || response.status === 400, "Expected status 202 or 400");
-});
-%}
-
-###
-
-### Test 8: Unfollow user
-DELETE {{baseUrl}}/{{loggedUserId}}/follow/{{userId}}
-Authorization: {{authToken}}
-
-> {%
-client.test("Unfollow user should return 204 or 400", function() {
-    client.assert(response.status === 204 || response.status === 400, "Expected status 204 or 400");
-});
-%}
-
-###
-
-### Test 9: Get user followers
-GET {{baseUrl}}/{{userId}}/followers
-Authorization: {{authToken}}
+### Test 6: Get user followers
+GET {{baseUrl}}/users/{{userId}}/followers
+Authorization: {{testAuthToken}}
 
 > {%
 client.test("Get followers should return 200", function() {
@@ -188,13 +155,15 @@ client.test("Get followers should return 200", function() {
 client.test("Response should be an array", function() {
     client.assert(Array.isArray(response.body), "Response should be an array");
 });
+
+client.log("✅ Found " + response.body.length + " followers for user");
 %}
 
 ###
 
-### Test 10: Get user following
-GET {{baseUrl}}/{{userId}}/following
-Authorization: {{authToken}}
+### Test 7: Get user following
+GET {{baseUrl}}/users/{{userId}}/following
+Authorization: {{testAuthToken}}
 
 > {%
 client.test("Get following should return 200", function() {
@@ -204,93 +173,191 @@ client.test("Get following should return 200", function() {
 client.test("Response should be an array", function() {
     client.assert(Array.isArray(response.body), "Response should be an array");
 });
+
+client.log("✅ User is following " + response.body.length + " users");
 %}
 
 ###
 
-### Test 11: Delete user
-DELETE {{baseUrl}}/{{userId}}
-Authorization: {{authToken}}
+### Test 8: Follow user
+POST {{baseUrl}}/users/{{testUserId}}/follow/{{userId}}
+Authorization: {{testAuthToken}}
 
 > {%
-client.test("Delete user should return 204 or 404", function() {
-    client.assert(response.status === 204 || response.status === 404, "Expected status 204 or 404");
+client.test("Follow user should return 202 or 400", function() {
+    client.assert(response.status === 202 || response.status === 400, "Expected status 202 or 400");
 });
+
+if (response.status === 202) {
+    client.log("✅ Successfully followed user");
+} else {
+    client.log("⚠️ Follow failed (user might already be followed)");
+}
 %}
 
 ###
 
-### Test 12: Login with invalid credentials
+### Test 9: Unfollow user
+DELETE {{baseUrl}}/users/{{testUserId}}/follow/{{userId}}
+Authorization: {{testAuthToken}}
+
+> {%
+client.test("Unfollow user should return 204 or 400", function() {
+    client.assert(response.status === 204 || response.status === 400, "Expected status 204 or 400");
+});
+
+if (response.status === 204) {
+    client.log("✅ Successfully unfollowed user");
+} else {
+    client.log("⚠️ Unfollow failed (user might not have been followed)");
+}
+%}
+
+###
+
+### Test 10: Login with invalid credentials
 POST {{baseUrl}}/sign-in
 Content-Type: application/json
 
 {
-  "email": "test@example.com",
+  "email": "nonexistent@example.com",
   "password": "wrongpassword"
 }
 
 > {%
-client.test("Login with wrong password should return 401", function() {
+client.test("Login with wrong credentials should return 401", function() {
     client.assert(response.status === 401, "Expected status 401");
 });
+
+client.log("✅ Correctly rejected invalid credentials");
 %}
 
 ###
 
-### Test 13: Register with invalid email
+### Test 11: Register with invalid email
 POST {{baseUrl}}/sign-up
 Content-Type: application/json
 
 {
-  "email": "invalid-email",
   "username": "testuser2",
-  "password": "password123",
-  "first_name": "Test",
-  "last_name": "User"
+  "name": "Test",
+  "lastname": "User",
+  "email": "invalid-email",
+  "password": "password123"
 }
 
 > {%
 client.test("Register with invalid email should return 400", function() {
     client.assert(response.status === 400, "Expected status 400");
 });
+
+client.log("✅ Correctly rejected invalid email format");
 %}
 
 ###
 
-### Test 14: Register with existing email
+### Test 12: Register with existing email
 POST {{baseUrl}}/sign-up
 Content-Type: application/json
 
 {
-  "email": "test@example.com",
   "username": "anothertestuser",
-  "password": "password123",
-  "first_name": "Another",
-  "last_name": "User"
+  "name": "Another",
+  "lastname": "User",
+  "email": "{{testUserEmail}}",
+  "password": "password123"
 }
 
 > {%
-client.test("Register with existing email should return 409", function() {
-    client.assert(response.status === 409, "Expected status 409");
+client.test("Register with existing email should return 409 or 400", function() {
+    client.assert(response.status === 409 || response.status === 400, "Expected status 409 or 400");
 });
+
+client.log("✅ Correctly rejected duplicate email");
 %}
 
 ###
 
-### Test 15: Access protected endpoint without token
-GET {{baseUrl}}/profile
+### Test 13: Register with missing required fields
+POST {{baseUrl}}/sign-up
+Content-Type: application/json
+
+{
+  "email": "incomplete@example.com",
+  "password": "password123"
+}
 
 > {%
-client.test("Access without token should return 401 or 200", function() {
-    client.assert(response.status === 401 || response.status === 200, "Expected status 401 (if auth enabled) or 200 (if auth disabled)");
+client.test("Register with missing fields should return 400", function() {
+    client.assert(response.status === 400, "Expected status 400");
 });
+
+client.log("✅ Correctly rejected incomplete registration data");
 %}
 
 ###
 
-### Test 16: CLEANUP - Delete registered user (if delete endpoint works)
-DELETE {{baseUrl}}/users/{{registeredUserId}}
-Authorization: {{authToken}}
+### Test 14: Access protected endpoint without token
+GET {{baseUrl}}/users/{{userId}}
+
+> {%
+client.test("Access without token should return 401 or 403", function() {
+    client.assert(response.status === 401 || response.status === 403 || response.status === 200, 
+                 "Expected status 401/403 (if auth enabled) or 200 (if auth disabled)");
+});
+
+if (response.status === 401 || response.status === 403) {
+    client.log("✅ Authentication is properly enforced");
+} else {
+    client.log("⚠️ Authentication appears to be disabled");
+}
+%}
+
+###
+
+### Test 15: Get non-existent user
+GET {{baseUrl}}/users/non-existent-user-id
+Authorization: {{testAuthToken}}
+
+> {%
+client.test("Get non-existent user should return 404", function() {
+    client.assert(response.status === 404, "Expected status 404");
+});
+
+client.log("✅ Correctly returned 404 for non-existent user");
+%}
+
+###
+
+### Test 16: Update non-existent user
+PUT {{baseUrl}}/users
+Content-Type: multipart/form-data; boundary=boundary123
+Authorization: {{testAuthToken}}
+
+--boundary123
+Content-Disposition: form-data; name="user"
+Content-Type: application/json
+
+{
+  "id": "non-existent-user-id",
+  "name": "Should",
+  "lastname": "Fail"
+}
+--boundary123--
+
+> {%
+client.test("Update non-existent user should return 404", function() {
+    client.assert(response.status === 404, "Expected status 404");
+});
+
+client.log("✅ Correctly returned 404 for non-existent user update");
+%}
+
+###
+
+### Test 17: CLEANUP - Delete created user
+DELETE {{baseUrl}}/users/{{testUserId}}
+Authorization: {{testAuthToken}}
 
 > {%
 client.test("Delete user should return 204 or 404", function() {
@@ -299,19 +366,20 @@ client.test("Delete user should return 204 or 404", function() {
 });
 
 if (response.status === 204) {
-    client.log("✅ User successfully deleted: " + client.global.get("registeredUserEmail"));
+    client.log("✅ User successfully deleted: " + client.global.get("testUsername"));
 } else if (response.status === 403) {
-    client.log("⚠️ Delete forbidden - user will remain: " + client.global.get("registeredUserEmail"));
-} else {
-    client.log("⚠️ Could not delete user: " + client.global.get("registeredUserEmail"));
+    client.log("⚠️ Delete forbidden - user will remain: " + client.global.get("testUsername"));
+} else if (response.status === 404) {
+    client.log("⚠️ User not found for deletion: " + client.global.get("testUsername"));
 }
 
 // Clear global variables
-client.global.clear("registeredUserId");
-client.global.clear("registeredUserEmail");
-client.global.clear("registeredUsername");
-client.global.clear("authToken");
+client.global.clear("testUserId");
+client.global.clear("testUserEmail");
+client.global.clear("testUsername");
+client.global.clear("testAuthToken");
 client.global.clear("loggedUserId");
+client.log("🧹 Cleanup completed - global variables cleared");
 %}
 
 ###

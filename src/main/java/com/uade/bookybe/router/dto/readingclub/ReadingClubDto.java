@@ -3,6 +3,7 @@ package com.uade.bookybe.router.dto.readingclub;
 import com.uade.bookybe.router.dto.book.BookDto;
 import com.uade.bookybe.router.dto.community.CommunityDto;
 import com.uade.bookybe.router.dto.user.UserPreviewDto;
+import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,12 +19,21 @@ public class ReadingClubDto {
   private LocalDateTime dateCreated;
   private String description;
   private LocalDateTime lastUpdated;
+  
+  @NotBlank(message = "Name is required")
   private String name;
-  private String bookId;
-  private String communityId;
+  
+  @NotBlank(message = "Book ID is required")
+  private String bookId; // OBLIGATORIO
+  
+  @NotBlank(message = "Community ID is required")
+  private String communityId; // OBLIGATORIO
+  
+  @NotBlank(message = "Moderator ID is required")
   private String moderatorId;
-  private BookDto book;
-  private CommunityDto community;
-  private UserPreviewDto moderator;
+  
+  private BookDto book; // OBLIGATORIO (enriquecido)
+  private CommunityDto community; // OBLIGATORIO (enriquecido)
+  private UserPreviewDto moderator; // OBLIGATORIO (enriquecido)
   private long memberCount;
 } 

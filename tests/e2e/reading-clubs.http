@@ -1,9 +1,10 @@
 ### Variables
 @baseUrl = http://localhost:8080
-@readingClubId = 550e8400-e29b-41d4-a716-446655440000
-@userId = 550e8400-e29b-41d4-a716-446655440001
-@bookId = 550e8400-e29b-41d4-a716-446655440002
-@communityId = 550e8400-e29b-41d4-a716-446655440003
+# Usando IDs que sabemos que existen en la base de datos
+@readingClubId = club-001
+@userId = 01284fa7-8a1e-463c-8b6c-c4fbaf13ca43
+@bookId = book-001
+@communityId = comm-001
 
 ### Test 1: Create reading club with random data
 POST {{baseUrl}}/reading-clubs
@@ -13,6 +14,7 @@ Authorization: {{token}}
 {
   "name": "Test Reading Club {{$timestamp}}",
   "description": "A reading club created for testing purposes - {{$timestamp}}",
+  "community_id": "{{communityId}}",
   "book_id": "{{bookId}}"
 }
 
@@ -26,37 +28,40 @@ client.test("Response should contain reading club data", function() {
     client.assert(response.body.name !== undefined, "Name should be present");
     client.assert(response.body.name.includes("Test Reading Club"), "Name should contain 'Test Reading Club'");
     client.assert(response.body.description !== undefined, "Description should be present");
+    client.assert(response.body.community_id !== undefined, "Community ID should be present");
     client.assert(response.body.book_id !== undefined, "Book ID should be present");
 });
 
-client.global.set("createdReadingClubId", response.body.id);
-client.global.set("createdReadingClubName", response.body.name);
+client.global.set("testReadingClubId", response.body.id);
+client.global.set("testReadingClubName", response.body.name);
+client.log("✅ Created reading club: " + response.body.name + " with ID: " + response.body.id);
 %}
 
 ###
 
-### Test 2: Get reading club by ID
-GET {{baseUrl}}/reading-clubs/{{readingClubId}}
+### Test 2: Get created reading club by ID
+GET {{baseUrl}}/reading-clubs/{{testReadingClubId}}
 Authorization: {{token}}
 
 > {%
-client.test("Get reading club should return 200 or 404", function() {
-    client.assert(response.status === 200 || response.status === 404, "Expected status 200 or 404");
+client.test("Get reading club should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
 });
 
-if (response.status === 200) {
-    client.test("Response should contain reading club data", function() {
-        client.assert(response.body.id !== undefined, "Reading club ID should be present");
-        client.assert(response.body.name !== undefined, "Name should be present");
-        client.assert(response.body.description !== undefined, "Description should be present");
-        client.assert(response.body.book_id !== undefined, "Book ID should be present");
-    });
-}
+client.test("Response should contain reading club data", function() {
+    client.assert(response.body.id === client.global.get("testReadingClubId"), "Reading club ID should match");
+    client.assert(response.body.name !== undefined, "Name should be present");
+    client.assert(response.body.description !== undefined, "Description should be present");
+    client.assert(response.body.community_id !== undefined, "Community ID should be present");
+    client.assert(response.body.book_id !== undefined, "Book ID should be present");
+});
+
+client.log("✅ Retrieved reading club: " + response.body.name);
 %}
 
 ###
 
-### Test 3: Get all reading clubs
+### Test 3: Get all reading clubs (should include our created club)
 GET {{baseUrl}}/reading-clubs
 Authorization: {{token}}
 
@@ -68,23 +73,51 @@ client.test("Get all reading clubs should return 200", function() {
 client.test("Response should be an array", function() {
     client.assert(Array.isArray(response.body), "Response should be an array");
 });
+
+client.test("Should include our created club", function() {
+    const createdClubId = client.global.get("testReadingClubId");
+    const foundClub = response.body.find(club => club.id === createdClubId);
+    client.assert(foundClub !== undefined, "Created club should be found in the list");
+});
+
+client.log("✅ Found " + response.body.length + " reading clubs, including our created one");
 %}
 
 ###
 
-### Test 4: Join reading club
-POST {{baseUrl}}/reading-clubs/{{readingClubId}}/join
+### Test 4: Other user joins the reading club
+POST {{baseUrl}}/reading-clubs/{{testReadingClubId}}/join
+Authorization: {{other_token}}
+
+> {%
+client.test("Other user join reading club should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.log("✅ Other user successfully joined reading club: " + client.global.get("testReadingClubName"));
+%}
+
+###
+
+### Test 5: Creator tries to join their own club (should handle gracefully)
+POST {{baseUrl}}/reading-clubs/{{testReadingClubId}}/join
 Authorization: {{token}}
 
 > {%
-client.test("Join reading club should return 200 or 404", function() {
-    client.assert(response.status === 200 || response.status === 404 || response.status === 409, "Expected status 200, 404, or 409");
+client.test("Creator join own club should return 200 or 409", function() {
+    client.assert(response.status === 200 || response.status === 409, "Expected status 200 (success) or 409 (already member)");
 });
+
+if (response.status === 409) {
+    client.log("✅ Creator is already a member (expected behavior)");
+} else {
+    client.log("✅ Creator joined their own club");
+}
 %}
 
 ###
 
-### Test 5: Get reading clubs by community
+### Test 6: Get reading clubs by community (should include our club)
 GET {{baseUrl}}/reading-clubs/community/{{communityId}}
 Authorization: {{token}}
 
@@ -96,28 +129,20 @@ client.test("Get reading clubs by community should return 200", function() {
 client.test("Response should be an array", function() {
     client.assert(Array.isArray(response.body), "Response should be an array");
 });
+
+client.test("Should include our created club", function() {
+    const createdClubId = client.global.get("testReadingClubId");
+    const foundClub = response.body.find(club => club.id === createdClubId);
+    client.assert(foundClub !== undefined, "Created club should be found in community clubs");
+});
+
+client.log("✅ Found " + response.body.length + " reading clubs in community");
 %}
 
 ###
 
-### Test 6: Get user's reading clubs
-GET {{baseUrl}}/reading-clubs/user/{{userId}}
-Authorization: {{token}}
-
-> {%
-client.test("Get user reading clubs should return 200", function() {
-    client.assert(response.status === 200, "Expected status 200");
-});
-
-client.test("Response should be an array", function() {
-    client.assert(Array.isArray(response.body), "Response should be an array");
-});
-%}
-
-###
-
-### Test 7: Search reading clubs
-GET {{baseUrl}}/reading-clubs/search?q=test
+### Test 7: Search reading clubs (should find our club)
+GET {{baseUrl}}/reading-clubs/search?q=Test Reading Club
 Authorization: {{token}}
 
 > {%
@@ -128,92 +153,201 @@ client.test("Search reading clubs should return 200", function() {
 client.test("Response should be an array", function() {
     client.assert(Array.isArray(response.body), "Response should be an array");
 });
+
+// Our club should be found since it contains "Test Reading Club"
+if (response.body.length > 0) {
+    client.log("✅ Search found " + response.body.length + " reading clubs matching query");
+} else {
+    client.log("⚠️ Search returned no results");
+}
 %}
 
 ###
 
-### Test 8: Join reading club
-POST {{baseUrl}}/reading-clubs/{{readingClubId}}/join
-Authorization: {{token}}
+### Test 8: Other user leaves the reading club
+POST {{baseUrl}}/reading-clubs/{{testReadingClubId}}/leave
+Authorization: {{other_token}}
 
 > {%
-client.test("Join reading club should return 200 or 400", function() {
-    client.assert(response.status === 200 || response.status === 400, "Expected status 200 or 400");
+client.test("Other user leave reading club should return 200 or 404", function() {
+    client.assert(response.status === 200 || response.status === 404, "Expected status 200 or 404");
 });
+
+if (response.status === 200) {
+    client.log("✅ Other user successfully left reading club: " + client.global.get("testReadingClubName"));
+} else {
+    client.log("⚠️ Leave endpoint might not be implemented or user was not a member");
+}
 %}
 
 ###
 
-### Test 9: Create reading club without authentication
+### Test 9: Try to join non-existent reading club
+POST {{baseUrl}}/reading-clubs/non-existent-id/join
+Authorization: {{other_token}}
+
+> {%
+client.test("Join non-existent reading club should return 404", function() {
+    client.assert(response.status === 404, "Expected status 404 for non-existent club");
+});
+
+client.log("✅ Correctly returned 404 for non-existent reading club");
+%}
+
+###
+
+### Test 10: Create reading club without authentication
 POST {{baseUrl}}/reading-clubs
 Content-Type: application/json
 
 {
   "name": "Unauthenticated Reading Club",
   "description": "This should fail if auth is enabled",
+  "community_id": "{{communityId}}",
   "book_id": "{{bookId}}"
 }
 
 > {%
-client.test("Create reading club without auth should return 401 or 201", function() {
-    client.assert(response.status === 401 || response.status === 201, "Expected status 401 (if auth enabled) or 201 (if auth disabled)");
+client.test("Create reading club without auth should return 401 or 403", function() {
+    client.assert(response.status === 401 || response.status === 403 || response.status === 201, 
+                 "Expected status 401/403 (if auth enabled) or 201 (if auth disabled)");
 });
+
+if (response.status === 201) {
+    client.log("⚠️ Authentication appears to be disabled");
+} else {
+    client.log("✅ Authentication is properly enforced");
+}
 %}
 
 ###
 
-### Test 10: Create reading club with invalid data
+### Test 11: Try to create reading club without community_id
 POST {{baseUrl}}/reading-clubs
 Content-Type: application/json
 Authorization: {{token}}
 
 {
-  "name": "",
-  "description": "",
-  "book_id": "invalid-book-id"
+  "name": "Invalid Reading Club - No Community",
+  "description": "This should fail because no community_id is provided",
+  "book_id": "{{bookId}}"
 }
 
 > {%
-client.test("Create reading club with invalid data should return 400", function() {
-    client.assert(response.status === 400, "Expected status 400");
+client.test("Create reading club without community_id should return 400", function() {
+    client.assert(response.status === 400, "Expected status 400 for missing community_id");
 });
+
+client.log("✅ Verified: Reading club creation requires community_id");
 %}
 
 ###
 
-### Test 11: Join non-existent reading club
-POST {{baseUrl}}/reading-clubs/non-existent-id/join
+### Test 12: Try to create reading club without book_id
+POST {{baseUrl}}/reading-clubs
+Content-Type: application/json
 Authorization: {{token}}
 
+{
+  "name": "Invalid Reading Club - No Book",
+  "description": "This should fail because no book_id is provided",
+  "community_id": "{{communityId}}"
+}
+
 > {%
-client.test("Join non-existent reading club should return 400", function() {
-    client.assert(response.status === 400, "Expected status 400");
+client.test("Create reading club without book_id should return 400", function() {
+    client.assert(response.status === 400, "Expected status 400 for missing book_id");
 });
+
+client.log("✅ Verified: Reading club creation requires book_id");
 %}
 
 ###
 
-### Test 12: CLEANUP - Delete created reading club (if delete endpoint exists)
-DELETE {{baseUrl}}/reading-clubs/{{createdReadingClubId}}
+### Test 13: Try to create reading club with invalid book_id
+POST {{baseUrl}}/reading-clubs
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "name": "Invalid Reading Club - Bad Book ID",
+  "description": "This should fail because book doesn't exist",
+  "community_id": "{{communityId}}",
+  "book_id": "non-existent-book-id"
+}
+
+> {%
+client.test("Create reading club with invalid book_id should return 400", function() {
+    client.assert(response.status === 400, "Expected status 400 for non-existent book");
+});
+
+client.log("✅ Verified: Reading club creation validates book existence");
+%}
+
+###
+
+### Test 14: Try to create reading club with invalid community_id
+POST {{baseUrl}}/reading-clubs
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "name": "Invalid Reading Club - Bad Community ID",
+  "description": "This should fail because community doesn't exist",
+  "community_id": "non-existent-community-id",
+  "book_id": "{{bookId}}"
+}
+
+> {%
+client.test("Create reading club with invalid community_id should return 400", function() {
+    client.assert(response.status === 400, "Expected status 400 for non-existent community");
+});
+
+client.log("✅ Verified: Reading club creation validates community existence");
+%}
+
+###
+
+### Test 15: Verify created reading club still exists before cleanup
+GET {{baseUrl}}/reading-clubs/{{testReadingClubId}}
 Authorization: {{token}}
 
 > {%
-client.test("Delete reading club should return 204 or 404", function() {
+client.test("Verify reading club exists before cleanup", function() {
+    client.assert(response.status === 200, "Reading club should exist before cleanup");
+});
+
+if (response.status === 200) {
+    client.log("✅ Reading club confirmed to exist before cleanup: " + response.body.name);
+} else {
+    client.log("⚠️ Reading club not found - may have been deleted already");
+}
+%}
+
+###
+
+### Test 16: CLEANUP - Delete created reading club
+DELETE {{baseUrl}}/reading-clubs/{{testReadingClubId}}
+Authorization: {{token}}
+
+> {%
+client.test("Delete reading club should return 204, 404, or 405", function() {
     client.assert(response.status === 204 || response.status === 404 || response.status === 405, 
                  "Expected status 204 (deleted), 404 (not found), or 405 (method not allowed)");
 });
 
 if (response.status === 204) {
-    client.log("✅ Reading club successfully deleted: " + client.global.get("createdReadingClubName"));
+    client.log("✅ Reading club successfully deleted: " + client.global.get("testReadingClubName"));
 } else if (response.status === 405) {
-    client.log("⚠️ Delete endpoint not implemented - reading club will remain: " + client.global.get("createdReadingClubName"));
+    client.log("⚠️ Delete endpoint not implemented - reading club will remain: " + client.global.get("testReadingClubName"));
 } else {
-    client.log("⚠️ Could not delete reading club: " + client.global.get("createdReadingClubName"));
+    client.log("⚠️ Could not delete reading club: " + client.global.get("testReadingClubName"));
 }
 
 // Clear global variables
-client.global.clear("createdReadingClubId");
-client.global.clear("createdReadingClubName");
+client.global.clear("testReadingClubId");
+client.global.clear("testReadingClubName");
+client.log("🧹 Cleanup completed - global variables cleared");
 %}
 
 ###

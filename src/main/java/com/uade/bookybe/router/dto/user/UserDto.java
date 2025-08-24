@@ -12,6 +12,7 @@ public class UserDto {
 
   private String id;
   private String username;
+  private String email;
   private String name;
   private String lastname;
   private String description;

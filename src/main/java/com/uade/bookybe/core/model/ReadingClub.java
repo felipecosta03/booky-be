@@ -1,5 +1,6 @@
 package com.uade.bookybe.core.model;
 
+import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,12 +16,18 @@ public class ReadingClub {
   private LocalDateTime dateCreated;
   private String description;
   private LocalDateTime lastUpdated;
+  
+  @NotBlank(message = "Name is required")
   private String name;
-  private String bookId;
-  private String communityId;
+  
+  @NotBlank(message = "Book ID is required")
+  private String bookId; // OBLIGATORIO - todo reading club debe tener un libro específico
+  
+  @NotBlank(message = "Community ID is required")
+  private String communityId; // OBLIGATORIO - todo reading club debe pertenecer a una comunidad
+  
+  @NotBlank(message = "Moderator ID is required")
   private String moderatorId;
-  private Book book;
-  private Community community;
-  private User moderator;
+  
   private long memberCount;
 } 

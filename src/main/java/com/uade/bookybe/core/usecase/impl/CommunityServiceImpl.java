@@ -1,7 +1,6 @@
 package com.uade.bookybe.core.usecase.impl;
 
-import com.uade.bookybe.core.exception.NotFoundException;
-import com.uade.bookybe.core.exception.UnauthorizedException;
+
 import com.uade.bookybe.core.model.Community;
 import com.uade.bookybe.core.usecase.CommunityService;
 import com.uade.bookybe.infraestructure.entity.CommunityEntity;
@@ -20,7 +19,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.weaver.ast.Not;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -160,15 +159,18 @@ public class CommunityServiceImpl implements CommunityService {
   public boolean deleteCommunity(String communityId, String adminId) {
     log.info("Deleting community: {} by admin: {}", communityId, adminId);
 
-    CommunityEntity communityEntity =
-        communityRepository
-            .findById(communityId)
-            .orElseThrow(() -> new NotFoundException("Community not found with ID: " + communityId));
+    Optional<CommunityEntity> communityEntityOpt = communityRepository.findById(communityId);
+    if (communityEntityOpt.isEmpty()) {
+      log.warn("Community not found with ID: {}", communityId);
+      return false;
+    }
+
+    CommunityEntity communityEntity = communityEntityOpt.get();
 
     // Verificar que el usuario es el administrador de la comunidad
     if (!communityEntity.getAdminId().equals(adminId)) {
       log.warn("User {} tried to delete community {} but is not the admin", adminId, communityId);
-      throw new UnauthorizedException("User not authorized to delete community");
+      return false;
     }
 
     try {
@@ -223,12 +225,14 @@ public class CommunityServiceImpl implements CommunityService {
 
     // Verificar que la comunidad existe
     if (!communityRepository.existsById(communityId)) {
-      throw new NotFoundException("Community not found with ID: " + communityId);
+      log.warn("Community not found with ID: {}", communityId);
+      return false;
     }
 
     // Verificar que el usuario existe
     if (!userRepository.existsById(userId)) {
-      throw new NotFoundException("User not found with ID: " + userId);
+      log.warn("User not found with ID: {}", userId);
+      return false;
     }
 
     // Verificar que el usuario no es ya miembro

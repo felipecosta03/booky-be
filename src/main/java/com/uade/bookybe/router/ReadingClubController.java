@@ -46,9 +46,10 @@ public class ReadingClubController {
     log.info("Getting all reading clubs");
 
     List<ReadingClub> readingClubs = readingClubService.getAllReadingClubs();
-    List<ReadingClubDto> readingClubDtos = readingClubs.stream()
-        .map(ReadingClubDtoMapper.INSTANCE::toDto)
-        .collect(Collectors.toList());
+    List<ReadingClubDto> readingClubDtos =
+        readingClubs.stream()
+            .map(ReadingClubDtoMapper.INSTANCE::toDto)
+            .collect(Collectors.toList());
 
     log.info("Retrieved {} reading clubs", readingClubDtos.size());
     return ResponseEntity.ok(readingClubDtos);
@@ -73,16 +74,19 @@ public class ReadingClubController {
       @Parameter(description = "ID del club de lectura", required = true) @PathVariable String id) {
     log.info("Getting reading club with ID: {}", id);
 
-    return readingClubService.getReadingClubById(id)
+    return readingClubService
+        .getReadingClubById(id)
         .map(ReadingClubDtoMapper.INSTANCE::toDto)
-        .map(club -> {
-          log.info("Reading club found: {}", club.getName());
-          return ResponseEntity.ok(club);
-        })
-        .orElseGet(() -> {
-          log.warn("Reading club not found with ID: {}", id);
-          return ResponseEntity.notFound().build();
-        });
+        .map(
+            club -> {
+              log.info("Reading club found: {}", club.getName());
+              return ResponseEntity.ok(club);
+            })
+        .orElseGet(
+            () -> {
+              log.warn("Reading club not found with ID: {}", id);
+              return ResponseEntity.notFound().build();
+            });
   }
 
   @Operation(
@@ -101,9 +105,10 @@ public class ReadingClubController {
     log.info("Getting reading clubs for user: {}", userId);
 
     List<ReadingClub> readingClubs = readingClubService.getReadingClubsByUserId(userId);
-    List<ReadingClubDto> readingClubDtos = readingClubs.stream()
-        .map(ReadingClubDtoMapper.INSTANCE::toDto)
-        .collect(Collectors.toList());
+    List<ReadingClubDto> readingClubDtos =
+        readingClubs.stream()
+            .map(ReadingClubDtoMapper.INSTANCE::toDto)
+            .collect(Collectors.toList());
 
     log.info("Retrieved {} reading clubs for user: {}", readingClubDtos.size(), userId);
     return ResponseEntity.ok(readingClubDtos);
@@ -121,13 +126,15 @@ public class ReadingClubController {
       })
   @GetMapping("/community/{communityId}")
   public ResponseEntity<List<ReadingClubDto>> getReadingClubsByCommunityId(
-      @Parameter(description = "ID de la comunidad", required = true) @PathVariable String communityId) {
+      @Parameter(description = "ID de la comunidad", required = true) @PathVariable
+          String communityId) {
     log.info("Getting reading clubs for community: {}", communityId);
 
     List<ReadingClub> readingClubs = readingClubService.getReadingClubsByCommunityId(communityId);
-    List<ReadingClubDto> readingClubDtos = readingClubs.stream()
-        .map(ReadingClubDtoMapper.INSTANCE::toDto)
-        .collect(Collectors.toList());
+    List<ReadingClubDto> readingClubDtos =
+        readingClubs.stream()
+            .map(ReadingClubDtoMapper.INSTANCE::toDto)
+            .collect(Collectors.toList());
 
     log.info("Retrieved {} reading clubs for community: {}", readingClubDtos.size(), communityId);
     return ResponseEntity.ok(readingClubDtos);
@@ -150,25 +157,35 @@ public class ReadingClubController {
       })
   @PostMapping
   public ResponseEntity<ReadingClubDto> createReadingClub(
-      @Parameter(description = "Datos del club de lectura", required = true)
-          @RequestBody @Valid CreateReadingClubDto createReadingClubDto,
+      @Parameter(description = "Datos del club de lectura", required = true) @RequestBody @Valid
+          CreateReadingClubDto createReadingClubDto,
       Authentication authentication) {
 
-    log.info("Creating reading club: {} by user: {}", createReadingClubDto.getName(), authentication.getName());
+    log.info(
+        "Creating reading club: {} by user: {}",
+        createReadingClubDto.getName(),
+        authentication.getName());
 
     String moderatorId = authentication.getName();
-    
-    return readingClubService.createReadingClub(moderatorId, createReadingClubDto.getName(), 
-            createReadingClubDto.getDescription(), createReadingClubDto.getBookId())
+
+    return readingClubService
+        .createReadingClub(
+            moderatorId,
+            createReadingClubDto.getName(),
+            createReadingClubDto.getDescription(),
+            createReadingClubDto.getCommunityId(),
+            createReadingClubDto.getBookId())
         .map(ReadingClubDtoMapper.INSTANCE::toDto)
-        .map(readingClubDto -> {
-          log.info("Reading club created successfully with ID: {}", readingClubDto.getId());
-          return ResponseEntity.status(HttpStatus.CREATED).body(readingClubDto);
-        })
-        .orElseGet(() -> {
-          log.warn("Failed to create reading club: {}", createReadingClubDto.getName());
-          return ResponseEntity.badRequest().build();
-        });
+        .map(
+            readingClubDto -> {
+              log.info("Reading club created successfully with ID: {}", readingClubDto.getId());
+              return ResponseEntity.status(HttpStatus.CREATED).body(readingClubDto);
+            })
+        .orElseGet(
+            () -> {
+              log.warn("Failed to create reading club: {}", createReadingClubDto.getName());
+              return ResponseEntity.badRequest().build();
+            });
   }
 
   @Operation(
@@ -177,24 +194,101 @@ public class ReadingClubController {
   @ApiResponses(
       value = {
         @ApiResponse(responseCode = "200", description = "Unido al club exitosamente"),
-        @ApiResponse(responseCode = "400", description = "Error al unirse al club", content = @Content),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Error al unirse al club",
+            content = @Content),
         @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content),
         @ApiResponse(responseCode = "404", description = "Club no encontrado", content = @Content)
       })
   @PostMapping("/{clubId}/join")
   public ResponseEntity<Void> joinReadingClub(
-      @Parameter(description = "ID del club de lectura", required = true) @PathVariable String clubId,
+      @Parameter(description = "ID del club de lectura", required = true) @PathVariable
+          String clubId,
       Authentication authentication) {
 
     log.info("User {} joining reading club: {}", authentication.getName(), clubId);
 
     String userId = authentication.getName();
-    
+
     if (readingClubService.joinReadingClub(clubId, userId)) {
       log.info("User {} successfully joined reading club: {}", userId, clubId);
       return ResponseEntity.ok().build();
     } else {
       log.warn("Failed to join reading club: {} for user: {}", clubId, userId);
+      return ResponseEntity.badRequest().build();
+    }
+  }
+
+  @Operation(
+      summary = "Salir de un club de lectura",
+      description = "El usuario abandona un club de lectura específico")
+  @ApiResponses(
+      value = {
+        @ApiResponse(responseCode = "200", description = "Salió del club exitosamente"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Error al salir del club o usuario no es miembro",
+            content = @Content),
+        @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content),
+        @ApiResponse(responseCode = "404", description = "Club no encontrado", content = @Content)
+      })
+  @PostMapping("/{clubId}/leave")
+  public ResponseEntity<Void> leaveReadingClub(
+      @Parameter(description = "ID del club de lectura", required = true) @PathVariable
+          String clubId,
+      Authentication authentication) {
+
+    log.info("User {} leaving reading club: {}", authentication.getName(), clubId);
+
+    String userId = authentication.getName();
+
+    // NotFoundException and BadRequestException will be handled by GlobalExceptionHandler
+    if (readingClubService.leaveReadingClub(clubId, userId)) {
+      log.info("User {} successfully left reading club: {}", userId, clubId);
+      return ResponseEntity.ok().build();
+    } else {
+      // This should never happen now since exceptions are thrown for error cases
+      log.warn(
+          "Unexpected false return from leaveReadingClub for user: {} and club: {}",
+          userId,
+          clubId);
+      return ResponseEntity.badRequest().build();
+    }
+  }
+
+  @Operation(
+      summary = "Eliminar club de lectura",
+      description = "Elimina un club de lectura específico (solo el moderador puede eliminarlo)")
+  @ApiResponses(
+      value = {
+        @ApiResponse(responseCode = "204", description = "Club eliminado exitosamente"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Error al eliminar el club o usuario no es moderador",
+            content = @Content),
+        @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content),
+        @ApiResponse(responseCode = "404", description = "Club no encontrado", content = @Content)
+      })
+  @DeleteMapping("/{clubId}")
+  public ResponseEntity<Void> deleteReadingClub(
+      @Parameter(description = "ID del club de lectura", required = true) @PathVariable
+          String clubId,
+      Authentication authentication) {
+
+    log.info("User {} attempting to delete reading club: {}", authentication.getName(), clubId);
+
+    String userId = authentication.getName();
+
+    // NotFoundException will be handled by GlobalExceptionHandler
+    if (readingClubService.deleteReadingClub(clubId, userId)) {
+      log.info("Reading club {} successfully deleted by user: {}", clubId, userId);
+      return ResponseEntity.noContent().build();
+    } else {
+      log.warn(
+          "Failed to delete reading club: {} by user: {} (user might not be moderator)",
+          clubId,
+          userId);
       return ResponseEntity.badRequest().build();
     }
   }
@@ -215,11 +309,12 @@ public class ReadingClubController {
     log.info("Searching reading clubs with query: {}", q);
 
     List<ReadingClub> readingClubs = readingClubService.searchReadingClubs(q);
-    List<ReadingClubDto> readingClubDtos = readingClubs.stream()
-        .map(ReadingClubDtoMapper.INSTANCE::toDto)
-        .collect(Collectors.toList());
+    List<ReadingClubDto> readingClubDtos =
+        readingClubs.stream()
+            .map(ReadingClubDtoMapper.INSTANCE::toDto)
+            .collect(Collectors.toList());
 
     log.info("Found {} reading clubs for query: {}", readingClubDtos.size(), q);
     return ResponseEntity.ok(readingClubDtos);
   }
-} 
+}

@@ -27,7 +27,7 @@ public class ReadingClubEntity {
 
   private String name;
 
-  @Column(name = "book_id")
+  @Column(name = "book_id", nullable = false)
   private String bookId;
 
   @Column(name = "community_id", nullable = false)
@@ -36,15 +36,5 @@ public class ReadingClubEntity {
   @Column(name = "moderator_id", nullable = false)
   private String moderatorId;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "book_id", insertable = false, updatable = false)
-  private BookEntity book;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "community_id", insertable = false, updatable = false)
-  private CommunityEntity community;
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "moderator_id", insertable = false, updatable = false)
-  private UserEntity moderator;
 } 

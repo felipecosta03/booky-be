@@ -14,9 +14,13 @@ public interface ReadingClubService {
 
   List<ReadingClub> getReadingClubsByCommunityId(String communityId);
 
-  Optional<ReadingClub> createReadingClub(String moderatorId, String name, String description, String bookId);
+  Optional<ReadingClub> createReadingClub(String moderatorId, String name, String description, String communityId, String bookId);
 
   boolean joinReadingClub(String clubId, String userId);
+
+  boolean leaveReadingClub(String clubId, String userId);
+
+  boolean deleteReadingClub(String clubId, String userId);
 
   List<ReadingClub> searchReadingClubs(String query);
 

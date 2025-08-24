@@ -9,13 +9,14 @@ import com.uade.bookybe.core.usecase.UserService;
 import com.uade.bookybe.infraestructure.entity.AddressEntity;
 import com.uade.bookybe.infraestructure.entity.UserEntity;
 import com.uade.bookybe.infraestructure.mapper.UserEntityMapper;
+import com.uade.bookybe.infraestructure.repository.UserBookRepository;
 import com.uade.bookybe.infraestructure.repository.UserRepository;
+import com.uade.bookybe.router.dto.user.UserPreviewDto;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
+  private final UserBookRepository userBookRepository;
   private final BCryptPasswordEncoder passwordEncoder;
   private final ImageStoragePort imageStoragePort;
 
@@ -169,5 +171,23 @@ public class UserServiceImpl implements UserService {
         .lastname(userSignUp.getLastname())
         .password(passwordEncoder.encode(userSignUp.getPassword()))
         .build();
+  }
+
+  @Override
+  public List<UserPreviewDto> searchUsersByBooks(List<String> bookIds, String requestingUserId) {
+    List<Object[]> userResults =
+        userBookRepository.findUsersByBookIds(bookIds, requestingUserId, bookIds.size());
+
+    return userResults.stream().map(this::mapToUserPreviewDto).collect(Collectors.toList());
+  }
+
+  private UserPreviewDto mapToUserPreviewDto(Object[] result) {
+    UserPreviewDto dto = new UserPreviewDto();
+    dto.setId((String) result[0]);
+    dto.setUsername((String) result[1]);
+    dto.setName((String) result[2]);
+    dto.setLastname((String) result[3]);
+    dto.setImage((String) result[4]);
+    return dto;
   }
 }

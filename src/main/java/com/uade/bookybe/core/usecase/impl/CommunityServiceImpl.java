@@ -1,5 +1,7 @@
 package com.uade.bookybe.core.usecase.impl;
 
+import com.uade.bookybe.core.exception.NotFoundException;
+import com.uade.bookybe.core.exception.UnauthorizedException;
 import com.uade.bookybe.core.model.Community;
 import com.uade.bookybe.core.usecase.CommunityService;
 import com.uade.bookybe.infraestructure.entity.CommunityEntity;
@@ -167,8 +169,7 @@ public class CommunityServiceImpl implements CommunityService {
 
     // Verificar que el usuario es el administrador de la comunidad
     if (!communityEntity.getAdminId().equals(adminId)) {
-      log.warn("User {} tried to delete community {} but is not the admin", adminId, communityId);
-      return false;
+      throw new UnauthorizedException("User is not the admin of the community");
     }
 
     try {
@@ -223,14 +224,12 @@ public class CommunityServiceImpl implements CommunityService {
 
     // Verificar que la comunidad existe
     if (!communityRepository.existsById(communityId)) {
-      log.warn("Community not found with ID: {}", communityId);
-      return false;
+      throw new NotFoundException("Community not found with ID: " + communityId);
     }
 
     // Verificar que el usuario existe
     if (!userRepository.existsById(userId)) {
-      log.warn("User not found with ID: {}", userId);
-      return false;
+      throw new NotFoundException("User not found with ID: " + userId);
     }
 
     // Verificar que el usuario no es ya miembro

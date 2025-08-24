@@ -21,8 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -323,5 +325,38 @@ public class UserController {
       log.warn("Failed to delete user - User not found with ID: {}", id);
       return ResponseEntity.notFound().build();
     }
+  }
+
+  @Operation(
+      summary = "Search users by books for exchange",
+      description = "Find users who have specific books available for exchange, ordered by distance if requesting user has address")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Users found successfully",
+            content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content),
+        @ApiResponse(responseCode = "401", description = "Not authenticated", content = @Content)
+      })
+  @PostMapping("/users/search-by-books")
+  public ResponseEntity<List<UserPreviewDto>> searchUsersByBooks(
+      @Parameter(description = "Search criteria with book list", required = true)
+          @Valid @RequestBody SearchUsersByBooksDto searchDto,
+      Authentication authentication) {
+
+    log.info("User {} searching for users with books: {}", authentication.getName(), searchDto.getBookIds());
+
+    String requestingUserId = authentication.getName();
+    
+    List<UserPreviewDto> result = userService.searchUsersByBooks(
+        searchDto.getBookIds(),
+        requestingUserId
+    );
+
+    log.info("Found {} users for book search by user: {}", 
+             result.size(), requestingUserId);
+    
+    return ResponseEntity.ok(result);
   }
 }

@@ -3,6 +3,7 @@ package com.uade.bookybe.infraestructure.repository;
 import com.uade.bookybe.infraestructure.entity.UserBookEntity;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,4 +38,23 @@ public interface UserBookRepository extends JpaRepository<UserBookEntity, String
       @Param("userId") String userId, @Param("bookId") String bookId);
 
   boolean existsByUserIdAndBookId(String userId, String bookId);
+
+  @Query(
+      value =
+          """
+    SELECT u.id, u.username, u.name, u.lastname, u.image
+    FROM users u
+    INNER JOIN user_books ub ON u.id = ub.user_id
+    WHERE ub.book_id IN :bookIds
+    AND ub.wants_to_exchange = true
+    AND ub.user_id != :excludeUserId
+    GROUP BY u.id, u.username, u.name, u.lastname, u.image
+    HAVING COUNT(DISTINCT ub.book_id) = :bookCount
+    LIMIT 100
+    """,
+      nativeQuery = true)
+  List<Object[]> findUsersByBookIds(
+      @Param("bookIds") List<String> bookIds,
+      @Param("excludeUserId") String excludeUserId,
+      @Param("bookCount") int bookCount);
 }

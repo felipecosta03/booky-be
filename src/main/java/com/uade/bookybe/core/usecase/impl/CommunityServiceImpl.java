@@ -4,6 +4,7 @@ import com.uade.bookybe.core.exception.NotFoundException;
 import com.uade.bookybe.core.exception.UnauthorizedException;
 import com.uade.bookybe.core.model.Community;
 import com.uade.bookybe.core.usecase.CommunityService;
+import com.uade.bookybe.core.usecase.GamificationService;
 import com.uade.bookybe.infraestructure.entity.CommunityEntity;
 import com.uade.bookybe.infraestructure.entity.CommunityMemberEntity;
 import com.uade.bookybe.infraestructure.entity.CommunityMemberId;
@@ -34,6 +35,7 @@ public class CommunityServiceImpl implements CommunityService {
   private final PostRepository postRepository;
   private final CommentRepository commentRepository;
   private final UserRepository userRepository;
+  private final GamificationService gamificationService;
 
   @Override
   public Optional<Community> createCommunity(String adminId, String name, String description) {
@@ -71,6 +73,10 @@ public class CommunityServiceImpl implements CommunityService {
       community = enrichWithMemberCount(community);
 
       log.info("Community created successfully with ID: {}", savedCommunity.getId());
+      
+      // Award gamification points for creating community
+      gamificationService.processCommunityCreated(adminId);
+      
       return Optional.of(community);
 
     } catch (Exception e) {
@@ -245,6 +251,17 @@ public class CommunityServiceImpl implements CommunityService {
 
       communityMemberRepository.save(memberEntity);
       log.info("User {} successfully joined community: {}", userId, communityId);
+      
+      // Award gamification points for joining community (only if not admin joining own community)
+      try {
+        Optional<CommunityEntity> community = communityRepository.findById(communityId);
+        if (community.isPresent() && !community.get().getAdminId().equals(userId)) {
+          gamificationService.processCommunityJoined(userId);
+        }
+      } catch (Exception e) {
+        log.warn("Could not award gamification points for joining community: {}", e.getMessage());
+      }
+      
       return true;
     } catch (Exception e) {
       log.error("Error joining community: {} by user: {}", communityId, userId, e);

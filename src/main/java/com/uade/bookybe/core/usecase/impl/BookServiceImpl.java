@@ -6,6 +6,7 @@ import com.uade.bookybe.core.model.UserBook;
 import com.uade.bookybe.core.model.constant.BookStatus;
 import com.uade.bookybe.core.port.GoogleBooksPort;
 import com.uade.bookybe.core.usecase.BookService;
+import com.uade.bookybe.core.usecase.GamificationService;
 import com.uade.bookybe.infraestructure.entity.BookEntity;
 import com.uade.bookybe.infraestructure.entity.UserBookEntity;
 import com.uade.bookybe.infraestructure.mapper.BookEntityMapper;
@@ -29,6 +30,7 @@ public class BookServiceImpl implements BookService {
   private final BookRepository bookRepository;
   private final UserBookRepository userBookRepository;
   private final GoogleBooksPort googleBooksPort;
+  private final GamificationService gamificationService;
 
   @Override
   public Optional<UserBook> addBookToUserLibrary(String userId, String isbn, BookStatus status) {
@@ -73,6 +75,10 @@ public class BookServiceImpl implements BookService {
 
     UserBook userBook = UserBookEntityMapper.INSTANCE.toModel(savedWithBook.get());
     log.info("Successfully added book to user library: {}", userBook.getId());
+    
+    // Award gamification points for adding book
+    gamificationService.processBookAdded(userId);
+    
     return Optional.of(userBook);
   }
 
@@ -179,11 +185,18 @@ public class BookServiceImpl implements BookService {
     }
 
     UserBookEntity entity = userBookEntity.get();
+    BookStatus oldStatus = entity.getStatus();
     entity.setStatus(status);
     entity = userBookRepository.save(entity);
 
     UserBook userBook = UserBookEntityMapper.INSTANCE.toModel(entity);
     log.info("Successfully updated book status: {}", userBook.getId());
+    
+    // Award gamification points if book was marked as read
+    if (status == BookStatus.READ && oldStatus != BookStatus.READ) {
+      gamificationService.processBookRead(userId);
+    }
+    
     return Optional.of(userBook);
   }
 
@@ -205,11 +218,18 @@ public class BookServiceImpl implements BookService {
     }
 
     UserBookEntity entity = userBookEntity.get();
+    boolean oldWantsToExchange = entity.isWantsToExchange();
     entity.setWantsToExchange(wantsToExchange);
     entity = userBookRepository.save(entity);
 
     UserBook userBook = UserBookEntityMapper.INSTANCE.toModel(entity);
     log.info("Successfully updated book exchange preference: {}", userBook.getId());
+    
+    // Award gamification points if book was offered for exchange
+    if (wantsToExchange && !oldWantsToExchange) {
+      gamificationService.processBookOfferedForExchange(userId);
+    }
+    
     return Optional.of(userBook);
   }
 
@@ -226,11 +246,18 @@ public class BookServiceImpl implements BookService {
     }
 
     UserBookEntity entity = userBookEntity.get();
+    boolean oldFavorite = entity.isFavorite();
     entity.setFavorite(!entity.isFavorite());
     entity = userBookRepository.save(entity);
 
     UserBook userBook = UserBookEntityMapper.INSTANCE.toModel(entity);
     log.info("Successfully toggled book favorite. New state: {}", userBook.isFavorite());
+    
+    // Award gamification points if book was marked as favorite
+    if (userBook.isFavorite() && !oldFavorite) {
+      gamificationService.processBookFavorited(userId);
+    }
+    
     return Optional.of(userBook);
   }
 

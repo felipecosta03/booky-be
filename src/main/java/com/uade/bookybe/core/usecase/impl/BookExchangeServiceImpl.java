@@ -7,6 +7,7 @@ import com.uade.bookybe.core.exception.NotFoundException;
 import com.uade.bookybe.core.model.BookExchange;
 import com.uade.bookybe.core.model.constant.ExchangeStatus;
 import com.uade.bookybe.core.usecase.BookExchangeService;
+import com.uade.bookybe.core.usecase.GamificationService;
 import com.uade.bookybe.infraestructure.entity.BookExchangeEntity;
 import com.uade.bookybe.infraestructure.mapper.BookExchangeEntityMapper;
 import com.uade.bookybe.infraestructure.repository.BookExchangeRepository;
@@ -29,6 +30,7 @@ public class BookExchangeServiceImpl implements BookExchangeService {
 
   private final BookExchangeRepository bookExchangeRepository;
   private final UserBookRepository userBookRepository;
+  private final GamificationService gamificationService;
 
   @Override
   public Optional<BookExchange> createExchange(
@@ -64,6 +66,10 @@ public class BookExchangeServiceImpl implements BookExchangeService {
             .build();
 
     BookExchangeEntity savedEntity = bookExchangeRepository.save(entity);
+    
+    // Award gamification points for creating exchange
+    gamificationService.processExchangeCreated(requesterId);
+    
     return Optional.of(BookExchangeEntityMapper.INSTANCE.toModel(savedEntity));
   }
 
@@ -117,6 +123,13 @@ public class BookExchangeServiceImpl implements BookExchangeService {
     entity.setDateUpdated(LocalDateTime.now());
 
     BookExchangeEntity savedEntity = bookExchangeRepository.save(entity);
+    
+    // Award gamification points for completing exchange
+    if (status == ExchangeStatus.COMPLETED) {
+      gamificationService.processExchangeCompleted(entity.getRequesterId());
+      gamificationService.processExchangeCompleted(entity.getOwnerId());
+    }
+    
     return Optional.of(BookExchangeEntityMapper.INSTANCE.toModel(savedEntity));
   }
 

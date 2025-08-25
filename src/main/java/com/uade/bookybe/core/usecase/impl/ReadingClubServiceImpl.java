@@ -4,6 +4,7 @@ import com.uade.bookybe.core.exception.ConflictException;
 import com.uade.bookybe.core.exception.NotFoundException;
 import com.uade.bookybe.core.model.ReadingClub;
 import com.uade.bookybe.core.usecase.ReadingClubService;
+import com.uade.bookybe.core.usecase.GamificationService;
 import com.uade.bookybe.infraestructure.entity.ReadingClubEntity;
 import com.uade.bookybe.infraestructure.entity.ReadingClubMemberEntity;
 import com.uade.bookybe.infraestructure.mapper.ReadingClubEntityMapper;
@@ -30,6 +31,7 @@ public class ReadingClubServiceImpl implements ReadingClubService {
   private final ReadingClubMemberRepository readingClubMemberRepository;
   private final CommunityRepository communityRepository;
   private final BookRepository bookRepository;
+  private final GamificationService gamificationService;
 
   @Override
   public List<ReadingClub> getAllReadingClubs() {
@@ -156,6 +158,10 @@ public class ReadingClubServiceImpl implements ReadingClubService {
       club.setMemberCount(1L); // Just the moderator for now
 
       log.info("Reading club created successfully: {}", savedClub.getId());
+      
+      // Award gamification points for creating reading club
+      gamificationService.processReadingClubCreated(moderatorId);
+      
       return Optional.of(club);
 
     } catch (Exception e) {
@@ -185,6 +191,17 @@ public class ReadingClubServiceImpl implements ReadingClubService {
     readingClubMemberRepository.save(memberEntity);
 
     log.info("User {} successfully joined reading club: {}", userId, clubId);
+    
+    // Award gamification points for joining reading club (only if not moderator joining own club)
+    try {
+      Optional<ReadingClubEntity> club = readingClubRepository.findById(clubId);
+      if (club.isPresent() && !club.get().getModeratorId().equals(userId)) {
+        gamificationService.processReadingClubJoined(userId);
+      }
+    } catch (Exception e) {
+      log.warn("Could not award gamification points for joining reading club: {}", e.getMessage());
+    }
+    
     return true;
   }
 

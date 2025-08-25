@@ -6,6 +6,7 @@ import com.uade.bookybe.core.model.User;
 import com.uade.bookybe.core.model.UserSignUp;
 import com.uade.bookybe.core.port.ImageStoragePort;
 import com.uade.bookybe.core.usecase.UserService;
+import com.uade.bookybe.core.usecase.GamificationService;
 import com.uade.bookybe.infraestructure.entity.AddressEntity;
 import com.uade.bookybe.infraestructure.entity.UserEntity;
 import com.uade.bookybe.infraestructure.mapper.UserEntityMapper;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,11 +26,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
   private final UserBookRepository userBookRepository;
   private final BCryptPasswordEncoder passwordEncoder;
   private final ImageStoragePort imageStoragePort;
+  private final GamificationService gamificationService;
 
   @Override
   public Optional<User> getUserById(String id) {
@@ -92,10 +96,49 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  @Transactional
   public boolean deleteUser(String id) {
-    if (!userRepository.existsById(id)) return false;
-    userRepository.deleteById(id);
-    return true;
+    if (!userRepository.existsById(id)) {
+      log.warn("Attempted to delete non-existent user: {}", id);
+      return false;
+    }
+    
+    try {
+      log.info("Deleting user: {}", id);
+      
+      // Manual cleanup of gamification data first
+      // This ensures gamification data is deleted even if FK constraints are not properly configured
+      try {
+        boolean gamificationDeleted = gamificationService.deleteUserGamificationData(id);
+        if (gamificationDeleted) {
+          log.info("Successfully deleted gamification data for user: {}", id);
+        }
+      } catch (Exception e) {
+        log.warn("Could not delete gamification data for user {}: {}", id, e.getMessage());
+      }
+      
+      // Delete the user (should CASCADE to related tables)
+      userRepository.deleteById(id);
+      log.info("User {} deleted successfully", id);
+      return true;
+      
+    } catch (org.springframework.dao.DataIntegrityViolationException e) {
+      log.error("Foreign key constraint violation when deleting user {}: {}", id, e.getMessage());
+      
+      // More specific error message
+      String message = e.getMessage();
+      if (message.contains("gamification_profiles")) {
+        throw new RuntimeException("Cannot delete user: gamification profile exists. Please run FK migration script.", e);
+      } else if (message.contains("user_achievements")) {
+        throw new RuntimeException("Cannot delete user: user achievements exist. Please run FK migration script.", e);
+      } else {
+        throw new RuntimeException("Cannot delete user due to foreign key constraints: " + message, e);
+      }
+      
+    } catch (Exception e) {
+      log.error("Unexpected error deleting user {}: {}", id, e.getMessage(), e);
+      throw new RuntimeException("Failed to delete user: " + id, e);
+    }
   }
 
   @Override
@@ -144,6 +187,10 @@ public class UserServiceImpl implements UserService {
     User user = buildUserBySignUp(userSignUp);
     UserEntity entity = UserEntityMapper.INSTANCE.toEntity(user);
     UserEntity saved = userRepository.save(entity);
+    
+    // Inicializar perfil de gamificación automáticamente para nuevo usuario
+    gamificationService.initializeUserProfile(saved.getId());
+    
     return Optional.ofNullable(UserEntityMapper.INSTANCE.toModel(saved));
   }
 

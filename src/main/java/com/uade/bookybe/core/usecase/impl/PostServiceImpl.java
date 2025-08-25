@@ -5,6 +5,7 @@ import com.uade.bookybe.core.exception.NotFoundException;
 import com.uade.bookybe.core.model.Post;
 import com.uade.bookybe.core.port.ImageStoragePort;
 import com.uade.bookybe.core.usecase.PostService;
+import com.uade.bookybe.core.usecase.GamificationService;
 import com.uade.bookybe.infraestructure.entity.PostEntity;
 import com.uade.bookybe.infraestructure.mapper.PostEntityMapper;
 import com.uade.bookybe.infraestructure.repository.CommunityRepository;
@@ -29,6 +30,7 @@ public class PostServiceImpl implements PostService {
   private final PostRepository postRepository;
   private final ImageStoragePort imageStoragePort;
   private final CommunityRepository communityRepository;
+  private final GamificationService gamificationService;
 
   @Override
   public Optional<Post> createPost(
@@ -66,6 +68,10 @@ public class PostServiceImpl implements PostService {
       Post post = PostEntityMapper.INSTANCE.toModel(savedPost);
 
       log.info("Post created successfully with ID: {}", savedPost.getId());
+      
+      // Award gamification points for creating post
+      gamificationService.processPostCreated(userId);
+      
       return Optional.of(post);
     } catch (Exception e) {
       log.error("Error creating post for user: {}", userId, e);

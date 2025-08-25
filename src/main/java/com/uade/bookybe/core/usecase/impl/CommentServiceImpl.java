@@ -3,6 +3,7 @@ package com.uade.bookybe.core.usecase.impl;
 import com.uade.bookybe.core.exception.NotFoundException;
 import com.uade.bookybe.core.model.Comment;
 import com.uade.bookybe.core.usecase.CommentService;
+import com.uade.bookybe.core.usecase.GamificationService;
 import com.uade.bookybe.infraestructure.entity.CommentEntity;
 import com.uade.bookybe.infraestructure.mapper.CommentEntityMapper;
 import com.uade.bookybe.infraestructure.repository.CommentRepository;
@@ -25,6 +26,7 @@ public class CommentServiceImpl implements CommentService {
 
   private final CommentRepository commentRepository;
   private final PostRepository postRepository;
+  private final GamificationService gamificationService;
 
   @Override
   public Optional<Comment> createComment(String userId, String postId, String body) {
@@ -50,6 +52,10 @@ public class CommentServiceImpl implements CommentService {
       Comment comment = CommentEntityMapper.INSTANCE.toModel(savedComment);
 
       log.info("Comment created successfully with ID: {}", savedComment.getId());
+      
+      // Award gamification points for creating comment
+      gamificationService.processCommentCreated(userId);
+      
       return Optional.of(comment);
 
     } catch (Exception e) {

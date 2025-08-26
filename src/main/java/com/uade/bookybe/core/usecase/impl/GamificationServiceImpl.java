@@ -24,6 +24,7 @@ public class GamificationServiceImpl implements GamificationService {
   private final UserAchievementRepository userAchievementRepository;
   private final AchievementRepository achievementRepository;
   private final UserLevelRepository userLevelRepository;
+  private final UserRepository userRepository;
 
   // Note: Points are now configured in GamificationActivity enum
 
@@ -35,6 +36,12 @@ public class GamificationServiceImpl implements GamificationService {
     if (gamificationProfileRepository.findByUserId(userId).isPresent()) {
       log.warn("Gamification profile already exists for user: {}", userId);
       return getUserProfile(userId);
+    }
+
+    // Verify that the user exists before creating profile
+    if (!userRepository.existsById(userId)) {
+      log.error("Cannot create gamification profile: user {} does not exist", userId);
+      return Optional.empty();
     }
 
     GamificationProfileEntity entity =

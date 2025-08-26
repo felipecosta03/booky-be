@@ -1,7 +1,7 @@
 ### Variables
 @baseUrl = http://localhost:8080
 # Usando IDs que sabemos que existen en la base de datos
-@userId = 01284fa7-8a1e-463c-8b6c-c4fbaf13ca43
+@userId = user-001
 
 ### Test 1: User registration with random data
 POST {{baseUrl}}/sign-up

@@ -30,33 +30,33 @@ INSERT INTO addresses (id, state, country, longitude, latitude) VALUES
 -- 2. INSERTAR USUARIOS
 -- =====================================================
 -- NOTA: Todas las contraseñas son "password123" encriptadas con BCrypt
--- Hash generado: $2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO
+-- Hash generado: $2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy
 
 INSERT INTO users (id, email, username, password, name, lastname, description, image, coins, address_id, date_created) VALUES 
 
 -- Usuarios Administradores
-('admin-001', 'admin@booky.com', 'admin', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Administrador', 'Sistema', 'Cuenta de administrador del sistema', NULL, 1000, 'addr-100', NOW()),
-('admin-002', 'superadmin@booky.com', 'superadmin', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Super', 'Administrador', 'Cuenta de super administrador', NULL, 2000, 'addr-100', NOW()),
+('admin-001', 'admin@booky.com', 'admin', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Administrador', 'Sistema', 'Cuenta de administrador del sistema', NULL, 1000, 'addr-100', NOW()),
+('admin-002', 'superadmin@booky.com', 'superadmin', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Super', 'Administrador', 'Cuenta de super administrador', NULL, 2000, 'addr-100', NOW()),
 
 -- Usuarios de Prueba - Argentina
-('user-001', 'juan.perez@gmail.com', 'juanp', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Juan', 'Pérez', 'Amante de la literatura clásica y contemporánea', NULL, 150, 'addr-100', NOW()),
-('user-002', 'maria.garcia@outlook.com', 'mariag', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'María', 'García', 'Lectora empedernida de novelas de misterio', NULL, 200, 'addr-101', NOW()),
-('user-003', 'carlos.rodriguez@yahoo.com', 'carlosr', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Carlos', 'Rodríguez', 'Fanático de la ciencia ficción y fantasía', NULL, 175, 'addr-102', NOW()),
-('user-004', 'ana.lopez@gmail.com', 'anal', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Ana', 'López', 'Especialista en literatura juvenil', NULL, 125, 'addr-103', NOW()),
-('user-005', 'luis.martinez@hotmail.com', 'luism', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Luis', 'Martínez', 'Coleccionista de libros de historia', NULL, 300, 'addr-104', NOW()),
-('user-006', 'sofia.gonzalez@gmail.com', 'sofiag', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Sofía', 'González', 'Aficionada a la poesía y narrativa', NULL, 180, 'addr-105', NOW()),
-('user-007', 'diego.fernandez@yahoo.com', 'diegof', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Diego', 'Fernández', 'Lector de biografías y ensayos', NULL, 220, 'addr-106', NOW()),
-('user-008', 'lucia.morales@outlook.com', 'luciam', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Lucía', 'Morales', 'Estudiante de literatura', NULL, 90, 'addr-107', NOW()),
-('user-009', 'alejandro.silva@gmail.com', 'alejandros', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Alejandro', 'Silva', 'Escritor y crítico literario', NULL, 250, 'addr-108', NOW()),
-('user-010', 'valentina.castro@hotmail.com', 'valentinac', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Valentina', 'Castro', 'Bloguera de reseñas de libros', NULL, 160, 'addr-109', NOW()),
+('user-001', 'juan.perez@gmail.com', 'juanp', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Juan', 'Pérez', 'Amante de la literatura clásica y contemporánea', NULL, 150, 'addr-100', NOW()),
+('user-002', 'maria.garcia@outlook.com', 'mariag', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'María', 'García', 'Lectora empedernida de novelas de misterio', NULL, 200, 'addr-101', NOW()),
+('user-003', 'carlos.rodriguez@yahoo.com', 'carlosr', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Carlos', 'Rodríguez', 'Fanático de la ciencia ficción y fantasía', NULL, 175, 'addr-102', NOW()),
+('user-004', 'ana.lopez@gmail.com', 'anal', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Ana', 'López', 'Especialista en literatura juvenil', NULL, 125, 'addr-103', NOW()),
+('user-005', 'luis.martinez@hotmail.com', 'luism', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Luis', 'Martínez', 'Coleccionista de libros de historia', NULL, 300, 'addr-104', NOW()),
+('user-006', 'sofia.gonzalez@gmail.com', 'sofiag', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Sofía', 'González', 'Aficionada a la poesía y narrativa', NULL, 180, 'addr-105', NOW()),
+('user-007', 'diego.fernandez@yahoo.com', 'diegof', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Diego', 'Fernández', 'Lector de biografías y ensayos', NULL, 220, 'addr-106', NOW()),
+('user-008', 'lucia.morales@outlook.com', 'luciam', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Lucía', 'Morales', 'Estudiante de literatura', NULL, 90, 'addr-107', NOW()),
+('user-009', 'alejandro.silva@gmail.com', 'alejandros', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Alejandro', 'Silva', 'Escritor y crítico literario', NULL, 250, 'addr-108', NOW()),
+('user-010', 'valentina.castro@hotmail.com', 'valentinac', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Valentina', 'Castro', 'Bloguera de reseñas de libros', NULL, 160, 'addr-109', NOW()),
 
 -- Usuarios Internacionales
-('user-011', 'isabella.martinez@gmail.es', 'isabellam', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Isabella', 'Martínez', 'Profesora de literatura española', NULL, 280, 'addr-110', NOW()),
-('user-012', 'pablo.ruiz@outlook.es', 'pablor', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Pablo', 'Ruiz', 'Traductor literario', NULL, 320, 'addr-111', NOW()),
-('user-013', 'fernanda.lopez@yahoo.mx', 'fernandal', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Fernanda', 'López', 'Editora de casa editorial', NULL, 400, 'addr-112', NOW()),
-('user-014', 'ricardo.vargas@gmail.pe', 'ricardov', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Ricardo', 'Vargas', 'Bibliotecario y archivista', NULL, 190, 'addr-113', NOW()),
-('user-015', 'camila.torres@outlook.cl', 'camilat', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Camila', 'Torres', 'Investigadora literaria', NULL, 230, 'addr-114', NOW()),
-('user-016', 'andres.herrera@gmail.co', 'andresh', '$2a$10$N9qo8uLOickgx2ZMRZoMye7I6Hii5FKKKKGHWALgc4JjRaJmKGzEO', 'Andrés', 'Herrera', 'Crítico de literatura latinoamericana', NULL, 270, 'addr-115', NOW());
+('user-011', 'isabella.martinez@gmail.es', 'isabellam', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Isabella', 'Martínez', 'Profesora de literatura española', NULL, 280, 'addr-110', NOW()),
+('user-012', 'pablo.ruiz@outlook.es', 'pablor', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Pablo', 'Ruiz', 'Traductor literario', NULL, 320, 'addr-111', NOW()),
+('user-013', 'fernanda.lopez@yahoo.mx', 'fernandal', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Fernanda', 'López', 'Editora de casa editorial', NULL, 400, 'addr-112', NOW()),
+('user-014', 'ricardo.vargas@gmail.pe', 'ricardov', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Ricardo', 'Vargas', 'Bibliotecario y archivista', NULL, 190, 'addr-113', NOW()),
+('user-015', 'camila.torres@outlook.cl', 'camilat', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Camila', 'Torres', 'Investigadora literaria', NULL, 230, 'addr-114', NOW()),
+('user-016', 'andres.herrera@gmail.co', 'andresh', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Andrés', 'Herrera', 'Crítico de literatura latinoamericana', NULL, 270, 'addr-115', NOW());
 
 -- =====================================================
 -- 3. SECUENCIAS Y CONFIGURACIÓN

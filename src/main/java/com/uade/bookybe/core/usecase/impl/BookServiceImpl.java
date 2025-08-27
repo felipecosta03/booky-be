@@ -287,12 +287,12 @@ public class BookServiceImpl implements BookService {
   }
 
   @Override
-  public List<UserBook> getUserLibraryFiltered(String userId, Boolean favorites, BookStatus status) {
-    log.info("Getting user library with filters for userId: {}, favorites: {}, status: {}", 
-             userId, favorites, status);
+  public List<UserBook> getUserLibraryFiltered(String userId, Boolean favorites, BookStatus status, Boolean wantsToExchange) {
+    log.info("Getting user library with filters for userId: {}, favorites: {}, status: {}, wantsToExchange: {}", 
+             userId, favorites, status, wantsToExchange);
 
     List<UserBookEntity> userBookEntities =
-        userBookRepository.findByUserIdWithFilters(userId, favorites, status);
+        userBookRepository.findByUserIdWithFilters(userId, favorites, status, wantsToExchange);
 
     return userBookEntities.stream()
         .map(UserBookEntityMapper.INSTANCE::toModel)

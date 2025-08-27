@@ -34,44 +34,58 @@ public class BookController {
 
   @Operation(
       summary = "Add book to user library",
-      description = "Adds a book to user's library. If book doesn't exist, fetches from Google Books API")
+      description =
+          "Adds a book to user's library. If book doesn't exist, fetches from Google Books API")
   @ApiResponses(
       value = {
         @ApiResponse(
             responseCode = "200",
             description = "Book added successfully",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = UserBookDto.class))),
-        @ApiResponse(responseCode = "400", description = "Invalid request data", content = @Content),
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = UserBookDto.class))),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid request data",
+            content = @Content),
         @ApiResponse(responseCode = "404", description = "Book not found", content = @Content),
-        @ApiResponse(responseCode = "409", description = "Book already in library", content = @Content)
+        @ApiResponse(
+            responseCode = "409",
+            description = "Book already in library",
+            content = @Content)
       })
   @PostMapping("/library")
   public ResponseEntity<UserBookDto> addBookToUserLibrary(
-      @Parameter(description = "Book data", required = true) @Valid @RequestBody AddBookToLibraryDto dto,
+      @Parameter(description = "Book data", required = true) @Valid @RequestBody
+          AddBookToLibraryDto dto,
       Authentication authentication) {
-    
+
     String userId = authentication.getName();
-    
+
     log.info("Adding book to library for user: {}", userId);
-    
-    return bookService.addBookToUserLibrary(userId, dto.getIsbn(), dto.getStatus())
+
+    return bookService
+        .addBookToUserLibrary(userId, dto.getIsbn(), dto.getStatus())
         .map(BookDtoMapper.INSTANCE::toUserBookDto)
-        .map(userBook -> {
-          String bookTitle = userBook.getBook() != null ? userBook.getBook().getTitle() : "Unknown";
-          log.info("Book added successfully to user library: {}", bookTitle);
-          return ResponseEntity.ok(userBook);
-        })
-        .orElseGet(() -> {
-          log.warn("Failed to add book to user library");
-          return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        });
+        .map(
+            userBook -> {
+              String bookTitle =
+                  userBook.getBook() != null ? userBook.getBook().getTitle() : "Unknown";
+              log.info("Book added successfully to user library: {}", bookTitle);
+              return ResponseEntity.ok(userBook);
+            })
+        .orElseGet(
+            () -> {
+              log.warn("Failed to add book to user library");
+              return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            });
   }
 
   @Operation(
       summary = "Get user library",
-      description = "Retrieves books from user's library with optional filters for favorites and status")
+      description =
+          "Retrieves books from user's library with optional filters for favorites and status")
   @ApiResponses(
       value = {
         @ApiResponse(
@@ -82,16 +96,25 @@ public class BookController {
   @GetMapping("/library/{userId}")
   public ResponseEntity<List<UserBookDto>> getUserLibrary(
       @Parameter(description = "User ID", required = true) @PathVariable String userId,
-      @Parameter(description = "Filter by favorites only") @RequestParam(required = false) Boolean favorites,
-      @Parameter(description = "Filter by book status") @RequestParam(required = false) BookStatus status) {
-    
-    log.info("Getting library for user: {} with filters - favorites: {}, status: {}", userId, favorites, status);
-    
-    List<UserBook> userBooks = bookService.getUserLibraryFiltered(userId, favorites, status);
-    List<UserBookDto> userBookDtos = userBooks.stream()
-        .map(BookDtoMapper.INSTANCE::toUserBookDto)
-        .collect(Collectors.toList());
-    
+      @Parameter(description = "Filter by favorites only") @RequestParam(required = false)
+          Boolean favorites,
+      @Parameter(description = "Filter by book status") @RequestParam(required = false)
+          BookStatus status,
+      @Parameter(description = "Filter by exchange preference") @RequestParam(required = false)
+          Boolean wantsToExchange) {
+
+    log.info(
+        "Getting library for user: {} with filters - favorites: {}, status: {}, wantsToExchange: {}",
+        userId,
+        favorites,
+        status,
+        wantsToExchange);
+
+    List<UserBook> userBooks =
+        bookService.getUserLibraryFiltered(userId, favorites, status, wantsToExchange);
+    List<UserBookDto> userBookDtos =
+        userBooks.stream().map(BookDtoMapper.INSTANCE::toUserBookDto).collect(Collectors.toList());
+
     return ResponseEntity.ok(userBookDtos);
   }
 
@@ -107,14 +130,13 @@ public class BookController {
       })
   @GetMapping("/exchange")
   public ResponseEntity<List<UserBookDto>> getBooksForExchange() {
-    
+
     log.info("Getting books available for exchange");
-    
+
     List<UserBook> userBooks = bookService.getBooksForExchange();
-    List<UserBookDto> userBookDtos = userBooks.stream()
-        .map(BookDtoMapper.INSTANCE::toUserBookDto)
-        .collect(Collectors.toList());
-    
+    List<UserBookDto> userBookDtos =
+        userBooks.stream().map(BookDtoMapper.INSTANCE::toUserBookDto).collect(Collectors.toList());
+
     return ResponseEntity.ok(userBookDtos);
   }
 
@@ -126,31 +148,39 @@ public class BookController {
         @ApiResponse(
             responseCode = "200",
             description = "Book status updated successfully",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = UserBookDto.class))),
-        @ApiResponse(responseCode = "404", description = "Book not found in user library", content = @Content)
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = UserBookDto.class))),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Book not found in user library",
+            content = @Content)
       })
   @PutMapping("/{bookId}/status")
   public ResponseEntity<UserBookDto> updateBookStatus(
       @Parameter(description = "Book ID", required = true) @PathVariable String bookId,
-      @Parameter(description = "Status update data", required = true) @Valid @RequestBody UpdateStatusDto dto,
+      @Parameter(description = "Status update data", required = true) @Valid @RequestBody
+          UpdateStatusDto dto,
       Authentication authentication) {
-    
+
     String userId = authentication.getName();
-    
+
     log.info("Updating book status for user: {}, book: {}", userId, bookId);
-    
-    return bookService.updateBookStatus(userId, bookId, dto.getStatus())
+
+    return bookService
+        .updateBookStatus(userId, bookId, dto.getStatus())
         .map(BookDtoMapper.INSTANCE::toUserBookDto)
-        .map(userBook -> {
-          log.info("Book status updated successfully: {}", userBook.getStatus());
-          return ResponseEntity.ok(userBook);
-        })
-        .orElseGet(() -> {
-          log.warn("Book not found in user library");
-          return ResponseEntity.notFound().build();
-        });
+        .map(
+            userBook -> {
+              log.info("Book status updated successfully: {}", userBook.getStatus());
+              return ResponseEntity.ok(userBook);
+            })
+        .orElseGet(
+            () -> {
+              log.warn("Book not found in user library");
+              return ResponseEntity.notFound().build();
+            });
   }
 
   @Operation(
@@ -161,31 +191,39 @@ public class BookController {
         @ApiResponse(
             responseCode = "200",
             description = "Exchange preference updated successfully",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = UserBookDto.class))),
-        @ApiResponse(responseCode = "404", description = "Book not found in user library", content = @Content)
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = UserBookDto.class))),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Book not found in user library",
+            content = @Content)
       })
   @PutMapping("/{bookId}/exchange")
   public ResponseEntity<UserBookDto> updateExchangePreference(
       @Parameter(description = "Book ID", required = true) @PathVariable String bookId,
-      @Parameter(description = "Exchange preference data", required = true) @Valid @RequestBody UpdateExchangePreferenceDto dto,
+      @Parameter(description = "Exchange preference data", required = true) @Valid @RequestBody
+          UpdateExchangePreferenceDto dto,
       Authentication authentication) {
-    
+
     String userId = authentication.getName();
-    
+
     log.info("Updating exchange preference for user: {}, book: {}", userId, bookId);
-    
-    return bookService.updateBookExchangePreference(userId, bookId, dto.getWantsToExchange())
+
+    return bookService
+        .updateBookExchangePreference(userId, bookId, dto.getWantsToExchange())
         .map(BookDtoMapper.INSTANCE::toUserBookDto)
-        .map(userBook -> {
-          log.info("Exchange preference updated successfully");
-          return ResponseEntity.ok(userBook);
-        })
-        .orElseGet(() -> {
-          log.warn("Book not found in user library");
-          return ResponseEntity.notFound().build();
-        });
+        .map(
+            userBook -> {
+              log.info("Exchange preference updated successfully");
+              return ResponseEntity.ok(userBook);
+            })
+        .orElseGet(
+            () -> {
+              log.warn("Book not found in user library");
+              return ResponseEntity.notFound().build();
+            });
   }
 
   @Operation(
@@ -196,30 +234,37 @@ public class BookController {
         @ApiResponse(
             responseCode = "200",
             description = "Favorite status toggled successfully",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = UserBookDto.class))),
-        @ApiResponse(responseCode = "404", description = "Book not found in user library", content = @Content)
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = UserBookDto.class))),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Book not found in user library",
+            content = @Content)
       })
   @PutMapping("/{bookId}/favorite")
   public ResponseEntity<UserBookDto> toggleBookFavorite(
       @Parameter(description = "Book ID", required = true) @PathVariable String bookId,
       Authentication authentication) {
-    
+
     String userId = authentication.getName();
-    
+
     log.info("Toggling favorite for user: {}, book: {}", userId, bookId);
-    
-    return bookService.toggleBookFavorite(userId, bookId)
+
+    return bookService
+        .toggleBookFavorite(userId, bookId)
         .map(BookDtoMapper.INSTANCE::toUserBookDto)
-        .map(userBook -> {
-          log.info("Favorite status toggled successfully: {}", userBook.isFavorite());
-          return ResponseEntity.ok(userBook);
-        })
-        .orElseGet(() -> {
-          log.warn("Book not found in user library");
-          return ResponseEntity.notFound().build();
-        });
+        .map(
+            userBook -> {
+              log.info("Favorite status toggled successfully: {}", userBook.isFavorite());
+              return ResponseEntity.ok(userBook);
+            })
+        .orElseGet(
+            () -> {
+              log.warn("Book not found in user library");
+              return ResponseEntity.notFound().build();
+            });
   }
 
   @Operation(
@@ -235,45 +280,49 @@ public class BookController {
   @GetMapping("/search")
   public ResponseEntity<List<BookDto>> searchBooks(
       @Parameter(description = "Search query", required = true) @RequestParam String q) {
-    
+
     log.info("Searching books with query: {}", q);
-    
+
     List<Book> books = bookService.searchBooks(q);
-    List<BookDto> bookDtos = books.stream()
-        .map(BookDtoMapper.INSTANCE::toDto)
-        .collect(Collectors.toList());
-    
+    List<BookDto> bookDtos =
+        books.stream().map(BookDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
+
     return ResponseEntity.ok(bookDtos);
   }
 
   @Operation(
       summary = "Get book by ISBN",
-      description = "Gets a book by ISBN. If not in database, fetches from Google Books API and saves it")
+      description =
+          "Gets a book by ISBN. If not in database, fetches from Google Books API and saves it")
   @ApiResponses(
       value = {
         @ApiResponse(
             responseCode = "200",
             description = "Book found successfully",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = BookDto.class))),
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = BookDto.class))),
         @ApiResponse(responseCode = "404", description = "Book not found", content = @Content)
       })
   @GetMapping("/isbn/{isbn}")
   public ResponseEntity<BookDto> getBookByIsbn(
       @Parameter(description = "ISBN", required = true) @PathVariable String isbn) {
-    
+
     log.info("Getting book by ISBN: {}", isbn);
-    
-    return bookService.getBookByIsbn(isbn)
+
+    return bookService
+        .getBookByIsbn(isbn)
         .map(BookDtoMapper.INSTANCE::toDto)
-        .map(book -> {
-          log.info("Book found: {}", book.getTitle());
-          return ResponseEntity.ok(book);
-        })
-        .orElseGet(() -> {
-          log.warn("Book not found with ISBN: {}", isbn);
-          return ResponseEntity.notFound().build();
-        });
+        .map(
+            book -> {
+              log.info("Book found: {}", book.getTitle());
+              return ResponseEntity.ok(book);
+            })
+        .orElseGet(
+            () -> {
+              log.warn("Book not found with ISBN: {}", isbn);
+              return ResponseEntity.notFound().build();
+            });
   }
-} 
+}

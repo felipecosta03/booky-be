@@ -21,4 +21,6 @@ public class BookExchange {
   private LocalDateTime dateUpdated;
   private List<String> ownerBookIds;
   private List<String> requesterBookIds;
+  private List<UserBook> ownerBooks;
+  private List<UserBook> requesterBooks;
 }

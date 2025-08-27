@@ -5,11 +5,14 @@ import static com.uade.bookybe.core.model.constant.ExchangeStatus.ACCEPTED;
 import com.uade.bookybe.core.exception.BadRequestException;
 import com.uade.bookybe.core.exception.NotFoundException;
 import com.uade.bookybe.core.model.BookExchange;
+import com.uade.bookybe.core.model.UserBook;
 import com.uade.bookybe.core.model.constant.ExchangeStatus;
 import com.uade.bookybe.core.usecase.BookExchangeService;
 import com.uade.bookybe.core.usecase.GamificationService;
 import com.uade.bookybe.infraestructure.entity.BookExchangeEntity;
+import com.uade.bookybe.infraestructure.entity.UserBookEntity;
 import com.uade.bookybe.infraestructure.mapper.BookExchangeEntityMapper;
+import com.uade.bookybe.infraestructure.mapper.UserBookEntityMapper;
 import com.uade.bookybe.infraestructure.repository.BookExchangeRepository;
 import com.uade.bookybe.infraestructure.repository.UserBookRepository;
 import java.time.LocalDateTime;
@@ -78,6 +81,7 @@ public class BookExchangeServiceImpl implements BookExchangeService {
     log.info("Getting all exchanges for user: {}", userId);
     return bookExchangeRepository.findByUserIdOrderByDateCreatedDesc(userId).stream()
         .map(BookExchangeEntityMapper.INSTANCE::toModel)
+        .map(this::enrichExchangeWithBooks)
         .collect(Collectors.toList());
   }
 
@@ -88,6 +92,7 @@ public class BookExchangeServiceImpl implements BookExchangeService {
         .findByUserIdAndStatusOrderByDateCreatedDesc(userId, status)
         .stream()
         .map(BookExchangeEntityMapper.INSTANCE::toModel)
+        .map(this::enrichExchangeWithBooks)
         .collect(Collectors.toList());
   }
 
@@ -96,7 +101,8 @@ public class BookExchangeServiceImpl implements BookExchangeService {
     log.info("Getting exchange by ID: {}", exchangeId);
     return bookExchangeRepository
         .findByIdWithUsers(exchangeId)
-        .map(BookExchangeEntityMapper.INSTANCE::toModel);
+        .map(BookExchangeEntityMapper.INSTANCE::toModel)
+        .map(this::enrichExchangeWithBooks);
   }
 
   @Override
@@ -130,7 +136,8 @@ public class BookExchangeServiceImpl implements BookExchangeService {
       gamificationService.processExchangeCompleted(entity.getOwnerId());
     }
     
-    return Optional.of(BookExchangeEntityMapper.INSTANCE.toModel(savedEntity));
+    return Optional.of(BookExchangeEntityMapper.INSTANCE.toModel(savedEntity))
+        .map(this::enrichExchangeWithBooks);
   }
 
   @Override
@@ -183,7 +190,8 @@ public class BookExchangeServiceImpl implements BookExchangeService {
             .build();
 
     BookExchangeEntity savedEntity = bookExchangeRepository.save(newEntity);
-    return Optional.of(BookExchangeEntityMapper.INSTANCE.toModel(savedEntity));
+    return Optional.of(BookExchangeEntityMapper.INSTANCE.toModel(savedEntity))
+        .map(this::enrichExchangeWithBooks);
   }
 
   @Override
@@ -191,6 +199,7 @@ public class BookExchangeServiceImpl implements BookExchangeService {
     log.info("Getting exchanges where user {} is requester", userId);
     return bookExchangeRepository.findByRequesterIdOrderByDateCreatedDesc(userId).stream()
         .map(BookExchangeEntityMapper.INSTANCE::toModel)
+        .map(this::enrichExchangeWithBooks)
         .collect(Collectors.toList());
   }
 
@@ -199,6 +208,7 @@ public class BookExchangeServiceImpl implements BookExchangeService {
     log.info("Getting exchanges where user {} is owner", userId);
     return bookExchangeRepository.findByOwnerIdOrderByDateCreatedDesc(userId).stream()
         .map(BookExchangeEntityMapper.INSTANCE::toModel)
+        .map(this::enrichExchangeWithBooks)
         .collect(Collectors.toList());
   }
 
@@ -233,5 +243,25 @@ public class BookExchangeServiceImpl implements BookExchangeService {
       default:
         return false;
     }
+  }
+
+  private BookExchange enrichExchangeWithBooks(BookExchange exchange) {
+    if (exchange.getOwnerBookIds() != null && !exchange.getOwnerBookIds().isEmpty()) {
+      List<UserBookEntity> ownerBookEntities = userBookRepository.findByIdInWithBook(exchange.getOwnerBookIds());
+      List<UserBook> ownerBooks = ownerBookEntities.stream()
+          .map(UserBookEntityMapper.INSTANCE::toModel)
+          .collect(Collectors.toList());
+      exchange.setOwnerBooks(ownerBooks);
+    }
+
+    if (exchange.getRequesterBookIds() != null && !exchange.getRequesterBookIds().isEmpty()) {
+      List<UserBookEntity> requesterBookEntities = userBookRepository.findByIdInWithBook(exchange.getRequesterBookIds());
+      List<UserBook> requesterBooks = requesterBookEntities.stream()
+          .map(UserBookEntityMapper.INSTANCE::toModel)
+          .collect(Collectors.toList());
+      exchange.setRequesterBooks(requesterBooks);
+    }
+
+    return exchange;
   }
 }

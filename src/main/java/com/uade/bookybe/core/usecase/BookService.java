@@ -33,8 +33,8 @@ public interface BookService {
   /** Gets user's favorite books */
   List<UserBook> getUserFavoriteBooks(String userId);
 
-  /** Gets user's library with optional filters for favorites and status */
-  List<UserBook> getUserLibraryFiltered(String userId, Boolean favorites, BookStatus status);
+  /** Gets user's library with optional filters for favorites, status and exchange preference */
+  List<UserBook> getUserLibraryFiltered(String userId, Boolean favorites, BookStatus status, Boolean wantsToExchange);
 
   /** Gets books available for exchange */
   List<UserBook> getBooksForExchange();

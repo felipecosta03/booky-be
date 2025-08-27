@@ -35,14 +35,19 @@ public interface UserBookRepository extends JpaRepository<UserBookEntity, String
     WHERE ub.userId = :userId 
     AND (:favorites IS NULL OR ub.favorite = :favorites)
     AND (:status IS NULL OR ub.status = :status)
+    AND (:wantsToExchange IS NULL OR ub.wantsToExchange = :wantsToExchange)
     """)
   List<UserBookEntity> findByUserIdWithFilters(
       @Param("userId") String userId,
       @Param("favorites") Boolean favorites,
-      @Param("status") BookStatus status);
+      @Param("status") BookStatus status,
+      @Param("wantsToExchange") Boolean wantsToExchange);
 
   @Query("SELECT ub FROM UserBookEntity ub JOIN FETCH ub.book WHERE ub.wantsToExchange = true")
   List<UserBookEntity> findByWantsToExchangeTrueWithBook();
+
+  @Query("SELECT ub FROM UserBookEntity ub JOIN FETCH ub.book WHERE ub.book.id IN :bookIds")
+  List<UserBookEntity> findByIdInWithBook(@Param("bookIds") List<String> bookIds);
 
   @Query(
       "SELECT ub FROM UserBookEntity ub JOIN FETCH ub.book WHERE ub.userId = :userId AND ub.bookId = :bookId")

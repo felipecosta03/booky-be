@@ -2075,6 +2075,28 @@ class ExchangesUI {
         }
     }
 
+    static async filterExchanges() {
+        const statusFilter = document.getElementById('exchangeStatusFilter').value;
+        console.log('Filtering exchanges by status:', statusFilter);
+
+        try {
+            let exchanges;
+            if (statusFilter) {
+                // If a specific status is selected, fetch filtered exchanges
+                exchanges = await BookyAPI.getUserExchanges(currentUser.id);
+                exchanges = exchanges.filter(exchange => exchange.status === statusFilter);
+            } else {
+                // If no filter, fetch all exchanges
+                exchanges = await BookyAPI.getUserExchanges(currentUser.id);
+            }
+
+            this.renderExchanges(exchanges);
+        } catch (error) {
+            console.error('Error filtering exchanges:', error);
+            showToast('Error al filtrar intercambios', 'error');
+        }
+    }
+
     static async renderExchanges(exchanges) {
         console.log('🎨 Rendering exchanges:', exchanges);
         const container = document.getElementById('exchangesList');
@@ -2113,9 +2135,9 @@ class ExchangesUI {
         const status = exchange?.status || 'UNKNOWN';
         const dateCreated = exchange?.date_created || new Date().toISOString();
 
-        // User data with fallbacks
-        const requester = exchange?.requester || {};
-        const owner = exchange?.owner || {};
+        // User data with fallbacks - handle both API format and mock format
+        const requester = exchange?.requester || { id: exchange?.requester_id };
+        const owner = exchange?.owner || { id: exchange?.owner_id };
         const requesterName = requester?.name || requester?.username || 'Solicitante';
         const ownerName = owner?.name || owner?.username || 'Propietario';
 
@@ -2123,6 +2145,24 @@ class ExchangesUI {
         const isCurrentUserOwner = owner?.id === currentUser?.id;
         const isCurrentUserRequester = requester?.id === currentUser?.id;
         const canRespond = status === 'PENDING' && isCurrentUserOwner;
+
+        // Can cancel: must be PENDING and current user must be the requester
+        const canCancel = status === 'PENDING' && isCurrentUserRequester;
+
+        // TEMPORARY: Force show cancel button for testing
+        const canCancelTest = status === 'PENDING';  // Show for any pending exchange
+
+        // Debug logs
+        console.log(`🔍 Exchange Debug Info:`, {
+            exchangeId,
+            status,
+            currentUserId: currentUser?.id,
+            requesterId: requester?.id,
+            ownerId: owner?.id,
+            isCurrentUserRequester,
+            canCancel,
+            canCancelTest
+        });
 
         // Role descriptions
         const requesterRole = isCurrentUserRequester ? 'Tú (Solicitante)' : `${requesterName} (Solicitante)`;
@@ -2205,11 +2245,12 @@ class ExchangesUI {
                             ❌ Rechazar
                         </button>
                     ` : ''}
-                    ${status === 'PENDING' && isCurrentUserRequester ? `
-                        <button class="btn btn-sm btn-outline-danger" onclick="ExchangesUI.respondToExchange('${exchangeId}', 'CANCELLED')">
+                    ${canCancelTest ? `
+                        <button class="btn btn-sm btn-danger" onclick="ExchangesUI.respondToExchange('${exchangeId}', 'CANCELLED')" style="background-color: #dc3545; border-color: #dc3545; color: white;">
                             🚫 Cancelar
                         </button>
                     ` : ''}
+                    <!-- Debug: canCancel=${canCancel}, canCancelTest=${canCancelTest}, status=${status}, isCurrentUserRequester=${isCurrentUserRequester} -->
                 </div>
             </div>
         `;
@@ -3060,7 +3101,19 @@ class ExchangesUI {
     static async respondToExchange(exchangeId, response) {
         try {
             await BookyAPI.respondToExchange(exchangeId, response);
-            showToast(`Intercambio ${response === 'ACCEPTED' ? 'aceptado' : 'rechazado'}`, 'success');
+
+            let message = 'Intercambio actualizado';
+            if (response === 'ACCEPTED') {
+                message = 'Intercambio aceptado';
+            } else if (response === 'REJECTED') {
+                message = 'Intercambio rechazado';
+            } else if (response === 'CANCELLED') {
+                message = 'Intercambio cancelado';
+            } else if (response === 'COMPLETED') {
+                message = 'Intercambio completado';
+            }
+
+            showToast(message, 'success');
             await this.loadExchanges();
             await GamificationUI.updateGamificationPanel(currentUser.id);
         } catch (error) {
@@ -3088,9 +3141,9 @@ class ExchangesUI {
         const status = exchange?.status || 'UNKNOWN';
         const dateCreated = exchange?.date_created || new Date().toISOString();
 
-        // User data
-        const requester = exchange?.requester || {};
-        const owner = exchange?.owner || {};
+        // User data - handle both API format and mock format
+        const requester = exchange?.requester || { id: exchange?.requester_id };
+        const owner = exchange?.owner || { id: exchange?.owner_id };
         const requesterName = requester?.name || requester?.username || 'Solicitante';
         const ownerName = owner?.name || owner?.username || 'Propietario';
 
@@ -3099,6 +3152,9 @@ class ExchangesUI {
         const isCurrentUserRequester = requester?.id === currentUser?.id;
         const requesterRole = isCurrentUserRequester ? 'Tú' : requesterName;
         const ownerRole = isCurrentUserOwner ? 'Tú' : ownerName;
+
+        // Can cancel: must be PENDING and current user must be the requester
+        const canCancel = status === 'PENDING' && isCurrentUserRequester;
 
         // Books
         const ownerBooks = exchange?.ownerBooks || [];
@@ -3210,8 +3266,8 @@ class ExchangesUI {
                                     ❌ Rechazar Intercambio
                                 </button>
                             ` : ''}
-                            ${status === 'PENDING' && isCurrentUserRequester ? `
-                                <button class="btn btn-outline-danger" onclick="ExchangesUI.respondToExchange('${exchangeId}', 'CANCELLED')">
+                            ${canCancel ? `
+                                <button class="btn btn-danger" onclick="ExchangesUI.respondToExchange('${exchangeId}', 'CANCELLED')" style="background-color: #dc3545; border-color: #dc3545; color: white;">
                                     🚫 Cancelar Intercambio
                                 </button>
                             ` : ''}
@@ -3543,6 +3599,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('statusFilter').addEventListener('change', BooksUI.filterBooks);
     document.getElementById('exchangeFilter').addEventListener('change', BooksUI.filterBooks);
     document.getElementById('communityPostFilter').addEventListener('change', PostsUI.loadPosts);
+    document.getElementById('exchangeStatusFilter').addEventListener('change', ExchangesUI.filterExchanges);
 
     // Search
     document.getElementById('searchUsersBtn').addEventListener('click', UsersUI.searchUsers);

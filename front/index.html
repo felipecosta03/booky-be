@@ -242,12 +242,27 @@
                                 Usuarios</h3>
                             <div class="actions">
                                 <input type="text" id="userSearchInput"
-                                    placeholder="Buscar usuarios..."
+                                    placeholder="Buscar usuarios por nombre o username..."
                                     class="search-input">
                                 <button id="searchUsersBtn"
                                     class="btn btn-secondary">
                                     <i class="fas fa-search"></i> Buscar
                                 </button>
+                                <button id="clearSearchBtn"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    style="display: none;">
+                                    <i class="fas fa-times"></i> Limpiar
+                                </button>
+                            </div>
+
+                            <!-- Search Results Section -->
+                            <div id="searchResultsSection" class="user-section"
+                                style="display: none;">
+                                <h4><i class="fas fa-search"></i> Resultados de
+                                    Búsqueda</h4>
+                                <div id="searchResultsList" class="items-grid">
+                                    <!-- Search results will be loaded here -->
+                                </div>
                             </div>
 
                             <div class="user-sections">
@@ -443,16 +458,21 @@
                         <div class="form-group">
                             <label for="postCommunity">Comunidad
                                 (opcional):</label>
-                            <select id="postCommunity">
+                            <select id="postCommunity" name="communityId">
                                 <option value>Post general</option>
                                 <!-- Communities will be loaded here -->
                             </select>
                         </div>
                         <div class="form-group">
                             <label for="postContent">Contenido:</label>
-                            <textarea id="postContent" required
+                            <textarea id="postContent" name="content" required
                                 rows="6"
                                 placeholder="Escribe el contenido de tu post..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="postImage">Imagen (opcional):</label>
+                            <input type="file" id="postImage" name="image"
+                                accept="image/*">
                         </div>
                         <button type="submit" class="btn btn-primary">Publicar
                             Post</button>

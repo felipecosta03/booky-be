@@ -221,6 +221,19 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  public List<User> searchUsersByUsername(String searchTerm) {
+    log.info("Searching for users with username containing: {}", searchTerm);
+    
+    List<UserEntity> userEntities = userRepository.findByUsernameContainingIgnoreCase(searchTerm);
+    
+    log.info("Found {} users matching search term: {}", userEntities.size(), searchTerm);
+    
+    return userEntities.stream()
+        .map(UserEntityMapper.INSTANCE::toModel)
+        .collect(Collectors.toList());
+  }
+
+  @Override
   public List<UserPreviewDto> searchUsersByBooks(List<String> bookIds, String requestingUserId) {
     List<Object[]> userResults =
         userBookRepository.findUsersByBookIds(bookIds, requestingUserId, bookIds.size());

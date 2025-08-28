@@ -28,6 +28,13 @@ public interface UserService {
   Optional<User> signIn(String email, String password);
 
   /**
+   * Search users by username (partial match, case insensitive)
+   * @param searchTerm The username search term
+   * @return List of users whose username contains the search term
+   */
+  List<User> searchUsersByUsername(String searchTerm);
+
+  /**
    * Search users who have specific books available for exchange
    * @param bookIds List of book IDs to search for
    * @param requestingUserId ID of the user making the request (to get their address for distance calculation)

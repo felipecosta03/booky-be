@@ -48,4 +48,10 @@ public interface UserRepository extends JpaRepository<UserEntity, String> {
   List<UserEntity> findFollowing(@Param("userId") String userId);
 
   Optional<UserEntity> findByEmail(String email);
+
+  @Query(
+      value = 
+          "SELECT * FROM users WHERE LOWER(username) LIKE LOWER(CONCAT('%', :searchTerm, '%')) ORDER BY username",
+      nativeQuery = true)
+  List<UserEntity> findByUsernameContainingIgnoreCase(@Param("searchTerm") String searchTerm);
 }

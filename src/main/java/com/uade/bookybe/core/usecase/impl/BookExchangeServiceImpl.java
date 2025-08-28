@@ -69,10 +69,10 @@ public class BookExchangeServiceImpl implements BookExchangeService {
             .build();
 
     BookExchangeEntity savedEntity = bookExchangeRepository.save(entity);
-    
+
     // Award gamification points for creating exchange
     gamificationService.processExchangeCreated(requesterId);
-    
+
     return Optional.of(BookExchangeEntityMapper.INSTANCE.toModel(savedEntity));
   }
 
@@ -129,13 +129,13 @@ public class BookExchangeServiceImpl implements BookExchangeService {
     entity.setDateUpdated(LocalDateTime.now());
 
     BookExchangeEntity savedEntity = bookExchangeRepository.save(entity);
-    
+
     // Award gamification points for completing exchange
     if (status == ExchangeStatus.COMPLETED) {
       gamificationService.processExchangeCompleted(entity.getRequesterId());
       gamificationService.processExchangeCompleted(entity.getOwnerId());
     }
-    
+
     return Optional.of(BookExchangeEntityMapper.INSTANCE.toModel(savedEntity))
         .map(this::enrichExchangeWithBooks);
   }
@@ -247,18 +247,23 @@ public class BookExchangeServiceImpl implements BookExchangeService {
 
   private BookExchange enrichExchangeWithBooks(BookExchange exchange) {
     if (exchange.getOwnerBookIds() != null && !exchange.getOwnerBookIds().isEmpty()) {
-      List<UserBookEntity> ownerBookEntities = userBookRepository.findByIdInWithBook(exchange.getOwnerBookIds());
-      List<UserBook> ownerBooks = ownerBookEntities.stream()
-          .map(UserBookEntityMapper.INSTANCE::toModel)
-          .collect(Collectors.toList());
+      List<UserBookEntity> ownerBookEntities =
+          userBookRepository.findByIdInWithBook(exchange.getOwnerBookIds(), exchange.getOwnerId());
+      List<UserBook> ownerBooks =
+          ownerBookEntities.stream()
+              .map(UserBookEntityMapper.INSTANCE::toModel)
+              .collect(Collectors.toList());
       exchange.setOwnerBooks(ownerBooks);
     }
 
     if (exchange.getRequesterBookIds() != null && !exchange.getRequesterBookIds().isEmpty()) {
-      List<UserBookEntity> requesterBookEntities = userBookRepository.findByIdInWithBook(exchange.getRequesterBookIds());
-      List<UserBook> requesterBooks = requesterBookEntities.stream()
-          .map(UserBookEntityMapper.INSTANCE::toModel)
-          .collect(Collectors.toList());
+      List<UserBookEntity> requesterBookEntities =
+          userBookRepository.findByIdInWithBook(
+              exchange.getRequesterBookIds(), exchange.getRequesterId());
+      List<UserBook> requesterBooks =
+          requesterBookEntities.stream()
+              .map(UserBookEntityMapper.INSTANCE::toModel)
+              .collect(Collectors.toList());
       exchange.setRequesterBooks(requesterBooks);
     }
 

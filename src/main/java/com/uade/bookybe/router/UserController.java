@@ -331,6 +331,39 @@ public class UserController {
   }
 
   @Operation(
+      summary = "Search users by username",
+      description = "Find users by partial username match (case insensitive)")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Users found successfully",
+            content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "400", description = "Invalid search term", content = @Content)
+      })
+  @GetMapping("/users/search")
+  public ResponseEntity<List<UserPreviewDto>> searchUsersByUsername(
+      @Parameter(description = "Username search term", required = true, example = "agus")
+          @RequestParam("q") String searchTerm) {
+
+    log.info("Searching for users with username containing: {}", searchTerm);
+
+    if (searchTerm == null || searchTerm.trim().length() < 2) {
+      log.warn("Search term too short or empty: {}", searchTerm);
+      return ResponseEntity.badRequest().build();
+    }
+
+    List<User> users = userService.searchUsersByUsername(searchTerm.trim());
+    List<UserPreviewDto> result = users.stream()
+        .map(UserDtoMapper.INSTANCE::toPreviewDto)
+        .collect(Collectors.toList());
+
+    log.info("Found {} users matching username search: {}", result.size(), searchTerm);
+    
+    return ResponseEntity.ok(result);
+  }
+
+  @Operation(
       summary = "Search users by books for exchange",
       description = "Find users who have specific books available for exchange, ordered by distance if requesting user has address")
   @ApiResponses(

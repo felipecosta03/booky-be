@@ -1,3 +1,145 @@
+/* ===== USER SEARCH STYLES ===== */
+.search-no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.search-no-results i {
+    display: block;
+    margin-bottom: 15px;
+}
+
+.search-no-results p {
+    margin: 10px 0;
+}
+
+.search-no-results .text-muted {
+    font-size: 14px;
+    color: #999;
+}
+
+#searchResultsSection {
+    border: 2px solid #e3f2fd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background-color: #f8f9fa;
+}
+
+#searchResultsSection h4 {
+    color: #1976d2;
+    margin-bottom: 15px;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 250px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.btn-outline-secondary {
+    background-color: transparent;
+    border: 1px solid #6c757d;
+    color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    color: white;
+}
+
+.mock-data-warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 12px;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Follow button styles */
+.follow-btn {
+    transition: all 0.3s ease;
+}
+
+.follow-btn.following {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.follow-btn.following:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    content: '🚫 Dejar de seguir';
+}
+
+.follow-btn:not(.following) {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.follow-btn:not(.following):hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+/* ===== COMMENTS STYLES ===== */
+.comment-item {
+    border-bottom: 1px solid #eee;
+    padding: 15px 0;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.comment-author {
+    font-weight: bold;
+    color: #333;
+}
+
+.comment-delete-btn {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.comment-delete-btn:hover {
+    opacity: 1;
+}
+
+.comment-content {
+    margin: 8px 0;
+    line-height: 1.5;
+}
+
+.comments-section {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
 /* ===== RESET Y BASE ===== */
 * {
     margin: 0;

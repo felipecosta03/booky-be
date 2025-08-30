@@ -3,6 +3,7 @@ package com.uade.bookybe.router;
 import com.uade.bookybe.core.model.BookExchange;
 import com.uade.bookybe.core.model.constant.ExchangeStatus;
 import com.uade.bookybe.core.usecase.BookExchangeService;
+import com.uade.bookybe.core.usecase.UserRateService;
 import com.uade.bookybe.router.dto.exchange.*;
 import com.uade.bookybe.router.mapper.BookExchangeDtoMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -30,6 +33,7 @@ import org.springframework.web.bind.annotation.*;
 public class BookExchangeController {
 
   private final BookExchangeService bookExchangeService;
+  private final UserRateService userRateService;
 
   @Operation(
       summary = "Create a new book exchange",
@@ -73,7 +77,7 @@ public class BookExchangeController {
       return ResponseEntity.status(HttpStatus.CONFLICT).build();
     }
 
-    BookExchangeDto responseDto = BookExchangeDtoMapper.INSTANCE.toDto(exchange.get());
+    BookExchangeDto responseDto = enrichDtoWithCanRate(exchange.get());
     return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
   }
 
@@ -105,8 +109,9 @@ public class BookExchangeController {
       exchanges = bookExchangeService.getUserExchanges(userId);
     }
 
-    List<BookExchangeDto> responseDtos =
-        exchanges.stream().map(BookExchangeDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
+    List<BookExchangeDto> responseDtos = exchanges.stream()
+        .map(this::enrichDtoWithCanRate)
+        .collect(Collectors.toList());
 
     return ResponseEntity.ok(responseDtos);
   }
@@ -121,8 +126,9 @@ public class BookExchangeController {
     log.info("Getting exchanges where user {} is requester", userId);
 
     List<BookExchange> exchanges = bookExchangeService.getExchangesAsRequester(userId);
-    List<BookExchangeDto> responseDtos =
-        exchanges.stream().map(BookExchangeDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
+    List<BookExchangeDto> responseDtos = exchanges.stream()
+        .map(this::enrichDtoWithCanRate)
+        .collect(Collectors.toList());
 
     return ResponseEntity.ok(responseDtos);
   }
@@ -137,8 +143,9 @@ public class BookExchangeController {
     log.info("Getting exchanges where user {} is owner", userId);
 
     List<BookExchange> exchanges = bookExchangeService.getExchangesAsOwner(userId);
-    List<BookExchangeDto> responseDtos =
-        exchanges.stream().map(BookExchangeDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
+    List<BookExchangeDto> responseDtos = exchanges.stream()
+        .map(this::enrichDtoWithCanRate)
+        .collect(Collectors.toList());
 
     return ResponseEntity.ok(responseDtos);
   }
@@ -168,7 +175,7 @@ public class BookExchangeController {
       return ResponseEntity.notFound().build();
     }
 
-    BookExchangeDto responseDto = BookExchangeDtoMapper.INSTANCE.toDto(exchange.get());
+    BookExchangeDto responseDto = enrichDtoWithCanRate(exchange.get());
     return ResponseEntity.ok(responseDto);
   }
 
@@ -212,7 +219,7 @@ public class BookExchangeController {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
-    BookExchangeDto responseDto = BookExchangeDtoMapper.INSTANCE.toDto(exchange.get());
+    BookExchangeDto responseDto = enrichDtoWithCanRate(exchange.get());
     return ResponseEntity.ok(responseDto);
   }
 
@@ -259,7 +266,7 @@ public class BookExchangeController {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
-    BookExchangeDto responseDto = BookExchangeDtoMapper.INSTANCE.toDto(exchange.get());
+    BookExchangeDto responseDto = enrichDtoWithCanRate(exchange.get());
     return ResponseEntity.ok(responseDto);
   }
 
@@ -274,5 +281,34 @@ public class BookExchangeController {
 
     long count = bookExchangeService.getPendingExchangesCount(userId);
     return ResponseEntity.ok(count);
+  }
+
+  /**
+   * Helper method to get the current authenticated user ID
+   */
+  private String getCurrentUserId() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication != null && authentication.isAuthenticated() && 
+        !authentication.getPrincipal().equals("anonymousUser")) {
+      return (String) authentication.getPrincipal();
+    }
+    return null;
+  }
+
+  /**
+   * Helper method to populate canRate field in BookExchangeDto
+   */
+  private BookExchangeDto enrichDtoWithCanRate(BookExchange exchange) {
+    BookExchangeDto dto = BookExchangeDtoMapper.INSTANCE.toDto(exchange);
+    
+    String currentUserId = getCurrentUserId();
+    if (currentUserId != null) {
+      boolean canRate = userRateService.canUserRateExchange(exchange.getId(), currentUserId);
+      dto.setCanRate(canRate);
+    } else {
+      dto.setCanRate(false);
+    }
+    
+    return dto;
   }
 }

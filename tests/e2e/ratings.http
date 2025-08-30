@@ -1,0 +1,35 @@
+### Test Rating Endpoints
+
+### 1. Create a rating for an exchange (POST /ratings/exchanges/{exchangeId})
+POST {{baseUrl}}/ratings/exchanges/exchange-12345678
+Content-Type: application/json
+
+{
+  "userId": "user-123",
+  "rating": 5,
+  "comment": "Great exchange! Books were in excellent condition."
+}
+
+### 2. Get ratings for a user (GET /ratings/users/{userId})
+GET {{baseUrl}}/ratings/users/user-456
+
+### 3. Get ratings for an exchange (GET /ratings/exchanges/{exchangeId})
+GET {{baseUrl}}/ratings/exchanges/exchange-12345678
+
+### 4. Check if user can rate exchange (GET /ratings/exchanges/{exchangeId}/can-rate)
+GET {{baseUrl}}/ratings/exchanges/exchange-12345678/can-rate?userId=user-123
+
+### 5. Get user rating statistics (GET /ratings/users/{userId}/stats)
+GET {{baseUrl}}/ratings/users/user-456/stats
+
+### 6. Get exchange with canRate flag (GET /exchanges/{exchangeId}) - canRate calculated from JWT token
+Authorization: Bearer {{token}}
+GET {{baseUrl}}/exchanges/exchange-12345678
+
+### 7. Get user exchanges with canRate flag (GET /exchanges/users/{userId}) - canRate calculated from JWT token
+Authorization: Bearer {{token}}
+GET {{baseUrl}}/exchanges/users/user-456
+
+### 8. Get user exchanges with status and canRate flag - canRate calculated from JWT token
+Authorization: Bearer {{token}}
+GET {{baseUrl}}/exchanges/users/user-456?status=COMPLETED

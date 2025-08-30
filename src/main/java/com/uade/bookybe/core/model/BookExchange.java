@@ -23,4 +23,6 @@ public class BookExchange {
   private List<String> requesterBookIds;
   private List<UserBook> ownerBooks;
   private List<UserBook> requesterBooks;
+  private UserRate requesterRate;
+  private UserRate ownerRate;
 }

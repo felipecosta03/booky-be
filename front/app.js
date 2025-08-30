@@ -839,6 +839,38 @@ class BookyAPI {
             body: JSON.stringify(counterOffer)
         });
     }
+
+    // ===== RATINGS =====
+    static async createRating(exchangeId, rating, comment) {
+        console.log('🔄 Creating rating for exchange:', exchangeId, 'Rating:', rating);
+        return await this.request(`/ratings/exchanges/${exchangeId}`, {
+            method: 'POST',
+            body: JSON.stringify({
+                rating: rating,
+                comment: comment
+            })
+        });
+    }
+
+    static async getUserRatings(userId) {
+        console.log('🔄 Getting ratings for user:', userId);
+        return await this.request(`/ratings/users/${userId}`);
+    }
+
+    static async getExchangeRatings(exchangeId) {
+        console.log('🔄 Getting ratings for exchange:', exchangeId);
+        return await this.request(`/ratings/exchanges/${exchangeId}`);
+    }
+
+    static async canUserRateExchange(exchangeId, userId) {
+        console.log('🔄 Checking if user can rate exchange:', exchangeId, 'User:', userId);
+        return await this.request(`/ratings/exchanges/${exchangeId}/can-rate?userId=${userId}`);
+    }
+
+    static async getUserRatingStats(userId) {
+        console.log('🔄 Getting rating statistics for user:', userId);
+        return await this.request(`/ratings/users/${userId}/stats`);
+    }
 }
 
 // ===== UI UTILITIES =====
@@ -2052,6 +2084,18 @@ class ExchangesUI {
             console.log('📋 Exchanges received in loadExchanges:', exchanges);
             console.log('📋 First exchange details:', exchanges[0]);
 
+            // Debug canRate field specifically
+            if (exchanges && exchanges.length > 0) {
+                exchanges.forEach((exchange, index) => {
+                    console.log(`🔍 Exchange ${index} canRate debug:`, {
+                        id: exchange.id,
+                        status: exchange.status,
+                        canRate: exchange.canRate,
+                        canRateType: typeof exchange.canRate
+                    });
+                });
+            }
+
             if (!Array.isArray(exchanges)) {
                 console.warn('⚠️ Exchanges is not an array:', exchanges);
                 document.getElementById('exchangesList').innerHTML = '<p class="text-center">No hay intercambios disponibles</p>';
@@ -2152,6 +2196,11 @@ class ExchangesUI {
         // TEMPORARY: Force show cancel button for testing
         const canCancelTest = status === 'PENDING';  // Show for any pending exchange
 
+        // Can rate: exchange must be COMPLETED and user must be participant
+        // Using backend canRate field if available, otherwise fallback to local logic
+        const canRate = exchange?.canRate === true ||
+            (status === 'COMPLETED' && (isCurrentUserOwner || isCurrentUserRequester));
+
         // Debug logs
         console.log(`🔍 Exchange Debug Info:`, {
             exchangeId,
@@ -2160,8 +2209,12 @@ class ExchangesUI {
             requesterId: requester?.id,
             ownerId: owner?.id,
             isCurrentUserRequester,
+            isCurrentUserOwner,
             canCancel,
-            canCancelTest
+            canCancelTest,
+            canRate,
+            'exchange.canRate': exchange?.canRate,
+            'exchange object': exchange
         });
 
         // Role descriptions
@@ -2250,7 +2303,17 @@ class ExchangesUI {
                             🚫 Cancelar
                         </button>
                     ` : ''}
-                    <!-- Debug: canCancel=${canCancel}, canCancelTest=${canCancelTest}, status=${status}, isCurrentUserRequester=${isCurrentUserRequester} -->
+                    ${canRate ? `
+                        <button class="btn btn-sm btn-warning" onclick="ExchangesUI.showRatingModal('${exchangeId}')" style="background-color: #ffc107; border-color: #ffc107; color: #000;">
+                            ⭐ Calificar
+                        </button>
+                    ` : ''}
+                    ${status === 'COMPLETED' && (isCurrentUserOwner || isCurrentUserRequester) ? `
+                        <button class="btn btn-sm btn-info" onclick="ExchangesUI.showRatingModal('${exchangeId}')" style="background-color: #17a2b8; border-color: #17a2b8; color: white;">
+                            ⭐ Calificar (Test)
+                        </button>
+                    ` : ''}
+                    <!-- Debug: canCancel=${canCancel}, canCancelTest=${canCancelTest}, status=${status}, isCurrentUserRequester=${isCurrentUserRequester}, canRate=${canRate}, exchange.canRate=${exchange?.canRate} -->
                 </div>
             </div>
         `;
@@ -3256,6 +3319,11 @@ class ExchangesUI {
                             </div>
                         ` : ''}
                         
+                        <!-- Ratings Section -->
+                        <div id="ratingsSection-${exchangeId}">
+                            ${status === 'COMPLETED' ? '<div class="loading-ratings">Cargando calificaciones...</div>' : ''}
+                        </div>
+                        
                         <!-- Action Buttons -->
                         <div class="modal-actions">
                             ${status === 'PENDING' && isCurrentUserOwner ? `
@@ -3281,6 +3349,11 @@ class ExchangesUI {
         `;
 
         document.body.insertAdjacentHTML('beforeend', modalContent);
+
+        // Load ratings if exchange is completed
+        if (status === 'COMPLETED') {
+            this.loadExchangeRatings(exchangeId);
+        }
     }
 
     static closeExchangeDetailsModal() {
@@ -3331,6 +3404,325 @@ class ExchangesUI {
         }
 
         return this.exchangeData;
+    }
+
+    // ===== RATING METHODS =====
+    static showRatingModal(exchangeId) {
+        console.log('🌟 Showing rating modal for exchange:', exchangeId);
+
+        // Check if modal already exists and remove it
+        const existingModal = document.getElementById('ratingModal');
+        if (existingModal) {
+            console.log('🗑️ Removing existing rating modal');
+            existingModal.remove();
+        }
+
+        const modalHtml = `
+            <div id="ratingModal" class="modal-overlay">
+                <div class="modal-content rating-modal">
+                    <div class="modal-header">
+                        <h3>⭐ Calificar Intercambio</h3>
+                        <span class="close" onclick="ExchangesUI.closeRatingModal()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p>¿Cómo fue tu experiencia con este intercambio?</p>
+                        
+                        <div class="rating-section">
+                            <label>Calificación:</label>
+                            <div class="star-rating" id="starRating">
+                                <span class="star" data-rating="1">⭐</span>
+                                <span class="star" data-rating="2">⭐</span>
+                                <span class="star" data-rating="3">⭐</span>
+                                <span class="star" data-rating="4">⭐</span>
+                                <span class="star" data-rating="5">⭐</span>
+                            </div>
+                            <div class="rating-text" id="ratingText">Selecciona una calificación</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ratingComment">Comentario (opcional):</label>
+                            <textarea id="ratingComment" class="form-control" rows="3" 
+                                placeholder="Comparte tu experiencia con este intercambio..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="ExchangesUI.closeRatingModal()">
+                            Cancelar
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="ExchangesUI.submitRating('${exchangeId}')" id="submitRatingBtn" disabled>
+                            Enviar Calificación
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        console.log('✅ Rating modal HTML inserted');
+
+        // Verify modal was created
+        const createdModal = document.getElementById('ratingModal');
+        if (createdModal) {
+            console.log('✅ Rating modal found in DOM');
+            createdModal.style.display = 'flex'; // Ensure it's visible
+        } else {
+            console.error('❌ Rating modal not found in DOM after insertion');
+            return;
+        }
+
+        // Initialize star rating functionality
+        console.log('🌟 Initializing star rating functionality');
+        this.initializeStarRating();
+    }
+
+    static initializeStarRating() {
+        const stars = document.querySelectorAll('.star');
+        const ratingText = document.getElementById('ratingText');
+        const submitBtn = document.getElementById('submitRatingBtn');
+        let selectedRating = 0;
+
+        console.log('🔍 Star rating elements found:', {
+            stars: stars.length,
+            ratingText: !!ratingText,
+            submitBtn: !!submitBtn
+        });
+
+        if (stars.length === 0) {
+            console.error('❌ No stars found! Cannot initialize rating');
+            return;
+        }
+
+        if (!ratingText) {
+            console.error('❌ Rating text element not found!');
+            return;
+        }
+
+        if (!submitBtn) {
+            console.error('❌ Submit button not found!');
+            return;
+        }
+
+        const ratingTexts = {
+            1: '⭐ Muy malo',
+            2: '⭐⭐ Malo',
+            3: '⭐⭐⭐ Regular',
+            4: '⭐⭐⭐⭐ Bueno',
+            5: '⭐⭐⭐⭐⭐ Excelente'
+        };
+
+        stars.forEach((star, index) => {
+            star.addEventListener('mouseover', () => {
+                stars.forEach((s, i) => {
+                    s.style.opacity = i <= index ? '1' : '0.3';
+                });
+                ratingText.textContent = ratingTexts[index + 1];
+            });
+
+            star.addEventListener('mouseout', () => {
+                stars.forEach((s, i) => {
+                    s.style.opacity = i < selectedRating ? '1' : '0.3';
+                });
+                ratingText.textContent = selectedRating > 0 ? ratingTexts[selectedRating] : 'Selecciona una calificación';
+            });
+
+            star.addEventListener('click', () => {
+                selectedRating = index + 1;
+                stars.forEach((s, i) => {
+                    s.style.opacity = i < selectedRating ? '1' : '0.3';
+                });
+                ratingText.textContent = ratingTexts[selectedRating];
+                submitBtn.disabled = false;
+
+                // Store selected rating
+                document.getElementById('starRating').setAttribute('data-selected-rating', selectedRating);
+            });
+        });
+
+        // Initialize all stars as inactive
+        stars.forEach(star => {
+            star.style.opacity = '0.3';
+        });
+    }
+
+    static async submitRating(exchangeId) {
+        console.log('🌟 Submit rating called for exchange:', exchangeId);
+
+        const starRatingElement = document.getElementById('starRating');
+        const commentElement = document.getElementById('ratingComment');
+
+        if (!starRatingElement) {
+            console.error('❌ Star rating element not found');
+            showToast('Error: Elementos del formulario no encontrados', 'error');
+            return;
+        }
+
+        if (!commentElement) {
+            console.error('❌ Comment element not found');
+            showToast('Error: Elementos del formulario no encontrados', 'error');
+            return;
+        }
+
+        const selectedRating = parseInt(starRatingElement.getAttribute('data-selected-rating'));
+        const comment = commentElement.value.trim();
+
+        console.log('🔍 Rating data:', { selectedRating, comment, exchangeId });
+
+        if (!selectedRating || selectedRating < 1 || selectedRating > 5) {
+            showToast('Por favor selecciona una calificación', 'error');
+            return;
+        }
+
+        try {
+            console.log('🌟 Submitting rating:', { exchangeId, selectedRating, comment });
+
+            // For testing, show success even if API fails
+            if (exchangeId.startsWith('test-')) {
+                console.log('🧪 Test mode - simulating success');
+                showToast('¡Calificación de prueba enviada exitosamente!', 'success');
+                this.closeRatingModal();
+                return;
+            }
+
+            await BookyAPI.createRating(exchangeId, selectedRating, comment);
+
+            showToast('¡Calificación enviada exitosamente!', 'success');
+            this.closeRatingModal();
+
+            // Reload exchanges to show updated state
+            await this.loadExchanges();
+
+        } catch (error) {
+            console.error('❌ Error submitting rating:', error);
+            showToast('Error al enviar la calificación: ' + error.message, 'error');
+        }
+    }
+
+    static closeRatingModal() {
+        const modal = document.getElementById('ratingModal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    static async loadExchangeRatings(exchangeId) {
+        try {
+            console.log('🌟 Loading ratings for exchange:', exchangeId);
+            const ratings = await BookyAPI.getExchangeRatings(exchangeId);
+
+            const ratingsContainer = document.getElementById(`ratingsSection-${exchangeId}`);
+            if (!ratingsContainer) {
+                console.warn('Ratings container not found');
+                return;
+            }
+
+            if (ratings && ratings.length > 0) {
+                const ratingsHtml = `
+                    <div class="exchange-ratings">
+                        <h4>⭐ Calificaciones del Intercambio</h4>
+                        <div class="ratings-list">
+                            ${ratings.map(rating => this.renderRating(rating)).join('')}
+                        </div>
+                    </div>
+                `;
+                ratingsContainer.innerHTML = ratingsHtml;
+            } else {
+                ratingsContainer.innerHTML = `
+                    <div class="no-ratings">
+                        <p>Aún no hay calificaciones para este intercambio.</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('❌ Error loading ratings:', error);
+            const ratingsContainer = document.getElementById(`ratingsSection-${exchangeId}`);
+            if (ratingsContainer) {
+                ratingsContainer.innerHTML = `
+                    <div class="no-ratings">
+                        <p>Error cargando calificaciones.</p>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    static renderRating(rating) {
+        const stars = '⭐'.repeat(rating.rating);
+        const ratingDate = new Date(rating.dateCreated).toLocaleDateString();
+
+        return `
+            <div class="exchange-rating-display">
+                <div class="rating-header">
+                    <div class="rating-stars">${stars}</div>
+                    <div class="rating-date">${ratingDate}</div>
+                </div>
+                ${rating.comment ? `
+                    <div class="rating-comment">
+                        "${rating.comment}"
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    // ===== DEBUG/TEST METHODS =====
+    static testRatingModal() {
+        console.log('🧪 Testing rating modal directly');
+        this.showRatingModal('test-exchange-123');
+    }
+
+    static createTestCompletedExchange() {
+        console.log('🧪 Creating test completed exchange for rating testing');
+
+        const testExchange = {
+            id: 'test-exchange-' + Date.now(),
+            status: 'COMPLETED',
+            canRate: true,
+            dateCreated: new Date().toISOString(),
+            dateUpdated: new Date().toISOString(),
+            requesterId: currentUser?.id,
+            ownerId: 'test-owner-id',
+            requester: {
+                id: currentUser?.id,
+                name: currentUser?.name || 'Test User',
+                username: currentUser?.username || 'testuser'
+            },
+            owner: {
+                id: 'test-owner-id',
+                name: 'Test Owner',
+                username: 'testowner'
+            },
+            ownerBooks: [{
+                id: 'test-book-1',
+                book: {
+                    title: 'Test Book 1',
+                    author: 'Test Author',
+                    image: 'https://via.placeholder.com/150x200'
+                }
+            }],
+            requesterBooks: [{
+                id: 'test-book-2',
+                book: {
+                    title: 'Test Book 2',
+                    author: 'Test Author 2',
+                    image: 'https://via.placeholder.com/150x200'
+                }
+            }]
+        };
+
+        // Add to the beginning of the exchanges list
+        const exchangesList = document.getElementById('exchangesList');
+        if (exchangesList) {
+            this.renderSingleExchange(testExchange).then(html => {
+                exchangesList.insertAdjacentHTML('afterbegin', `
+                    <div style="border: 2px solid #28a745; border-radius: 8px; margin-bottom: 15px; padding: 10px;">
+                        <div style="background-color: #d4edda; padding: 5px 10px; margin: -10px -10px 10px -10px; border-radius: 6px 6px 0 0;">
+                            <strong>🧪 TEST EXCHANGE - Para probar calificaciones</strong>
+                        </div>
+                        ${html}
+                    </div>
+                `);
+            });
+        }
     }
 }
 

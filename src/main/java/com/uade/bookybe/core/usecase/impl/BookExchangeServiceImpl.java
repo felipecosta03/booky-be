@@ -6,9 +6,11 @@ import com.uade.bookybe.core.exception.BadRequestException;
 import com.uade.bookybe.core.exception.NotFoundException;
 import com.uade.bookybe.core.model.BookExchange;
 import com.uade.bookybe.core.model.UserBook;
+import com.uade.bookybe.core.model.UserRate;
 import com.uade.bookybe.core.model.constant.ExchangeStatus;
 import com.uade.bookybe.core.usecase.BookExchangeService;
 import com.uade.bookybe.core.usecase.GamificationService;
+import com.uade.bookybe.core.usecase.UserRateService;
 import com.uade.bookybe.infraestructure.entity.BookExchangeEntity;
 import com.uade.bookybe.infraestructure.entity.UserBookEntity;
 import com.uade.bookybe.infraestructure.mapper.BookExchangeEntityMapper;
@@ -34,6 +36,7 @@ public class BookExchangeServiceImpl implements BookExchangeService {
   private final BookExchangeRepository bookExchangeRepository;
   private final UserBookRepository userBookRepository;
   private final GamificationService gamificationService;
+  private final UserRateService userRateService;
 
   @Override
   public Optional<BookExchange> createExchange(
@@ -265,6 +268,23 @@ public class BookExchangeServiceImpl implements BookExchangeService {
               .map(UserBookEntityMapper.INSTANCE::toModel)
               .collect(Collectors.toList());
       exchange.setRequesterBooks(requesterBooks);
+    }
+
+    // Populate ratings if exchange is completed
+    if (exchange.getStatus() == ExchangeStatus.COMPLETED) {
+      List<UserRate> exchangeRatings = userRateService.getExchangeRatings(exchange.getId());
+      
+      // Find requester and owner ratings
+      Optional<UserRate> requesterRating = exchangeRatings.stream()
+          .filter(rating -> rating.getUserId().equals(exchange.getRequesterId()))
+          .findFirst();
+      
+      Optional<UserRate> ownerRating = exchangeRatings.stream()
+          .filter(rating -> rating.getUserId().equals(exchange.getOwnerId()))
+          .findFirst();
+      
+      requesterRating.ifPresent(exchange::setRequesterRate);
+      ownerRating.ifPresent(exchange::setOwnerRate);
     }
 
     return exchange;

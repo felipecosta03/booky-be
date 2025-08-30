@@ -9,7 +9,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = {BookDtoMapper.class})
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = {BookDtoMapper.class, UserRateDtoMapper.class})
 public interface BookExchangeDtoMapper {
   BookExchangeDtoMapper INSTANCE = Mappers.getMapper(BookExchangeDtoMapper.class);
 

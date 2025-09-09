@@ -24,6 +24,7 @@ public class BookExchangeDto {
   private LocalDateTime dateUpdated;
   private List<String> ownerBookIds;
   private List<String> requesterBookIds;
+  private String chatId;
   private List<UserBookDto> ownerBooks;
   private List<UserBookDto> requesterBooks;
   private UserPreviewDto requester;

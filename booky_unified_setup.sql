@@ -6,6 +6,8 @@ DROP TABLE IF EXISTS gamification_profiles CASCADE;
 DROP TABLE IF EXISTS exchange_requester_books CASCADE;
 DROP TABLE IF EXISTS exchange_owner_books CASCADE;
 DROP TABLE IF EXISTS book_exchanges CASCADE;
+DROP TABLE IF EXISTS messages CASCADE;
+DROP TABLE IF EXISTS chats CASCADE;
 DROP TABLE IF EXISTS comment CASCADE;
 DROP TABLE IF EXISTS post CASCADE;
 DROP TABLE IF EXISTS reading_club_members CASCADE;
@@ -123,6 +125,7 @@ CREATE TABLE book_exchanges
     status       VARCHAR(255) NOT NULL,
     date_created TIMESTAMP    NOT NULL,
     date_updated TIMESTAMP    NOT NULL,
+    chat_id      VARCHAR(255),
     FOREIGN KEY (requester_id) REFERENCES users (id),
     FOREIGN KEY (owner_id) REFERENCES users (id)
 );
@@ -158,6 +161,39 @@ CREATE TABLE user_rates
     FOREIGN KEY (exchange_id) REFERENCES book_exchanges (id) ON DELETE CASCADE,
     CONSTRAINT uk_user_exchange_rating UNIQUE (user_id, exchange_id)
 );
+
+-- =====================================================
+-- TABLAS DE CHAT
+-- =====================================================
+
+-- Tabla: chats
+CREATE TABLE chats
+(
+    id           VARCHAR(255) PRIMARY KEY,
+    user1_id     VARCHAR(255) NOT NULL,
+    user2_id     VARCHAR(255) NOT NULL,
+    date_created TIMESTAMP    NOT NULL,
+    date_updated TIMESTAMP    NOT NULL,
+    FOREIGN KEY (user1_id) REFERENCES users (id),
+    FOREIGN KEY (user2_id) REFERENCES users (id),
+    CONSTRAINT unique_chat_users UNIQUE (user1_id, user2_id)
+);
+
+-- Tabla: messages
+CREATE TABLE messages
+(
+    id        VARCHAR(255) PRIMARY KEY,
+    chat_id   VARCHAR(255) NOT NULL,
+    sender_id VARCHAR(255) NOT NULL,
+    content   TEXT         NOT NULL,
+    date_sent TIMESTAMP    NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users (id)
+);
+
+-- Agregar foreign key para chat_id en book_exchanges
+ALTER TABLE book_exchanges ADD FOREIGN KEY (chat_id) REFERENCES chats (id);
 
 -- =====================================================
 -- TABLAS DE COMUNIDADES
@@ -329,6 +365,12 @@ CREATE INDEX idx_reading_clubs_book_id ON reading_clubs (book_id);
 CREATE INDEX idx_gamification_profiles_user_id ON gamification_profiles (user_id);
 CREATE INDEX idx_user_achievements_user_id ON user_achievements (user_id);
 CREATE INDEX idx_user_levels_level_number ON user_levels (level);
+CREATE INDEX idx_chats_user1 ON chats (user1_id);
+CREATE INDEX idx_chats_user2 ON chats (user2_id);
+CREATE INDEX idx_chats_updated ON chats (date_updated);
+CREATE INDEX idx_messages_chat ON messages (chat_id);
+CREATE INDEX idx_messages_sender ON messages (sender_id);
+CREATE INDEX idx_messages_date ON messages (date_sent);
 
 -- Insertar niveles de usuario
 
@@ -919,6 +961,110 @@ VALUES ('comm-001', 'Macondo es más real que muchos lugares reales. García Má
        ('comm-006', '¡Tengo "La casa de los espíritus"! ¿Te interesa?', NOW() - INTERVAL '18 hours', 'user-005',
         'post-011');
 
+-- =====================================================
+-- DATOS DE CHATS Y MENSAJES
+-- =====================================================
+
+-- Insertar chats
+INSERT INTO chats (id, user1_id, user2_id, date_created, date_updated)
+VALUES 
+-- Chat entre Juan (user-001) y Carlos (user-003) - Para intercambio
+('chat-001', 'user-001', 'user-003', NOW() - INTERVAL '3 days', NOW() - INTERVAL '30 minutes'),
+
+-- Chat entre María (user-002) y Ana (user-004) - Conversación general
+('chat-002', 'user-002', 'user-004', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 hours'),
+
+-- Chat entre Luis (user-005) y Sofía (user-006) - Intercambio de libros
+('chat-003', 'user-005', 'user-006', NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 hour'),
+
+-- Chat entre Diego (user-007) y Lucía (user-008) - Discusión literaria
+('chat-004', 'user-007', 'user-008', NOW() - INTERVAL '5 hours', NOW() - INTERVAL '15 minutes'),
+
+-- Chat entre Juan (user-001) y María (user-002) - Recomendaciones
+('chat-005', 'user-001', 'user-002', NOW() - INTERVAL '6 hours', NOW() - INTERVAL '45 minutes');
+
+-- Insertar mensajes
+INSERT INTO messages (id, chat_id, sender_id, content, date_sent, is_read)
+VALUES 
+-- Conversación en chat-001 (Juan y Carlos - Intercambio)
+('msg-001', 'chat-001', 'user-001', 'Hola Carlos! Vi que tienes "Un Mundo Feliz" disponible para intercambio. Me interesa mucho.', NOW() - INTERVAL '3 days', true),
+('msg-002', 'chat-001', 'user-003', '¡Hola Juan! Sí, tengo "Un Mundo Feliz" y está en excelente estado. ¿Qué me ofreces a cambio?', NOW() - INTERVAL '3 days' + INTERVAL '15 minutes', true),
+('msg-003', 'chat-001', 'user-001', 'Te puedo ofrecer "Cien Años de Soledad". Es una primera edición y está como nuevo.', NOW() - INTERVAL '3 days' + INTERVAL '30 minutes', true),
+('msg-004', 'chat-001', 'user-003', 'Perfecto! García Márquez es uno de mis autores favoritos. ¿Dónde podemos hacer el intercambio?', NOW() - INTERVAL '3 days' + INTERVAL '45 minutes', true),
+('msg-005', 'chat-001', 'user-001', 'Podemos encontrarnos en el café de Corrientes y Callao el sábado a las 15:00. ¿Te parece bien?', NOW() - INTERVAL '2 days', true),
+('msg-006', 'chat-001', 'user-003', 'Perfecto! Nos vemos el sábado. Llevaré "Un Mundo Feliz" en una bolsa azul.', NOW() - INTERVAL '2 days' + INTERVAL '20 minutes', true),
+('msg-007', 'chat-001', 'user-001', 'Genial! Yo llevaré "Cien Años de Soledad" en una carpeta marrón. ¡Hasta el sábado!', NOW() - INTERVAL '2 days' + INTERVAL '25 minutes', true),
+('msg-008', 'chat-001', 'user-003', '¡Excelente intercambio! El libro está en perfectas condiciones. Gracias Juan!', NOW() - INTERVAL '1 day', true),
+('msg-009', 'chat-001', 'user-001', 'Igualmente! "Un Mundo Feliz" es exactamente lo que esperaba. ¡Fue un placer hacer el intercambio contigo!', NOW() - INTERVAL '1 day' + INTERVAL '10 minutes', true),
+('msg-010', 'chat-001', 'user-003', 'Si tienes más libros de García Márquez, avísame. Me encanta su estilo.', NOW() - INTERVAL '30 minutes', false),
+
+-- Conversación en chat-002 (María y Ana - Conversación general)
+('msg-011', 'chat-002', 'user-002', 'Ana, ¿has leído algo bueno últimamente? Necesito recomendaciones de literatura juvenil.', NOW() - INTERVAL '2 days', true),
+('msg-012', 'chat-002', 'user-004', '¡Hola María! Acabo de terminar "La Ladrona de Libros" y me encantó. Es juvenil pero muy profundo.', NOW() - INTERVAL '2 days' + INTERVAL '30 minutes', true),
+('msg-013', 'chat-002', 'user-002', 'Ese libro está en mi lista desde hace tiempo. ¿Es muy triste?', NOW() - INTERVAL '2 days' + INTERVAL '45 minutes', true),
+('msg-014', 'chat-002', 'user-004', 'Tiene momentos tristes, pero también mucha esperanza. La narrativa es hermosa.', NOW() - INTERVAL '2 days' + INTERVAL '1 hour', true),
+('msg-015', 'chat-002', 'user-002', 'Perfecto, creo que será mi próxima lectura. ¿Tienes más recomendaciones?', NOW() - INTERVAL '2 hours', false),
+
+-- Conversación en chat-003 (Luis y Sofía - Intercambio)
+('msg-016', 'chat-003', 'user-005', 'Sofía, vi tu post sobre "El Retrato de Dorian Gray". ¿Estarías interesada en intercambiarlo?', NOW() - INTERVAL '1 day', true),
+('msg-017', 'chat-003', 'user-006', 'Hola Luis! Sí, me gustaría intercambiarlo. ¿Qué tienes disponible?', NOW() - INTERVAL '1 day' + INTERVAL '20 minutes', true),
+('msg-018', 'chat-003', 'user-005', 'Tengo "Crimen y Castigo" de Dostoevsky. Es una edición muy buena.', NOW() - INTERVAL '1 day' + INTERVAL '35 minutes', true),
+('msg-019', 'chat-003', 'user-006', '¡Me encanta Dostoevsky! Acepto el intercambio. ¿Cuándo podemos hacerlo?', NOW() - INTERVAL '1 day' + INTERVAL '50 minutes', true),
+('msg-020', 'chat-003', 'user-005', 'Podemos hacerlo mañana en la plaza San Martín a las 18:00.', NOW() - INTERVAL '1 hour', false),
+
+-- Conversación en chat-004 (Diego y Lucía - Discusión literaria)
+('msg-021', 'chat-004', 'user-007', 'Lucía, leí tu análisis sobre "El Guardián entre el Centeno". Muy interesante tu perspectiva.', NOW() - INTERVAL '5 hours', true),
+('msg-022', 'chat-004', 'user-008', 'Gracias Diego! Salinger tiene una forma única de capturar la adolescencia.', NOW() - INTERVAL '5 hours' + INTERVAL '15 minutes', true),
+('msg-023', 'chat-004', 'user-007', 'Exacto. ¿Has leído "Franny and Zooey"? Es menos conocido pero igual de profundo.', NOW() - INTERVAL '4 hours', true),
+('msg-024', 'chat-004', 'user-008', 'No, pero ahora lo agregaré a mi lista. ¿Me lo recomiendas?', NOW() - INTERVAL '15 minutes', false),
+
+-- Conversación en chat-005 (Juan y María - Recomendaciones)
+('msg-025', 'chat-005', 'user-001', 'María, ¿qué opinas de los thrillers nórdicos? Estoy pensando en leer algo del género.', NOW() - INTERVAL '6 hours', true),
+('msg-026', 'chat-005', 'user-002', '¡Son fantásticos! Te recomiendo empezar con "La Chica del Dragón Tatuado".', NOW() - INTERVAL '6 hours' + INTERVAL '10 minutes', true),
+('msg-027', 'chat-005', 'user-001', 'Perfecto, justo vi que lo tienes en tu biblioteca. ¿Es muy complejo?', NOW() - INTERVAL '5 hours', true),
+('msg-028', 'chat-005', 'user-002', 'Al principio puede parecer lento, pero después no podrás dejarlo. La trama es adictiva.', NOW() - INTERVAL '45 minutes', false);
+
+-- =====================================================
+-- DATOS DE INTERCAMBIOS
+-- =====================================================
+
+-- Insertar intercambios
+INSERT INTO book_exchanges (id, requester_id, owner_id, status, date_created, date_updated, chat_id)
+VALUES 
+-- Intercambio completado entre Juan y Carlos
+('exchange-001', 'user-001', 'user-003', 'COMPLETED', NOW() - INTERVAL '3 days', NOW() - INTERVAL '1 day', 'chat-001'),
+
+-- Intercambio pendiente entre Luis y Sofía
+('exchange-002', 'user-005', 'user-006', 'PENDING', NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 hour', 'chat-003'),
+
+-- Intercambio aceptado entre María y Ana (sin chat específico aún)
+('exchange-003', 'user-002', 'user-004', 'ACCEPTED', NOW() - INTERVAL '2 hours', NOW() - INTERVAL '1 hour', NULL);
+
+-- Insertar libros de intercambios
+INSERT INTO exchange_owner_books (exchange_id, user_book_id)
+VALUES 
+-- Carlos ofrece "Un Mundo Feliz" (ub-012)
+('exchange-001', 'ub-012'),
+-- Sofía ofrece "Dorian Gray" (ub-027)  
+('exchange-002', 'ub-027'),
+-- Ana ofrece "Harry Potter" (ub-017)
+('exchange-003', 'ub-017');
+
+INSERT INTO exchange_requester_books (exchange_id, user_book_id)
+VALUES 
+-- Juan ofrece "Cien Años de Soledad" (ub-005)
+('exchange-001', 'ub-005'),
+-- Luis ofrece "Crimen y Castigo" (ub-022)
+('exchange-002', 'ub-022'),
+-- María ofrece "Matar un Ruiseñor" (ub-007)
+('exchange-003', 'ub-007');
+
+-- Insertar calificación para el intercambio completado
+INSERT INTO user_rates (id, user_id, exchange_id, rating, comment, date_created)
+VALUES 
+('rate-001', 'user-001', 'exchange-001', 5, 'Excelente intercambio! El libro estaba en perfectas condiciones y Carlos fue muy puntual.', NOW() - INTERVAL '1 day'),
+('rate-002', 'user-003', 'exchange-001', 5, 'Juan es una persona muy confiable. El intercambio fue perfecto y el libro era exactamente como lo describió.', NOW() - INTERVAL '1 day' + INTERVAL '30 minutes');
+
 SELECT 'Users: ' || COUNT(*)
 FROM users
 UNION ALL
@@ -940,6 +1086,18 @@ UNION ALL
 SELECT 'Comments: ' || COUNT(*)
 FROM comment
 UNION ALL
+SELECT 'Chats: ' || COUNT(*)
+FROM chats
+UNION ALL
+SELECT 'Messages: ' || COUNT(*)
+FROM messages
+UNION ALL
+SELECT 'Book_exchanges: ' || COUNT(*)
+FROM book_exchanges
+UNION ALL
+SELECT 'User_rates: ' || COUNT(*)
+FROM user_rates
+UNION ALL
 SELECT 'User_levels: ' || COUNT(*)
 FROM user_levels
 UNION ALL
@@ -955,7 +1113,11 @@ WHERE wants_to_exchange = true
 UNION ALL
 SELECT 'Libros favoritos: ' || COUNT(*)
 FROM user_books
-WHERE is_favorite = true;
+WHERE is_favorite = true
+UNION ALL
+SELECT 'Mensajes no leídos: ' || COUNT(*)
+FROM messages
+WHERE is_read = false;
 
 SELECT 'User ID: ' || id || ' - Email: ' || email
 FROM users
@@ -969,10 +1131,11 @@ COMMIT;
 /*
 ARCHIVO UNIFICADO - RESUMEN COMPLETO:
 
-✅ TABLAS CREADAS (18 tablas activas):
+✅ TABLAS CREADAS (20 tablas activas):
 - addresses, users, user_follows
 - books, book_categories, user_books  
 - book_exchanges, exchange_owner_books, exchange_requester_books, user_rates
+- chats, messages (NUEVO SISTEMA DE CHAT)
 - community, community_members, reading_clubs, reading_club_members
 - post, comment
 - gamification_profiles, achievements, user_achievements, user_levels
@@ -989,12 +1152,18 @@ ARCHIVO UNIFICADO - RESUMEN COMPLETO:
 - 20 comunidades temáticas
 - 5 clubes de lectura activos
 - 11 posts y 6 comentarios
-- 5 niveles de usuario y 5 logros
+- 5 chats entre usuarios (NUEVO)
+- 28 mensajes de chat con conversaciones realistas (NUEVO)
+- 3 intercambios de libros con diferentes estados (NUEVO)
+- 2 calificaciones de intercambios (NUEVO)
+- 7 niveles de usuario y 7 logros
 - 18 perfiles de gamificación
 - Múltiples membresías cruzadas
 
 🚀 BENEFICIOS:
-- Esquema 30% más simple y mantenible
+- Sistema de chat completamente funcional
+- Intercambios automáticamente vinculados a chats
+- Esquema optimizado y mantenible
 - Solo tablas realmente implementadas
 - Datos de prueba completos y realistas
 - Listo para testing de todas las funcionalidades
@@ -1002,9 +1171,18 @@ ARCHIVO UNIFICADO - RESUMEN COMPLETO:
 - Documentación precisa del sistema actual
 
 🎯 LISTO PARA USAR:
+- Sistema de chat entre usuarios
+- Intercambios de libros con chat integrado
 - Sistema de intercambios con calificaciones
 - Gamificación completa
 - Comunidades y clubes de lectura
 - Posts y comentarios
 - Usuarios con libros para intercambiar
+
+💬 FUNCIONALIDADES DE CHAT:
+- Chat único entre dos usuarios
+- Mensajes con estado de lectura
+- Integración automática con intercambios
+- Conversaciones realistas de prueba
+- Intercambio completado entre user-001 (Juan) y user-003 (Carlos)
 */

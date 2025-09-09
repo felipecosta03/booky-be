@@ -5,10 +5,12 @@ import static com.uade.bookybe.core.model.constant.ExchangeStatus.ACCEPTED;
 import com.uade.bookybe.core.exception.BadRequestException;
 import com.uade.bookybe.core.exception.NotFoundException;
 import com.uade.bookybe.core.model.BookExchange;
+import com.uade.bookybe.core.model.Chat;
 import com.uade.bookybe.core.model.UserBook;
 import com.uade.bookybe.core.model.UserRate;
 import com.uade.bookybe.core.model.constant.ExchangeStatus;
 import com.uade.bookybe.core.usecase.BookExchangeService;
+import com.uade.bookybe.core.usecase.ChatService;
 import com.uade.bookybe.core.usecase.GamificationService;
 import com.uade.bookybe.core.usecase.UserRateService;
 import com.uade.bookybe.infraestructure.entity.BookExchangeEntity;
@@ -37,6 +39,7 @@ public class BookExchangeServiceImpl implements BookExchangeService {
   private final UserBookRepository userBookRepository;
   private final GamificationService gamificationService;
   private final UserRateService userRateService;
+  private final ChatService chatService;
 
   @Override
   public Optional<BookExchange> createExchange(
@@ -59,6 +62,10 @@ public class BookExchangeServiceImpl implements BookExchangeService {
       return Optional.empty();
     }
 
+    // Create chat between users
+    Optional<Chat> chatOpt = chatService.createOrGetChat(requesterId, ownerId);
+    String chatId = chatOpt.map(Chat::getId).orElse(null);
+
     BookExchangeEntity entity =
         BookExchangeEntity.builder()
             .id("exchange-" + UUID.randomUUID().toString().substring(0, 8))
@@ -69,6 +76,7 @@ public class BookExchangeServiceImpl implements BookExchangeService {
             .dateUpdated(LocalDateTime.now())
             .ownerBookIds(ownerBookIds)
             .requesterBookIds(requesterBookIds)
+            .chatId(chatId)
             .build();
 
     BookExchangeEntity savedEntity = bookExchangeRepository.save(entity);
@@ -179,7 +187,7 @@ public class BookExchangeServiceImpl implements BookExchangeService {
     originalEntity.setDateUpdated(LocalDateTime.now());
     bookExchangeRepository.save(originalEntity);
 
-    // Create new exchange with inverted roles
+    // Create new exchange with inverted roles (reuse existing chat)
     BookExchangeEntity newEntity =
         BookExchangeEntity.builder()
             .id("exchange-" + UUID.randomUUID().toString().substring(0, 8))
@@ -190,6 +198,7 @@ public class BookExchangeServiceImpl implements BookExchangeService {
             .status(ExchangeStatus.PENDING)
             .dateCreated(LocalDateTime.now())
             .dateUpdated(LocalDateTime.now())
+            .chatId(originalEntity.getChatId()) // Reuse existing chat
             .build();
 
     BookExchangeEntity savedEntity = bookExchangeRepository.save(newEntity);

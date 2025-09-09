@@ -46,6 +46,9 @@ public class BookExchangeEntity {
   @Column(name = "user_book_id")
   private List<String> requesterBookIds;
 
+  @Column(name = "chat_id")
+  private String chatId;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "requester_id", insertable = false, updatable = false)
   private UserEntity requester;

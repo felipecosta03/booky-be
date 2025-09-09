@@ -1,0 +1,56 @@
+### Chat API Tests
+
+### 1. Create or get chat with another user
+POST {{baseUrl}}/api/chats
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "otherUserId": "user-456"
+}
+
+### 2. Get all chats for current user
+GET {{baseUrl}}/api/chats
+Authorization: Bearer {{authToken}}
+
+### 3. Get specific chat by ID
+GET {{baseUrl}}/api/chats/{{chatId}}
+Authorization: Bearer {{authToken}}
+
+### 4. Get messages from a chat
+GET {{baseUrl}}/api/chats/{{chatId}}/messages
+Authorization: Bearer {{authToken}}
+
+### 5. Send a message to a chat
+POST {{baseUrl}}/api/chats/{{chatId}}/messages
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "content": "Hola! Me interesa intercambiar libros contigo."
+}
+
+### 6. Send another message
+POST {{baseUrl}}/api/chats/{{chatId}}/messages
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "content": "¿Qué libros tienes disponibles para intercambio?"
+}
+
+### 7. Mark messages as read
+PUT {{baseUrl}}/api/chats/{{chatId}}/mark-read
+Authorization: Bearer {{authToken}}
+
+### 8. Test chat creation with exchange
+# This should automatically create a chat when creating an exchange
+POST {{baseUrl}}/api/exchanges
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "ownerId": "user-456",
+  "ownerBookIds": ["book-123"],
+  "requesterBookIds": ["book-789"]
+}

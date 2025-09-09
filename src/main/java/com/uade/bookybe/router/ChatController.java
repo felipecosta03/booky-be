@@ -11,6 +11,11 @@ import com.uade.bookybe.router.dto.chat.SendMessageRequestDto;
 import com.uade.bookybe.router.mapper.ChatDtoMapper;
 import com.uade.bookybe.router.mapper.MessageDtoMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.security.Principal;
 import java.util.List;
@@ -29,7 +34,19 @@ public class ChatController {
   private final MessageRepository messageRepository;
 
   @PostMapping
-  @Operation(summary = "Create or get existing chat with another user")
+  @Operation(
+      summary = "Create or get existing chat with another user",
+      description = "Creates a new chat or returns existing chat between current user and specified user"
+  )
+  @ApiResponses(value = {
+      @ApiResponse(
+          responseCode = "200",
+          description = "Chat created or retrieved successfully",
+          content = @Content(schema = @Schema(implementation = ChatDto.class))
+      ),
+      @ApiResponse(responseCode = "400", description = "Invalid request data"),
+      @ApiResponse(responseCode = "401", description = "Not authenticated")
+  })
   public ResponseEntity<ChatDto> createOrGetChat(
       @RequestBody CreateChatRequestDto request, Principal principal) {
     
@@ -51,7 +68,18 @@ public class ChatController {
   }
 
   @GetMapping
-  @Operation(summary = "Get all chats for current user")
+  @Operation(
+      summary = "Get all chats for current user",
+      description = "Returns all chats where the current user is a participant"
+  )
+  @ApiResponses(value = {
+      @ApiResponse(
+          responseCode = "200",
+          description = "Chats retrieved successfully",
+          content = @Content(schema = @Schema(implementation = ChatDto.class))
+      ),
+      @ApiResponse(responseCode = "401", description = "Not authenticated")
+  })
   public ResponseEntity<List<ChatDto>> getUserChats(Principal principal) {
     String currentUserId = principal.getName();
     List<Chat> chats = chatService.getUserChats(currentUserId);
@@ -70,8 +98,22 @@ public class ChatController {
   }
 
   @GetMapping("/{chatId}")
-  @Operation(summary = "Get chat by ID")
-  public ResponseEntity<ChatDto> getChatById(@PathVariable String chatId, Principal principal) {
+  @Operation(
+      summary = "Get chat by ID",
+      description = "Returns a specific chat by its ID if user is a participant"
+  )
+  @ApiResponses(value = {
+      @ApiResponse(
+          responseCode = "200",
+          description = "Chat found",
+          content = @Content(schema = @Schema(implementation = ChatDto.class))
+      ),
+      @ApiResponse(responseCode = "404", description = "Chat not found or user not authorized"),
+      @ApiResponse(responseCode = "401", description = "Not authenticated")
+  })
+  public ResponseEntity<ChatDto> getChatById(
+      @Parameter(description = "Chat ID", required = true) @PathVariable String chatId, 
+      Principal principal) {
     String currentUserId = principal.getName();
     Optional<Chat> chatOpt = chatService.getChatById(chatId, currentUserId);
     
@@ -90,9 +132,22 @@ public class ChatController {
   }
 
   @GetMapping("/{chatId}/messages")
-  @Operation(summary = "Get all messages from a chat")
+  @Operation(
+      summary = "Get all messages from a chat",
+      description = "Returns all messages from a specific chat if user is a participant"
+  )
+  @ApiResponses(value = {
+      @ApiResponse(
+          responseCode = "200",
+          description = "Messages retrieved successfully",
+          content = @Content(schema = @Schema(implementation = MessageDto.class))
+      ),
+      @ApiResponse(responseCode = "404", description = "Chat not found or user not authorized"),
+      @ApiResponse(responseCode = "401", description = "Not authenticated")
+  })
   public ResponseEntity<List<MessageDto>> getChatMessages(
-      @PathVariable String chatId, Principal principal) {
+      @Parameter(description = "Chat ID", required = true) @PathVariable String chatId, 
+      Principal principal) {
     
     String currentUserId = principal.getName();
     List<Message> messages = chatService.getChatMessages(chatId, currentUserId);
@@ -105,9 +160,22 @@ public class ChatController {
   }
 
   @PostMapping("/{chatId}/messages")
-  @Operation(summary = "Send a message to a chat")
+  @Operation(
+      summary = "Send a message to a chat",
+      description = "Sends a new message to the specified chat if user is a participant"
+  )
+  @ApiResponses(value = {
+      @ApiResponse(
+          responseCode = "200",
+          description = "Message sent successfully",
+          content = @Content(schema = @Schema(implementation = MessageDto.class))
+      ),
+      @ApiResponse(responseCode = "400", description = "Invalid message data or user not authorized"),
+      @ApiResponse(responseCode = "404", description = "Chat not found"),
+      @ApiResponse(responseCode = "401", description = "Not authenticated")
+  })
   public ResponseEntity<MessageDto> sendMessage(
-      @PathVariable String chatId,
+      @Parameter(description = "Chat ID", required = true) @PathVariable String chatId,
       @RequestBody SendMessageRequestDto request,
       Principal principal) {
     
@@ -123,8 +191,18 @@ public class ChatController {
   }
 
   @PutMapping("/{chatId}/mark-read")
-  @Operation(summary = "Mark all messages in chat as read")
-  public ResponseEntity<Void> markMessagesAsRead(@PathVariable String chatId, Principal principal) {
+  @Operation(
+      summary = "Mark all messages in chat as read",
+      description = "Marks all messages in the specified chat as read for the current user"
+  )
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Messages marked as read successfully"),
+      @ApiResponse(responseCode = "404", description = "Chat not found or user not authorized"),
+      @ApiResponse(responseCode = "401", description = "Not authenticated")
+  })
+  public ResponseEntity<Void> markMessagesAsRead(
+      @Parameter(description = "Chat ID", required = true) @PathVariable String chatId, 
+      Principal principal) {
     String currentUserId = principal.getName();
     chatService.markMessagesAsRead(chatId, currentUserId);
     return ResponseEntity.ok().build();

@@ -14,8 +14,9 @@ Authorization: {{token}}
 {
   "name": "Test Reading Club {{$timestamp}}",
   "description": "A reading club created for testing purposes - {{$timestamp}}",
-  "community_id": "{{communityId}}",
-  "book_id": "{{bookId}}"
+  "communityId": "{{communityId}}",
+  "bookId": "{{bookId}}",
+  "nextMeeting": "2024-12-15T19:00:00"
 }
 
 > {%
@@ -28,8 +29,9 @@ client.test("Response should contain reading club data", function() {
     client.assert(response.body.name !== undefined, "Name should be present");
     client.assert(response.body.name.includes("Test Reading Club"), "Name should contain 'Test Reading Club'");
     client.assert(response.body.description !== undefined, "Description should be present");
-    client.assert(response.body.community_id !== undefined, "Community ID should be present");
-    client.assert(response.body.book_id !== undefined, "Book ID should be present");
+    client.assert(response.body.communityId !== undefined, "Community ID should be present");
+    client.assert(response.body.bookId !== undefined, "Book ID should be present");
+    client.assert(response.body.nextMeeting !== undefined, "Next meeting should be present");
 });
 
 client.global.set("testReadingClubId", response.body.id);
@@ -52,8 +54,9 @@ client.test("Response should contain reading club data", function() {
     client.assert(response.body.id === client.global.get("testReadingClubId"), "Reading club ID should match");
     client.assert(response.body.name !== undefined, "Name should be present");
     client.assert(response.body.description !== undefined, "Description should be present");
-    client.assert(response.body.community_id !== undefined, "Community ID should be present");
-    client.assert(response.body.book_id !== undefined, "Book ID should be present");
+    client.assert(response.body.communityId !== undefined, "Community ID should be present");
+    client.assert(response.body.bookId !== undefined, "Book ID should be present");
+    client.assert(response.body.nextMeeting !== undefined, "Next meeting should be present");
 });
 
 client.log("✅ Retrieved reading club: " + response.body.name);
@@ -203,8 +206,9 @@ Content-Type: application/json
 {
   "name": "Unauthenticated Reading Club",
   "description": "This should fail if auth is enabled",
-  "community_id": "{{communityId}}",
-  "book_id": "{{bookId}}"
+  "communityId": "{{communityId}}",
+  "bookId": "{{bookId}}",
+  "nextMeeting": "2024-12-15T19:00:00"
 }
 
 > {%
@@ -229,8 +233,9 @@ Authorization: {{token}}
 
 {
   "name": "Invalid Reading Club - No Community",
-  "description": "This should fail because no community_id is provided",
-  "book_id": "{{bookId}}"
+  "description": "This should fail because no communityId is provided",
+  "bookId": "{{bookId}}",
+  "nextMeeting": "2024-12-15T19:00:00"
 }
 
 > {%
@@ -250,8 +255,9 @@ Authorization: {{token}}
 
 {
   "name": "Invalid Reading Club - No Book",
-  "description": "This should fail because no book_id is provided",
-  "community_id": "{{communityId}}"
+  "description": "This should fail because no bookId is provided",
+  "communityId": "{{communityId}}",
+  "nextMeeting": "2024-12-15T19:00:00"
 }
 
 > {%
@@ -272,8 +278,9 @@ Authorization: {{token}}
 {
   "name": "Invalid Reading Club - Bad Book ID",
   "description": "This should fail because book doesn't exist",
-  "community_id": "{{communityId}}",
-  "book_id": "non-existent-book-id"
+  "communityId": "{{communityId}}",
+  "bookId": "non-existent-book-id",
+  "nextMeeting": "2024-12-15T19:00:00"
 }
 
 > {%
@@ -294,8 +301,9 @@ Authorization: {{token}}
 {
   "name": "Invalid Reading Club - Bad Community ID",
   "description": "This should fail because community doesn't exist",
-  "community_id": "non-existent-community-id",
-  "book_id": "{{bookId}}"
+  "communityId": "non-existent-community-id",
+  "bookId": "{{bookId}}",
+  "nextMeeting": "2024-12-15T19:00:00"
 }
 
 > {%
@@ -308,7 +316,173 @@ client.log("✅ Verified: Reading club creation validates community existence");
 
 ###
 
-### Test 15: Verify created reading club still exists before cleanup
+### Test 15: Try to create reading club without nextMeeting
+POST {{baseUrl}}/reading-clubs
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "name": "Invalid Reading Club - No Next Meeting",
+  "description": "This should fail because no nextMeeting is provided",
+  "communityId": "{{communityId}}",
+  "bookId": "{{bookId}}"
+}
+
+> {%
+client.test("Create reading club without nextMeeting should return 400", function() {
+    client.assert(response.status === 400, "Expected status 400 for missing nextMeeting");
+});
+
+client.log("✅ Verified: Reading club creation requires nextMeeting");
+%}
+
+###
+
+### Test 16: Update meeting information for created reading club
+PUT {{baseUrl}}/reading-clubs/{{testReadingClubId}}/meeting
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "nextMeeting": "2024-12-20T20:00:00",
+  "currentChapter": 5
+}
+
+> {%
+client.test("Update meeting should return 200", function() {
+    client.assert(response.status === 200, "Expected status 200");
+});
+
+client.test("Response should contain updated meeting data", function() {
+    client.assert(response.body.id === client.global.get("testReadingClubId"), "Reading club ID should match");
+    client.assert(response.body.nextMeeting !== undefined, "Next meeting should be present");
+    client.assert(response.body.currentChapter !== undefined, "Current chapter should be present");
+    client.assert(response.body.currentChapter === 5, "Current chapter should be 5");
+});
+
+client.log("✅ Meeting updated successfully for reading club: " + response.body.name);
+%}
+
+###
+
+### Test 17: Try to update meeting with non-moderator user
+PUT {{baseUrl}}/reading-clubs/{{testReadingClubId}}/meeting
+Content-Type: application/json
+Authorization: {{other_token}}
+
+{
+  "nextMeeting": "2024-12-25T19:00:00",
+  "currentChapter": 10
+}
+
+> {%
+client.test("Non-moderator update meeting should return 404", function() {
+    client.assert(response.status === 404, "Expected status 404 for non-moderator");
+});
+
+client.log("✅ Verified: Only moderator can update meeting information");
+%}
+
+###
+
+### Test 18: Try to update meeting for non-existent reading club
+PUT {{baseUrl}}/reading-clubs/non-existent-id/meeting
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "nextMeeting": "2024-12-25T19:00:00",
+  "currentChapter": 1
+}
+
+> {%
+client.test("Update meeting for non-existent club should return 404", function() {
+    client.assert(response.status === 404, "Expected status 404 for non-existent club");
+});
+
+client.log("✅ Correctly returned 404 for non-existent reading club");
+%}
+
+###
+
+### Test 19: Try to update meeting without authentication
+PUT {{baseUrl}}/reading-clubs/{{testReadingClubId}}/meeting
+Content-Type: application/json
+
+{
+  "nextMeeting": "2024-12-25T19:00:00",
+  "currentChapter": 1
+}
+
+> {%
+client.test("Update meeting without auth should return 401 or 403", function() {
+    client.assert(response.status === 401 || response.status === 403, "Expected status 401 or 403");
+});
+
+client.log("✅ Authentication is properly enforced for meeting updates");
+%}
+
+###
+
+### Test 20: Try to update meeting with invalid data (negative chapter)
+PUT {{baseUrl}}/reading-clubs/{{testReadingClubId}}/meeting
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "nextMeeting": "2024-12-25T19:00:00",
+  "currentChapter": -1
+}
+
+> {%
+client.test("Update meeting with invalid chapter should return 400", function() {
+    client.assert(response.status === 400, "Expected status 400 for invalid chapter");
+});
+
+client.log("✅ Verified: Chapter validation works correctly");
+%}
+
+###
+
+### Test 21: Try to update meeting without nextMeeting
+PUT {{baseUrl}}/reading-clubs/{{testReadingClubId}}/meeting
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "currentChapter": 3
+}
+
+> {%
+client.test("Update meeting without nextMeeting should return 400", function() {
+    client.assert(response.status === 400, "Expected status 400 for missing nextMeeting");
+});
+
+client.log("✅ Verified: nextMeeting is required for meeting updates");
+%}
+
+###
+
+### Test 22: Try to update meeting without currentChapter
+PUT {{baseUrl}}/reading-clubs/{{testReadingClubId}}/meeting
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "nextMeeting": "2024-12-25T19:00:00"
+}
+
+> {%
+client.test("Update meeting without currentChapter should return 400", function() {
+    client.assert(response.status === 400, "Expected status 400 for missing currentChapter");
+});
+
+client.log("✅ Verified: currentChapter is required for meeting updates");
+%}
+
+###
+
+### Test 23: Verify created reading club still exists before cleanup
 GET {{baseUrl}}/reading-clubs/{{testReadingClubId}}
 Authorization: {{token}}
 
@@ -326,7 +500,7 @@ if (response.status === 200) {
 
 ###
 
-### Test 16: CLEANUP - Delete created reading club
+### Test 24: CLEANUP - Delete created reading club
 DELETE {{baseUrl}}/reading-clubs/{{testReadingClubId}}
 Authorization: {{token}}
 

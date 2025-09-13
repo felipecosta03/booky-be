@@ -4,7 +4,9 @@ import com.uade.bookybe.core.model.ReadingClub;
 import com.uade.bookybe.core.usecase.ReadingClubService;
 import com.uade.bookybe.router.dto.readingclub.CreateReadingClubDto;
 import com.uade.bookybe.router.dto.readingclub.ReadingClubDto;
+import com.uade.bookybe.router.dto.readingclub.UpdateReadingClubMeetingDto;
 import com.uade.bookybe.router.mapper.ReadingClubDtoMapper;
+import com.uade.bookybe.router.mapper.ReadingClubDtoMapperWithNestedObjects;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 public class ReadingClubController {
 
   private final ReadingClubService readingClubService;
+  private final ReadingClubDtoMapperWithNestedObjects readingClubDtoMapperWithNestedObjects;
 
   @Operation(
       summary = "Obtener todos los clubes de lectura",
@@ -48,7 +51,7 @@ public class ReadingClubController {
     List<ReadingClub> readingClubs = readingClubService.getAllReadingClubs();
     List<ReadingClubDto> readingClubDtos =
         readingClubs.stream()
-            .map(ReadingClubDtoMapper.INSTANCE::toDto)
+            .map(readingClubDtoMapperWithNestedObjects::toDtoWithNestedObjects)
             .collect(Collectors.toList());
 
     log.info("Retrieved {} reading clubs", readingClubDtos.size());
@@ -76,7 +79,7 @@ public class ReadingClubController {
 
     return readingClubService
         .getReadingClubById(id)
-        .map(ReadingClubDtoMapper.INSTANCE::toDto)
+            .map(readingClubDtoMapperWithNestedObjects::toDtoWithNestedObjects)
         .map(
             club -> {
               log.info("Reading club found: {}", club.getName());
@@ -133,7 +136,7 @@ public class ReadingClubController {
     List<ReadingClub> readingClubs = readingClubService.getReadingClubsByCommunityId(communityId);
     List<ReadingClubDto> readingClubDtos =
         readingClubs.stream()
-            .map(ReadingClubDtoMapper.INSTANCE::toDto)
+                .map(readingClubDtoMapperWithNestedObjects::toDtoWithNestedObjects)
             .collect(Collectors.toList());
 
     log.info("Retrieved {} reading clubs for community: {}", readingClubDtos.size(), communityId);
@@ -174,7 +177,8 @@ public class ReadingClubController {
             createReadingClubDto.getName(),
             createReadingClubDto.getDescription(),
             createReadingClubDto.getCommunityId(),
-            createReadingClubDto.getBookId())
+            createReadingClubDto.getBookId(),
+            createReadingClubDto.getNextMeeting())
         .map(ReadingClubDtoMapper.INSTANCE::toDto)
         .map(
             readingClubDto -> {
@@ -316,5 +320,55 @@ public class ReadingClubController {
 
     log.info("Found {} reading clubs for query: {}", readingClubDtos.size(), q);
     return ResponseEntity.ok(readingClubDtos);
+  }
+
+  @Operation(
+      summary = "Actualizar información de reunión del club de lectura",
+      description = "Actualiza la fecha de la próxima reunión y el capítulo actual del club de lectura. Solo el moderador puede realizar esta acción.")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Información de reunión actualizada exitosamente",
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ReadingClubDto.class))),
+        @ApiResponse(responseCode = "400", description = "Datos inválidos", content = @Content),
+        @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content),
+        @ApiResponse(responseCode = "403", description = "Solo el moderador puede actualizar la reunión", content = @Content),
+        @ApiResponse(responseCode = "404", description = "Club de lectura no encontrado", content = @Content)
+      })
+  @PutMapping("/{clubId}/meeting")
+  public ResponseEntity<ReadingClubDto> updateMeeting(
+      @Parameter(description = "ID del club de lectura", required = true) @PathVariable String clubId,
+      @Parameter(description = "Información de la reunión a actualizar", required = true) @RequestBody @Valid
+          UpdateReadingClubMeetingDto updateMeetingDto,
+      Authentication authentication) {
+
+    log.info(
+        "Updating meeting for reading club: {} by user: {}",
+        clubId,
+        authentication.getName());
+
+    String userId = authentication.getName();
+
+    return readingClubService
+        .updateMeeting(
+            clubId,
+            userId,
+            updateMeetingDto.getNextMeeting(),
+            updateMeetingDto.getCurrentChapter())
+        .map(ReadingClubDtoMapper.INSTANCE::toDto)
+        .map(
+            readingClubDto -> {
+              log.info("Meeting updated successfully for reading club: {}", clubId);
+              return ResponseEntity.ok(readingClubDto);
+            })
+        .orElseGet(
+            () -> {
+              log.warn("Failed to update meeting for reading club: {} by user: {}", clubId, userId);
+              return ResponseEntity.notFound().build();
+            });
   }
 }

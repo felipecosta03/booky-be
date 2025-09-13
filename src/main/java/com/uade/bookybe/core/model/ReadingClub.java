@@ -29,5 +29,9 @@ public class ReadingClub {
   @NotBlank(message = "Moderator ID is required")
   private String moderatorId;
 
+  private LocalDateTime nextMeeting; // Fecha de la próxima reunión
+
+  private Integer currentChapter; // Capítulo actual desde el cual se arrancará la reunión
+
   private long memberCount;
 }

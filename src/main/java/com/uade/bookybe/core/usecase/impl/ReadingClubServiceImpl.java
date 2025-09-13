@@ -104,7 +104,7 @@ public class ReadingClubServiceImpl implements ReadingClubService {
   @Override
   @Transactional
   public Optional<ReadingClub> createReadingClub(
-      String moderatorId, String name, String description, String communityId, String bookId) {
+      String moderatorId, String name, String description, String communityId, String bookId, LocalDateTime nextMeeting) {
     log.info(
         "Creating reading club: {} by moderator: {} in community: {}",
         name,
@@ -139,6 +139,7 @@ public class ReadingClubServiceImpl implements ReadingClubService {
               .communityId(communityId) // OBLIGATORIO
               .bookId(bookId) // OBLIGATORIO
               .moderatorId(moderatorId)
+              .nextMeeting(nextMeeting) // OBLIGATORIO
               .dateCreated(LocalDateTime.now())
               .lastUpdated(LocalDateTime.now())
               .build();
@@ -312,5 +313,44 @@ public class ReadingClubServiceImpl implements ReadingClubService {
   @Override
   public long getMemberCount(String clubId) {
     return readingClubMemberRepository.countByReadingClubId(clubId);
+  }
+
+  @Override
+  @Transactional
+  public Optional<ReadingClub> updateMeeting(String clubId, String userId, LocalDateTime nextMeeting, Integer currentChapter) {
+    log.info("Updating meeting for reading club: {} by user: {}", clubId, userId);
+
+    try {
+      // Check if reading club exists
+      Optional<ReadingClubEntity> clubEntityOpt = readingClubRepository.findById(clubId);
+      if (clubEntityOpt.isEmpty()) {
+        log.warn("Reading club with ID {} not found", clubId);
+        return Optional.empty();
+      }
+
+      ReadingClubEntity clubEntity = clubEntityOpt.get();
+
+      // Check if user is the moderator
+      if (!clubEntity.getModeratorId().equals(userId)) {
+        log.warn("User {} is not the moderator of reading club {}", userId, clubId);
+        return Optional.empty();
+      }
+
+      // Update meeting information
+      clubEntity.setNextMeeting(nextMeeting);
+      clubEntity.setCurrentChapter(currentChapter);
+      clubEntity.setLastUpdated(LocalDateTime.now());
+
+      ReadingClubEntity savedClub = readingClubRepository.save(clubEntity);
+      ReadingClub club = ReadingClubEntityMapper.INSTANCE.toModel(savedClub);
+      club.setMemberCount(getMemberCount(clubId));
+
+      log.info("Meeting updated successfully for reading club: {}", clubId);
+      return Optional.of(club);
+
+    } catch (Exception e) {
+      log.error("Error updating meeting for reading club {}: {}", clubId, e.getMessage(), e);
+      return Optional.empty();
+    }
   }
 }

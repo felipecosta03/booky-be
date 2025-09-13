@@ -35,4 +35,11 @@ public class ReadingClubEntity {
 
   @Column(name = "moderator_id", nullable = false)
   private String moderatorId;
+
+  @Column(name = "next_meeting")
+  private LocalDateTime nextMeeting;
+
+  @Builder.Default
+  @Column(name = "current_chapter")
+  private Integer currentChapter = 0;
 }

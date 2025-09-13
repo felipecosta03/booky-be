@@ -32,6 +32,10 @@ public class ReadingClubDto {
   @NotBlank(message = "Moderator ID is required")
   private String moderatorId;
 
+  private LocalDateTime nextMeeting; // Fecha de la próxima reunión
+
+  private Integer currentChapter; // Capítulo actual desde el cual se arrancará la reunión
+
   private BookDto book; // OBLIGATORIO (enriquecido)
   private CommunityDto community; // OBLIGATORIO (enriquecido)
   private UserPreviewDto moderator; // OBLIGATORIO (enriquecido)

@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 public class ReadingClubDtoMapperWithNestedObjects {
 
   private final BookRepository bookRepository;
-  private final CommunityRepository communityRepository;
   private final UserRepository userRepository;
 
   public ReadingClubDto toDtoWithNestedObjects(ReadingClub model) {
@@ -38,15 +37,6 @@ public class ReadingClubDtoMapperWithNestedObjects {
             .map(BookEntityMapper.INSTANCE::toModel)
             .map(BookDtoMapper.INSTANCE::toDto)
             .ifPresent(dto::setBook);
-      }
-
-      // Cargar community si communityId existe (sin memberCount por ahora para evitar ciclos)
-      if (model.getCommunityId() != null) {
-        communityRepository
-            .findById(model.getCommunityId())
-            .map(CommunityEntityMapper.INSTANCE::toModel)
-            .map(CommunityDtoMapper.INSTANCE::toDto)
-            .ifPresent(dto::setCommunity);
       }
 
       // Cargar moderator si moderatorId existe

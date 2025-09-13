@@ -1,6 +1,7 @@
 package com.uade.bookybe.core.usecase;
 
 import com.uade.bookybe.core.model.ReadingClub;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,7 +16,7 @@ public interface ReadingClubService {
   List<ReadingClub> getReadingClubsByCommunityId(String communityId);
 
   Optional<ReadingClub> createReadingClub(
-      String moderatorId, String name, String description, String communityId, String bookId);
+      String moderatorId, String name, String description, String communityId, String bookId, LocalDateTime nextMeeting);
 
   boolean joinReadingClub(String clubId, String userId);
 
@@ -28,4 +29,6 @@ public interface ReadingClubService {
   List<ReadingClub> getReadingClubsByBookId(String bookId);
 
   long getMemberCount(String clubId);
+
+  Optional<ReadingClub> updateMeeting(String clubId, String userId, LocalDateTime nextMeeting, Integer currentChapter);
 }

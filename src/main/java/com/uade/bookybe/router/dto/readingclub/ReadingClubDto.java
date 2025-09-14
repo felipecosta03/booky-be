@@ -40,4 +40,6 @@ public class ReadingClubDto {
   private CommunityDto community; // OBLIGATORIO (enriquecido)
   private UserPreviewDto moderator; // OBLIGATORIO (enriquecido)
   private long memberCount;
+  private boolean isJoinAvailable; // Campo calculado dinámicamente por el service
+
 }

@@ -353,4 +353,9 @@ public class ReadingClubServiceImpl implements ReadingClubService {
       return Optional.empty();
     }
   }
+
+  @Override
+  public boolean isUserMember(String clubId, String userId) {
+    return readingClubMemberRepository.existsByReadingClubIdAndUserId(clubId, userId);
+  }
 }

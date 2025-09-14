@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -136,8 +137,14 @@ public class ReadingClubController {
     List<ReadingClub> readingClubs = readingClubService.getReadingClubsByCommunityId(communityId);
     List<ReadingClubDto> readingClubDtos =
         readingClubs.stream()
-                .map(readingClubDtoMapperWithNestedObjects::toDtoWithNestedObjects)
+            .map(readingClubDtoMapperWithNestedObjects::toDtoWithNestedObjects)
             .collect(Collectors.toList());
+
+    String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+    readingClubDtos.forEach(
+        readingClubDto ->
+            readingClubDto.setJoinAvailable(
+                !readingClubService.isUserMember(readingClubDto.getId(), userId)));
 
     log.info("Retrieved {} reading clubs for community: {}", readingClubDtos.size(), communityId);
     return ResponseEntity.ok(readingClubDtos);

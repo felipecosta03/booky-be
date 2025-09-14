@@ -28,6 +28,7 @@ public class UserLevelEntity {
   @Column(name = "max_points", nullable = false)
   private int maxPoints;
 
+  @Column(length = 3000)
   private String badge;
   private String color;
 }

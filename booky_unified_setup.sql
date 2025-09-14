@@ -187,13 +187,14 @@ CREATE TABLE messages
     sender_id VARCHAR(255) NOT NULL,
     content   TEXT         NOT NULL,
     date_sent TIMESTAMP    NOT NULL,
-    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    is_read   BOOLEAN      NOT NULL DEFAULT FALSE,
     FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE,
     FOREIGN KEY (sender_id) REFERENCES users (id)
 );
 
 -- Agregar foreign key para chat_id en book_exchanges
-ALTER TABLE book_exchanges ADD FOREIGN KEY (chat_id) REFERENCES chats (id);
+ALTER TABLE book_exchanges
+    ADD FOREIGN KEY (chat_id) REFERENCES chats (id);
 
 -- =====================================================
 -- TABLAS DE COMUNIDADES
@@ -290,7 +291,7 @@ CREATE TABLE user_levels
     description TEXT,
     min_points  INTEGER      NOT NULL,
     max_points  INTEGER      NOT NULL,
-    badge       VARCHAR(100),
+    badge       VARCHAR(3000),
     color       VARCHAR(7)
 );
 
@@ -378,13 +379,27 @@ CREATE INDEX idx_messages_date ON messages (date_sent);
 -- Insertar niveles de usuario
 
 INSERT INTO user_levels (level, name, description, min_points, max_points, badge, color)
-VALUES (1, 'Novato', 'Recién comenzando tu aventura literaria', 0, 99, '🌱', '#28a745'),
-       (2, 'Aprendiz', 'Empezando a descubrir el mundo de los libros', 100, 249, '📚', '#17a2b8'),
-       (3, 'Lector', 'Ya tienes experiencia con los libros', 250, 499, '🤓', '#6f42c1'),
-       (4, 'Bibliófilo', 'Amante verdadero de la literatura', 500, 999, '📖', '#fd7e14'),
-       (5, 'Experto', 'Conocedor profundo del mundo literario', 1000, 1999, '🎓', '#e83e8c'),
-       (6, 'Maestro', 'Referente en la comunidad de lectores', 2000, 3999, '👑', '#dc3545'),
-       (7, 'Leyenda', 'El más alto honor en Booky', 4000, 999999, '⭐', '#ffc107');
+VALUES (1, 'Novato', 'Recién comenzando tu aventura literaria', 0, 99,
+        'https://res.cloudinary.com/dfsfkyyx7/image/upload/v1757892086/ChatGPT_Image_14_sept_2025_20_18_09_adzmtg.png',
+        '#28a745'),
+       (2, 'Aprendiz', 'Empezando a descubrir el mundo de los libros', 100, 249,
+        'https://res.cloudinary.com/dfsfkyyx7/image/upload/v1757892086/ChatGPT_Image_14_sept_2025_20_17_24_vzyloe.png',
+        '#17a2b8'),
+       (3, 'Lector', 'Ya tienes experiencia con los libros', 250, 499,
+        'https://res.cloudinary.com/dfsfkyyx7/image/upload/v1757892086/ChatGPT_Image_14_sept_2025_20_17_25_xe3eui.png',
+        '#6f42c1'),
+       (4, 'Bibliófilo', 'Amante verdadero de la literatura', 500, 999,
+        'https://res.cloudinary.com/dfsfkyyx7/image/upload/v1757892085/ChatGPT_Image_14_sept_2025_20_17_26_lzvxma.png',
+        '#fd7e14'),
+       (5, 'Experto', 'Conocedor profundo del mundo literario', 1000, 1999,
+        'https://res.cloudinary.com/dfsfkyyx7/image/upload/v1757892085/ChatGPT_Image_14_sept_2025_20_17_27_hlgesj.png',
+        '#e83e8c'),
+       (6, 'Maestro', 'Referente en la comunidad de lectores', 2000, 3999,
+        'https://res.cloudinary.com/dfsfkyyx7/image/upload/v1757892085/ChatGPT_Image_14_sept_2025_20_17_29_wrbecm.png',
+        '#dc3545'),
+       (7, 'Leyenda', 'El más alto honor en Booky', 4000, 999999,
+        'https://res.cloudinary.com/dfsfkyyx7/image/upload/v1757892087/ChatGPT_Image_14_sept_2025_20_17_30_ycrcpo.png',
+        '#ffc107');
 
 INSERT INTO achievements (id, name, description, category, icon, required_value, condition_type, points_reward,
                           is_active)
@@ -832,13 +847,14 @@ VALUES
 ('comm-001', 'admin-002'), -- Super Admin en Literatura Clásica
 ('comm-010', 'admin-002'); -- Super Admin en Reseñas y Críticas
 
-INSERT INTO reading_clubs (id, date_created, description, last_updated, name, book_id, community_id, moderator_id, next_meeting, current_chapter)
+INSERT INTO reading_clubs (id, date_created, description, last_updated, name, book_id, community_id, moderator_id,
+                           next_meeting, current_chapter)
 VALUES
 
 -- Clubes en comunidades existentes
 ('club-001', NOW() - INTERVAL '1 month',
  'Club dedicado a la lectura y análisis profundo de "Matar un Ruiseñor". Exploramos temas de justicia, racismo y crecimiento moral.',
- NOW() - INTERVAL '1 week', 'Club Mockingbird', 'book-002', 'comm-001', 'user-001', 
+ NOW() - INTERVAL '1 week', 'Club Mockingbird', 'book-002', 'comm-001', 'user-001',
  NOW() + INTERVAL '3 days', 5),
 
 ('club-002', NOW() - INTERVAL '3 weeks',
@@ -975,7 +991,7 @@ VALUES ('comm-001', 'Macondo es más real que muchos lugares reales. García Má
 
 -- Insertar chats
 INSERT INTO chats (id, user1_id, user2_id, date_created, date_updated)
-VALUES 
+VALUES
 -- Chat entre Juan (user-001) y Carlos (user-003) - Para intercambio
 ('chat-001', 'user-001', 'user-003', NOW() - INTERVAL '3 days', NOW() - INTERVAL '30 minutes'),
 
@@ -993,44 +1009,85 @@ VALUES
 
 -- Insertar mensajes
 INSERT INTO messages (id, chat_id, sender_id, content, date_sent, is_read)
-VALUES 
+VALUES
 -- Conversación en chat-001 (Juan y Carlos - Intercambio)
-('msg-001', 'chat-001', 'user-001', 'Hola Carlos! Vi que tienes "Un Mundo Feliz" disponible para intercambio. Me interesa mucho.', NOW() - INTERVAL '3 days', true),
-('msg-002', 'chat-001', 'user-003', '¡Hola Juan! Sí, tengo "Un Mundo Feliz" y está en excelente estado. ¿Qué me ofreces a cambio?', NOW() - INTERVAL '3 days' + INTERVAL '15 minutes', true),
-('msg-003', 'chat-001', 'user-001', 'Te puedo ofrecer "Cien Años de Soledad". Es una primera edición y está como nuevo.', NOW() - INTERVAL '3 days' + INTERVAL '30 minutes', true),
-('msg-004', 'chat-001', 'user-003', 'Perfecto! García Márquez es uno de mis autores favoritos. ¿Dónde podemos hacer el intercambio?', NOW() - INTERVAL '3 days' + INTERVAL '45 minutes', true),
-('msg-005', 'chat-001', 'user-001', 'Podemos encontrarnos en el café de Corrientes y Callao el sábado a las 15:00. ¿Te parece bien?', NOW() - INTERVAL '2 days', true),
-('msg-006', 'chat-001', 'user-003', 'Perfecto! Nos vemos el sábado. Llevaré "Un Mundo Feliz" en una bolsa azul.', NOW() - INTERVAL '2 days' + INTERVAL '20 minutes', true),
-('msg-007', 'chat-001', 'user-001', 'Genial! Yo llevaré "Cien Años de Soledad" en una carpeta marrón. ¡Hasta el sábado!', NOW() - INTERVAL '2 days' + INTERVAL '25 minutes', true),
-('msg-008', 'chat-001', 'user-003', '¡Excelente intercambio! El libro está en perfectas condiciones. Gracias Juan!', NOW() - INTERVAL '1 day', true),
-('msg-009', 'chat-001', 'user-001', 'Igualmente! "Un Mundo Feliz" es exactamente lo que esperaba. ¡Fue un placer hacer el intercambio contigo!', NOW() - INTERVAL '1 day' + INTERVAL '10 minutes', true),
-('msg-010', 'chat-001', 'user-003', 'Si tienes más libros de García Márquez, avísame. Me encanta su estilo.', NOW() - INTERVAL '30 minutes', false),
+('msg-001', 'chat-001', 'user-001',
+ 'Hola Carlos! Vi que tienes "Un Mundo Feliz" disponible para intercambio. Me interesa mucho.',
+ NOW() - INTERVAL '3 days', true),
+('msg-002', 'chat-001', 'user-003',
+ '¡Hola Juan! Sí, tengo "Un Mundo Feliz" y está en excelente estado. ¿Qué me ofreces a cambio?',
+ NOW() - INTERVAL '3 days' + INTERVAL '15 minutes', true),
+('msg-003', 'chat-001', 'user-001',
+ 'Te puedo ofrecer "Cien Años de Soledad". Es una primera edición y está como nuevo.',
+ NOW() - INTERVAL '3 days' + INTERVAL '30 minutes', true),
+('msg-004', 'chat-001', 'user-003',
+ 'Perfecto! García Márquez es uno de mis autores favoritos. ¿Dónde podemos hacer el intercambio?',
+ NOW() - INTERVAL '3 days' + INTERVAL '45 minutes', true),
+('msg-005', 'chat-001', 'user-001',
+ 'Podemos encontrarnos en el café de Corrientes y Callao el sábado a las 15:00. ¿Te parece bien?',
+ NOW() - INTERVAL '2 days', true),
+('msg-006', 'chat-001', 'user-003', 'Perfecto! Nos vemos el sábado. Llevaré "Un Mundo Feliz" en una bolsa azul.',
+ NOW() - INTERVAL '2 days' + INTERVAL '20 minutes', true),
+('msg-007', 'chat-001', 'user-001',
+ 'Genial! Yo llevaré "Cien Años de Soledad" en una carpeta marrón. ¡Hasta el sábado!',
+ NOW() - INTERVAL '2 days' + INTERVAL '25 minutes', true),
+('msg-008', 'chat-001', 'user-003', '¡Excelente intercambio! El libro está en perfectas condiciones. Gracias Juan!',
+ NOW() - INTERVAL '1 day', true),
+('msg-009', 'chat-001', 'user-001',
+ 'Igualmente! "Un Mundo Feliz" es exactamente lo que esperaba. ¡Fue un placer hacer el intercambio contigo!',
+ NOW() - INTERVAL '1 day' + INTERVAL '10 minutes', true),
+('msg-010', 'chat-001', 'user-003', 'Si tienes más libros de García Márquez, avísame. Me encanta su estilo.',
+ NOW() - INTERVAL '30 minutes', false),
 
 -- Conversación en chat-002 (María y Ana - Conversación general)
-('msg-011', 'chat-002', 'user-002', 'Ana, ¿has leído algo bueno últimamente? Necesito recomendaciones de literatura juvenil.', NOW() - INTERVAL '2 days', true),
-('msg-012', 'chat-002', 'user-004', '¡Hola María! Acabo de terminar "La Ladrona de Libros" y me encantó. Es juvenil pero muy profundo.', NOW() - INTERVAL '2 days' + INTERVAL '30 minutes', true),
-('msg-013', 'chat-002', 'user-002', 'Ese libro está en mi lista desde hace tiempo. ¿Es muy triste?', NOW() - INTERVAL '2 days' + INTERVAL '45 minutes', true),
-('msg-014', 'chat-002', 'user-004', 'Tiene momentos tristes, pero también mucha esperanza. La narrativa es hermosa.', NOW() - INTERVAL '2 days' + INTERVAL '1 hour', true),
-('msg-015', 'chat-002', 'user-002', 'Perfecto, creo que será mi próxima lectura. ¿Tienes más recomendaciones?', NOW() - INTERVAL '2 hours', false),
+('msg-011', 'chat-002', 'user-002',
+ 'Ana, ¿has leído algo bueno últimamente? Necesito recomendaciones de literatura juvenil.', NOW() - INTERVAL '2 days',
+ true),
+('msg-012', 'chat-002', 'user-004',
+ '¡Hola María! Acabo de terminar "La Ladrona de Libros" y me encantó. Es juvenil pero muy profundo.',
+ NOW() - INTERVAL '2 days' + INTERVAL '30 minutes', true),
+('msg-013', 'chat-002', 'user-002', 'Ese libro está en mi lista desde hace tiempo. ¿Es muy triste?',
+ NOW() - INTERVAL '2 days' + INTERVAL '45 minutes', true),
+('msg-014', 'chat-002', 'user-004', 'Tiene momentos tristes, pero también mucha esperanza. La narrativa es hermosa.',
+ NOW() - INTERVAL '2 days' + INTERVAL '1 hour', true),
+('msg-015', 'chat-002', 'user-002', 'Perfecto, creo que será mi próxima lectura. ¿Tienes más recomendaciones?',
+ NOW() - INTERVAL '2 hours', false),
 
 -- Conversación en chat-003 (Luis y Sofía - Intercambio)
-('msg-016', 'chat-003', 'user-005', 'Sofía, vi tu post sobre "El Retrato de Dorian Gray". ¿Estarías interesada en intercambiarlo?', NOW() - INTERVAL '1 day', true),
-('msg-017', 'chat-003', 'user-006', 'Hola Luis! Sí, me gustaría intercambiarlo. ¿Qué tienes disponible?', NOW() - INTERVAL '1 day' + INTERVAL '20 minutes', true),
-('msg-018', 'chat-003', 'user-005', 'Tengo "Crimen y Castigo" de Dostoevsky. Es una edición muy buena.', NOW() - INTERVAL '1 day' + INTERVAL '35 minutes', true),
-('msg-019', 'chat-003', 'user-006', '¡Me encanta Dostoevsky! Acepto el intercambio. ¿Cuándo podemos hacerlo?', NOW() - INTERVAL '1 day' + INTERVAL '50 minutes', true),
-('msg-020', 'chat-003', 'user-005', 'Podemos hacerlo mañana en la plaza San Martín a las 18:00.', NOW() - INTERVAL '1 hour', false),
+('msg-016', 'chat-003', 'user-005',
+ 'Sofía, vi tu post sobre "El Retrato de Dorian Gray". ¿Estarías interesada en intercambiarlo?',
+ NOW() - INTERVAL '1 day', true),
+('msg-017', 'chat-003', 'user-006', 'Hola Luis! Sí, me gustaría intercambiarlo. ¿Qué tienes disponible?',
+ NOW() - INTERVAL '1 day' + INTERVAL '20 minutes', true),
+('msg-018', 'chat-003', 'user-005', 'Tengo "Crimen y Castigo" de Dostoevsky. Es una edición muy buena.',
+ NOW() - INTERVAL '1 day' + INTERVAL '35 minutes', true),
+('msg-019', 'chat-003', 'user-006', '¡Me encanta Dostoevsky! Acepto el intercambio. ¿Cuándo podemos hacerlo?',
+ NOW() - INTERVAL '1 day' + INTERVAL '50 minutes', true),
+('msg-020', 'chat-003', 'user-005', 'Podemos hacerlo mañana en la plaza San Martín a las 18:00.',
+ NOW() - INTERVAL '1 hour', false),
 
 -- Conversación en chat-004 (Diego y Lucía - Discusión literaria)
-('msg-021', 'chat-004', 'user-007', 'Lucía, leí tu análisis sobre "El Guardián entre el Centeno". Muy interesante tu perspectiva.', NOW() - INTERVAL '5 hours', true),
-('msg-022', 'chat-004', 'user-008', 'Gracias Diego! Salinger tiene una forma única de capturar la adolescencia.', NOW() - INTERVAL '5 hours' + INTERVAL '15 minutes', true),
-('msg-023', 'chat-004', 'user-007', 'Exacto. ¿Has leído "Franny and Zooey"? Es menos conocido pero igual de profundo.', NOW() - INTERVAL '4 hours', true),
-('msg-024', 'chat-004', 'user-008', 'No, pero ahora lo agregaré a mi lista. ¿Me lo recomiendas?', NOW() - INTERVAL '15 minutes', false),
+('msg-021', 'chat-004', 'user-007',
+ 'Lucía, leí tu análisis sobre "El Guardián entre el Centeno". Muy interesante tu perspectiva.',
+ NOW() - INTERVAL '5 hours', true),
+('msg-022', 'chat-004', 'user-008', 'Gracias Diego! Salinger tiene una forma única de capturar la adolescencia.',
+ NOW() - INTERVAL '5 hours' + INTERVAL '15 minutes', true),
+('msg-023', 'chat-004', 'user-007', 'Exacto. ¿Has leído "Franny and Zooey"? Es menos conocido pero igual de profundo.',
+ NOW() - INTERVAL '4 hours', true),
+('msg-024', 'chat-004', 'user-008', 'No, pero ahora lo agregaré a mi lista. ¿Me lo recomiendas?',
+ NOW() - INTERVAL '15 minutes', false),
 
 -- Conversación en chat-005 (Juan y María - Recomendaciones)
-('msg-025', 'chat-005', 'user-001', 'María, ¿qué opinas de los thrillers nórdicos? Estoy pensando en leer algo del género.', NOW() - INTERVAL '6 hours', true),
-('msg-026', 'chat-005', 'user-002', '¡Son fantásticos! Te recomiendo empezar con "La Chica del Dragón Tatuado".', NOW() - INTERVAL '6 hours' + INTERVAL '10 minutes', true),
-('msg-027', 'chat-005', 'user-001', 'Perfecto, justo vi que lo tienes en tu biblioteca. ¿Es muy complejo?', NOW() - INTERVAL '5 hours', true),
-('msg-028', 'chat-005', 'user-002', 'Al principio puede parecer lento, pero después no podrás dejarlo. La trama es adictiva.', NOW() - INTERVAL '45 minutes', false);
+('msg-025', 'chat-005', 'user-001',
+ 'María, ¿qué opinas de los thrillers nórdicos? Estoy pensando en leer algo del género.', NOW() - INTERVAL '6 hours',
+ true),
+('msg-026', 'chat-005', 'user-002', '¡Son fantásticos! Te recomiendo empezar con "La Chica del Dragón Tatuado".',
+ NOW() - INTERVAL '6 hours' + INTERVAL '10 minutes', true),
+('msg-027', 'chat-005', 'user-001', 'Perfecto, justo vi que lo tienes en tu biblioteca. ¿Es muy complejo?',
+ NOW() - INTERVAL '5 hours', true),
+('msg-028', 'chat-005', 'user-002',
+ 'Al principio puede parecer lento, pero después no podrás dejarlo. La trama es adictiva.',
+ NOW() - INTERVAL '45 minutes', false);
 
 -- =====================================================
 -- DATOS DE INTERCAMBIOS
@@ -1038,7 +1095,7 @@ VALUES
 
 -- Insertar intercambios
 INSERT INTO book_exchanges (id, requester_id, owner_id, status, date_created, date_updated, chat_id)
-VALUES 
+VALUES
 -- Intercambio completado entre Juan y Carlos
 ('exchange-001', 'user-001', 'user-003', 'COMPLETED', NOW() - INTERVAL '3 days', NOW() - INTERVAL '1 day', 'chat-001'),
 
@@ -1050,7 +1107,7 @@ VALUES
 
 -- Insertar libros de intercambios
 INSERT INTO exchange_owner_books (exchange_id, user_book_id)
-VALUES 
+VALUES
 -- Carlos ofrece "Un Mundo Feliz" (ub-012)
 ('exchange-001', 'ub-012'),
 -- Sofía ofrece "Dorian Gray" (ub-027)  
@@ -1059,7 +1116,7 @@ VALUES
 ('exchange-003', 'ub-017');
 
 INSERT INTO exchange_requester_books (exchange_id, user_book_id)
-VALUES 
+VALUES
 -- Juan ofrece "Cien Años de Soledad" (ub-005)
 ('exchange-001', 'ub-005'),
 -- Luis ofrece "Crimen y Castigo" (ub-022)
@@ -1069,9 +1126,12 @@ VALUES
 
 -- Insertar calificación para el intercambio completado
 INSERT INTO user_rates (id, user_id, exchange_id, rating, comment, date_created)
-VALUES 
-('rate-001', 'user-001', 'exchange-001', 5, 'Excelente intercambio! El libro estaba en perfectas condiciones y Carlos fue muy puntual.', NOW() - INTERVAL '1 day'),
-('rate-002', 'user-003', 'exchange-001', 5, 'Juan es una persona muy confiable. El intercambio fue perfecto y el libro era exactamente como lo describió.', NOW() - INTERVAL '1 day' + INTERVAL '30 minutes');
+VALUES ('rate-001', 'user-001', 'exchange-001', 5,
+        'Excelente intercambio! El libro estaba en perfectas condiciones y Carlos fue muy puntual.',
+        NOW() - INTERVAL '1 day'),
+       ('rate-002', 'user-003', 'exchange-001', 5,
+        'Juan es una persona muy confiable. El intercambio fue perfecto y el libro era exactamente como lo describió.',
+        NOW() - INTERVAL '1 day' + INTERVAL '30 minutes');
 
 SELECT 'Users: ' || COUNT(*)
 FROM users

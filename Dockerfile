@@ -1,14 +1,15 @@
 # Multi-stage build for Spring Boot application
-FROM eclipse-temurin:17-jdk-alpine as build
+FROM eclipse-temurin:17-jdk-alpine AS build
+
+# Install curl for dependency download (if needed)
+RUN apk add --no-cache curl
 
 # Set working directory
 WORKDIR /app
 
-# Copy Maven wrapper and pom.xml
-COPY mvnw .
-COPY mvnw.cmd .
+# Copy Maven wrapper and configuration files
+COPY mvnw mvnw.cmd pom.xml ./
 COPY .mvn .mvn
-COPY pom.xml .
 
 # Make mvnw executable
 RUN chmod +x ./mvnw
@@ -17,7 +18,7 @@ RUN chmod +x ./mvnw
 RUN ./mvnw dependency:go-offline
 
 # Copy source code
-COPY src ./src
+COPY src src
 
 # Build the application
 RUN ./mvnw clean package -DskipTests

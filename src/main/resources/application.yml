@@ -83,3 +83,4 @@ livekit:
   apiKey: ${LIVEKIT_API_KEY}
   apiSecret: ${LIVEKIT_API_SECRET}
   wsUrl: ${LIVEKIT_WS_URL}
+  tokenTtlSeconds: 3600

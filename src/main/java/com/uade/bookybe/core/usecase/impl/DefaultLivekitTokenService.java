@@ -8,6 +8,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.util.Date;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -50,8 +53,7 @@ public class DefaultLivekitTokenService implements LivekitTokenService {
             token.setName(participantId);
 
             // Set token expiration using configured TTL
-            token.setTtl(livekitProps.getTokenTtlSeconds());
-
+            token.setExpiration(Date.from(Instant.now().plusSeconds(livekitProps.getTokenTtlSeconds())));
             // Create a basic token for now - the API seems to be different
             // This is a simplified version that should work
             return token.toJwt();

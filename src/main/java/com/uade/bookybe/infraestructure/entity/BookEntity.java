@@ -18,9 +18,10 @@ public class BookEntity {
 
   private String isbn;
   private String title;
+  @Column(length = 3000)
   private String overview;
 
-  @Column(columnDefinition = "TEXT")
+  @Column(columnDefinition = "TEXT", length = 3000)
   private String synopsis;
 
   private Integer pages;

@@ -21,6 +21,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,13 +72,13 @@ public class CommunityServiceImpl implements CommunityService {
 
       Community community = CommunityEntityMapper.INSTANCE.toModel(savedCommunity);
       // Enriquecer con memberCount
-      community = enrichWithMemberCount(community);
+      community = enrichWithJoinAvailable(enrichWithMemberCount(community));
 
       log.info("Community created successfully with ID: {}", savedCommunity.getId());
-      
+
       // Award gamification points for creating community
       gamificationService.processCommunityCreated(adminId);
-      
+
       return Optional.of(community);
 
     } catch (Exception e) {
@@ -93,7 +95,8 @@ public class CommunityServiceImpl implements CommunityService {
     return communityRepository
         .findById(communityId)
         .map(CommunityEntityMapper.INSTANCE::toModel)
-        .map(this::enrichWithMemberCount);
+            .map(this::enrichWithJoinAvailable)
+            .map(this::enrichWithMemberCount);
   }
 
   @Override
@@ -103,6 +106,7 @@ public class CommunityServiceImpl implements CommunityService {
 
     return communityRepository.findByAdminIdOrderByDateCreatedDesc(adminId).stream()
         .map(CommunityEntityMapper.INSTANCE::toModel)
+        .map(this::enrichWithJoinAvailable)
         .collect(Collectors.toList());
   }
 
@@ -114,6 +118,7 @@ public class CommunityServiceImpl implements CommunityService {
     return communityRepository.findAllWithAdminOrderByDateCreatedDesc().stream()
         .map(CommunityEntityMapper.INSTANCE::toModel)
         .map(this::enrichWithMemberCount)
+        .map(this::enrichWithJoinAvailable)
         .collect(Collectors.toList());
   }
 
@@ -251,7 +256,7 @@ public class CommunityServiceImpl implements CommunityService {
 
       communityMemberRepository.save(memberEntity);
       log.info("User {} successfully joined community: {}", userId, communityId);
-      
+
       // Award gamification points for joining community (only if not admin joining own community)
       try {
         Optional<CommunityEntity> community = communityRepository.findById(communityId);
@@ -261,7 +266,7 @@ public class CommunityServiceImpl implements CommunityService {
       } catch (Exception e) {
         log.warn("Could not award gamification points for joining community: {}", e.getMessage());
       }
-      
+
       return true;
     } catch (Exception e) {
       log.error("Error joining community: {} by user: {}", communityId, userId, e);
@@ -330,6 +335,13 @@ public class CommunityServiceImpl implements CommunityService {
       community.setMemberCount(0);
     }
 
+    return community;
+  }
+
+  private Community enrichWithJoinAvailable(Community community) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    String currentUserId = authentication.getName();
+    community.setJoinAvailable(!isUserMember(community.getId(), currentUserId));
     return community;
   }
 }

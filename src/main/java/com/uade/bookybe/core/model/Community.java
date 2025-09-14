@@ -18,4 +18,5 @@ public class Community {
   private String adminId;
   private User admin;
   private long memberCount; // Campo calculado dinámicamente por el service
+  private boolean isJoinAvailable; // Campo calculado dinámicamente por el service
 }

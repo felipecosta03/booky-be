@@ -15,16 +15,19 @@ COPY .mvn .mvn
 RUN chmod +x ./mvnw
 
 # Download dependencies (this layer will be cached if pom.xml doesn't change)
-RUN ./mvnw dependency:go-offline
+RUN ./mvnw dependency:go-offline -B
 
 # Copy source code
 COPY src src
 
 # Build the application
-RUN ./mvnw clean package -DskipTests
+RUN ./mvnw clean package -DskipTests -B
 
-# Production stage
+# Production stage - Using stable OpenJDK image
 FROM eclipse-temurin:17-jre-alpine
+
+# Install necessary packages for PostgreSQL connectivity
+RUN apk add --no-cache tzdata
 
 # Create non-root user
 RUN addgroup -S spring && adduser -S spring -G spring
@@ -44,5 +47,14 @@ USER spring
 # Expose port
 EXPOSE 8080
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+
+# Run the application with optimized JVM settings
+ENTRYPOINT ["java", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-Dspring.profiles.active=prod", \
+    "-XX:+UseContainerSupport", \
+    "-XX:MaxRAMPercentage=75.0", \
+    "-jar", "app.jar"]

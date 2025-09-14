@@ -82,4 +82,4 @@ springdoc:
 livekit:
   apiKey: ${LIVEKIT_API_KEY}
   apiSecret: ${LIVEKIT_API_SECRET}
-  wsUrl: wss://${LIVEKIT_WS_URL}
+  wsUrl: ${LIVEKIT_WS_URL}

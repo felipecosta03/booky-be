@@ -1,6 +1,10 @@
 package com.uade.bookybe.core.usecase;
 
-public interface LivekitTokenService {
+import com.uade.bookybe.core.model.LivekitToken;
 
-  String createJoinToken(String room, String identity, boolean canPublish, boolean canSubscribe);
+public interface LivekitTokenService {
+    LivekitToken createToken(String roomName, String participantName, String participantId, 
+                           LivekitToken.TokenPermissions permissions);
+    
+    String createJoinToken(String roomName, String participantId, boolean canPublish, boolean canSubscribe);
 }

@@ -42,4 +42,19 @@ public class ReadingClubEntity {
   @Builder.Default
   @Column(name = "current_chapter")
   private Integer currentChapter = 0;
+
+  // LiveKit meeting fields
+  @Builder.Default
+  @Column(name = "meeting_active")
+  private Boolean meetingActive = false;
+
+  @Column(name = "meeting_started_at")
+  private LocalDateTime meetingStartedAt;
+
+  @Column(name = "meeting_ended_at")
+  private LocalDateTime meetingEndedAt;
+
+  @Builder.Default
+  @Column(name = "last_meeting_duration")
+  private Long lastMeetingDuration = 0L;
 }

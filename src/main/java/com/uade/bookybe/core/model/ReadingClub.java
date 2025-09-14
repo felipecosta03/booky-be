@@ -34,4 +34,10 @@ public class ReadingClub {
   private Integer currentChapter; // Capítulo actual desde el cual se arrancará la reunión
 
   private long memberCount;
+
+  // LiveKit meeting fields
+  private Boolean meetingActive;
+  private LocalDateTime meetingStartedAt;
+  private LocalDateTime meetingEndedAt;
+  private Long lastMeetingDuration;
 }

@@ -15,4 +15,5 @@ public class UserPreviewDto {
   private String name;
   private String lastname;
   private String image;
+  private AddressDto address;
 }

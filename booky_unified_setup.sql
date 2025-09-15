@@ -221,19 +221,23 @@ CREATE TABLE community_members
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
--- Tabla: reading_clubs
+-- Tabla: reading_clubs (versión completa)
 CREATE TABLE reading_clubs
 (
-    id              VARCHAR(255) PRIMARY KEY,
-    date_created    TIMESTAMP,
-    description     VARCHAR(1000),
-    last_updated    TIMESTAMP,
-    name            VARCHAR(255),
-    book_id         VARCHAR(255),
-    community_id    VARCHAR(255),
-    moderator_id    VARCHAR(255),
-    next_meeting    TIMESTAMP,
-    current_chapter INTEGER DEFAULT 0,
+    id                      VARCHAR(255) PRIMARY KEY,
+    date_created            TIMESTAMP,
+    description             VARCHAR(1000),
+    last_updated            TIMESTAMP,
+    name                    VARCHAR(255),
+    book_id                 VARCHAR(255),
+    community_id            VARCHAR(255),
+    moderator_id            VARCHAR(255),
+    next_meeting            TIMESTAMP,
+    current_chapter         INTEGER DEFAULT 0,
+    meeting_active          BOOLEAN DEFAULT FALSE,
+    meeting_started_at      TIMESTAMP,
+    meeting_ended_at        TIMESTAMP,
+    last_meeting_duration   BIGINT DEFAULT 0,
     FOREIGN KEY (book_id) REFERENCES books (id),
     FOREIGN KEY (community_id) REFERENCES community (id),
     FOREIGN KEY (moderator_id) REFERENCES users (id)
@@ -848,34 +852,34 @@ VALUES
 ('comm-010', 'admin-002'); -- Super Admin en Reseñas y Críticas
 
 INSERT INTO reading_clubs (id, date_created, description, last_updated, name, book_id, community_id, moderator_id,
-                           next_meeting, current_chapter)
+                           next_meeting, current_chapter, meeting_active, meeting_started_at, meeting_ended_at, last_meeting_duration)
 VALUES
 
 -- Clubes en comunidades existentes
 ('club-001', NOW() - INTERVAL '1 month',
  'Club dedicado a la lectura y análisis profundo de "Matar un Ruiseñor". Exploramos temas de justicia, racismo y crecimiento moral.',
  NOW() - INTERVAL '1 week', 'Club Mockingbird', 'book-002', 'comm-001', 'user-001',
- NOW() + INTERVAL '3 days', 5),
+ NOW() + INTERVAL '3 days', 5, FALSE, NULL, NOW() - INTERVAL '1 week', 3600000),
 
 ('club-002', NOW() - INTERVAL '3 weeks',
  'Redescubriendo la magia de Harry Potter desde una perspectiva adulta. Analizamos simbolismos, referencias y el mundo mágico de Rowling.',
  NOW() - INTERVAL '3 days', 'Magia Adulta', 'book-009', 'comm-004', 'user-004',
- NOW() + INTERVAL '1 week', 8),
+ NOW() + INTERVAL '1 week', 8, FALSE, NULL, NOW() - INTERVAL '3 days', 5400000),
 
 ('club-003', NOW() - INTERVAL '2 weeks',
  'Distopía orwelliana en tiempos modernos. ¿Qué tan cerca estamos del mundo de Winston Smith? Debate y reflexión crítica.',
  NOW() - INTERVAL '5 days', 'Hermano Mayor', 'book-004', 'comm-003', 'user-003',
- NOW() + INTERVAL '5 days', 12),
+ NOW() + INTERVAL '5 days', 12, FALSE, NULL, NOW() - INTERVAL '5 days', 4500000),
 
 ('club-004', NOW() - INTERVAL '1 week',
  'Huxley vs Orwell: dos visiones del futuro. ¿Control por placer o por miedo? Comparamos ambas distopías.',
  NOW() - INTERVAL '2 days', 'Mundo Feliz', 'book-005', 'comm-007', 'user-007',
- NOW() + INTERVAL '2 weeks', 3),
+ NOW() + INTERVAL '2 weeks', 3, FALSE, NULL, NOW() - INTERVAL '2 days', 4200000),
 
 ('club-005', NOW() - INTERVAL '5 days',
  'La amistad y los sueños rotos en la América de la Depresión. Steinbeck y su retrato crudo de la humanidad.',
  NOW() - INTERVAL '1 day', 'Ratones y Hombres', 'book-014', 'comm-005', 'user-005',
- NOW() + INTERVAL '10 days', 1);
+ NOW() + INTERVAL '10 days', 1, FALSE, NULL, NOW() - INTERVAL '1 day', 3000000);
 
 INSERT INTO reading_club_members (reading_club_id, user_id)
 VALUES

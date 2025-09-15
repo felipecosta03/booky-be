@@ -100,3 +100,20 @@ livekit:
   apiSecret: ${LIVEKIT_API_SECRET}
   wsUrl: ${LIVEKIT_WS_URL}
   tokenTtlSeconds: 3600
+
+# OpenAI Configuration
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  chat-model: ${OPENAI_CHAT_MODEL:gpt-4o-mini}
+  image-model: ${OPENAI_IMAGE_MODEL:dall-e-3}
+  base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+  timeout: ${OPENAI_TIMEOUT:30s}
+  max-retries: ${OPENAI_MAX_RETRIES:3}
+
+# Scene Image Generation Configuration
+scene-image:
+  default-size: ${SCENE_IMAGE_DEFAULT_SIZE:1024x1024}
+  max-text-length: ${SCENE_IMAGE_MAX_TEXT_LENGTH:2000}
+  min-text-length: ${SCENE_IMAGE_MIN_TEXT_LENGTH:15}
+  rate-limit:
+    requests-per-minute: ${SCENE_IMAGE_RATE_LIMIT:10}

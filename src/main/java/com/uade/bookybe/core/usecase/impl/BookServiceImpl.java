@@ -16,6 +16,8 @@ import com.uade.bookybe.infraestructure.repository.UserBookRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import com.uade.bookybe.router.mapper.BookDtoMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -309,5 +311,10 @@ public class BookServiceImpl implements BookService {
     return userBookEntities.stream()
         .map(UserBookEntityMapper.INSTANCE::toModel)
         .collect(Collectors.toList());
+  }
+
+  @Override
+  public Optional<Book> getBookById(String bookId) {
+    return bookRepository.findById(bookId).map(BookEntityMapper.INSTANCE::toModel);
   }
 }

@@ -38,4 +38,6 @@ public interface BookService {
 
   /** Gets books available for exchange */
   List<UserBook> getBooksForExchange();
+
+  Optional<Book> getBookById(String bookId);
 }

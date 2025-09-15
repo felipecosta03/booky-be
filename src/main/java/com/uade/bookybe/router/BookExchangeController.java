@@ -4,8 +4,11 @@ import com.uade.bookybe.core.model.BookExchange;
 import com.uade.bookybe.core.model.constant.ExchangeStatus;
 import com.uade.bookybe.core.usecase.BookExchangeService;
 import com.uade.bookybe.core.usecase.UserRateService;
+import com.uade.bookybe.core.usecase.UserService;
 import com.uade.bookybe.router.dto.exchange.*;
+import com.uade.bookybe.router.dto.user.UserPreviewDto;
 import com.uade.bookybe.router.mapper.BookExchangeDtoMapper;
+import com.uade.bookybe.router.mapper.UserDtoMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,6 +37,7 @@ public class BookExchangeController {
 
   private final BookExchangeService bookExchangeService;
   private final UserRateService userRateService;
+  private final UserService userService;
 
   @Operation(
       summary = "Create a new book exchange",
@@ -111,6 +115,8 @@ public class BookExchangeController {
 
     List<BookExchangeDto> responseDtos = exchanges.stream()
         .map(this::enrichDtoWithCanRate)
+            .map(this::enrichWithUsers)
+
         .collect(Collectors.toList());
 
     return ResponseEntity.ok(responseDtos);
@@ -128,6 +134,7 @@ public class BookExchangeController {
     List<BookExchange> exchanges = bookExchangeService.getExchangesAsRequester(userId);
     List<BookExchangeDto> responseDtos = exchanges.stream()
         .map(this::enrichDtoWithCanRate)
+            .map(this::enrichWithUsers)
         .collect(Collectors.toList());
 
     return ResponseEntity.ok(responseDtos);
@@ -145,6 +152,7 @@ public class BookExchangeController {
     List<BookExchange> exchanges = bookExchangeService.getExchangesAsOwner(userId);
     List<BookExchangeDto> responseDtos = exchanges.stream()
         .map(this::enrichDtoWithCanRate)
+            .map(this::enrichWithUsers)
         .collect(Collectors.toList());
 
     return ResponseEntity.ok(responseDtos);
@@ -175,7 +183,7 @@ public class BookExchangeController {
       return ResponseEntity.notFound().build();
     }
 
-    BookExchangeDto responseDto = enrichDtoWithCanRate(exchange.get());
+    BookExchangeDto responseDto = enrichWithUsers(enrichDtoWithCanRate(exchange.get()));
     return ResponseEntity.ok(responseDto);
   }
 
@@ -310,5 +318,14 @@ public class BookExchangeController {
     }
     
     return dto;
+  }
+
+  private BookExchangeDto enrichWithUsers(BookExchangeDto exchange) {
+
+    UserPreviewDto owner = userService.getUserById(exchange.getOwnerId()).map(UserDtoMapper.INSTANCE::toPreviewDto).get();
+    UserPreviewDto requester = userService.getUserById(exchange.getRequesterId()).map(UserDtoMapper.INSTANCE::toPreviewDto).get();
+    exchange.setOwner(owner);
+    exchange.setRequester(requester);
+    return exchange;
   }
 }

@@ -34,6 +34,7 @@ public class UserEntity {
   @Column(length = 1000)
   private String description;
 
+  @Column(length = 1000)
   private String image;
 
   @ManyToOne(cascade = CascadeType.ALL)

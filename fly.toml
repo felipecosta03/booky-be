@@ -11,9 +11,9 @@ primary_region = 'gru'
 [http_service]
 internal_port = 8080
 force_https = true
-auto_stop_machines = 'stop'
+auto_stop_machines = 'off'  # Deshabilitar auto-stop
 auto_start_machines = true
-min_machines_running = 0
+min_machines_running = 1    # Mantener 1 máquina activa
 processes = ['app']
 
 [[vm]]

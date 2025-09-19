@@ -2,10 +2,8 @@ package com.uade.bookybe.router.mapper;
 
 import com.uade.bookybe.core.model.ReadingClub;
 import com.uade.bookybe.infraestructure.mapper.BookEntityMapper;
-import com.uade.bookybe.infraestructure.mapper.CommunityEntityMapper;
 import com.uade.bookybe.infraestructure.mapper.UserEntityMapper;
 import com.uade.bookybe.infraestructure.repository.BookRepository;
-import com.uade.bookybe.infraestructure.repository.CommunityRepository;
 import com.uade.bookybe.infraestructure.repository.UserRepository;
 import com.uade.bookybe.router.dto.readingclub.ReadingClubDto;
 import lombok.RequiredArgsConstructor;
@@ -30,10 +28,10 @@ public class ReadingClubDtoMapperWithNestedObjects {
 
     // Enriquecer con objetos anidados
     try {
-      // Cargar book si bookId existe
+      // Cargar book si bookId existe - usando método con fetch eager para categories
       if (model.getBookId() != null) {
         bookRepository
-            .findById(model.getBookId())
+            .findByIdWithCategories(model.getBookId())
             .map(BookEntityMapper.INSTANCE::toModel)
             .map(BookDtoMapper.INSTANCE::toDto)
             .ifPresent(dto::setBook);

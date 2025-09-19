@@ -13,6 +13,9 @@ public interface BookRepository extends JpaRepository<BookEntity, String> {
 
   Optional<BookEntity> findByIsbn(String isbn);
 
+  @Query("SELECT b FROM BookEntity b LEFT JOIN FETCH b.categories WHERE b.id = :id")
+  Optional<BookEntity> findByIdWithCategories(@Param("id") String id);
+
   @Query(
       """
       SELECT DISTINCT b FROM BookEntity b LEFT JOIN b.categories c

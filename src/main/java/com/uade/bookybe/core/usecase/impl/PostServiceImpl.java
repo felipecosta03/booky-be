@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +33,7 @@ public class PostServiceImpl implements PostService {
 
   @Override
   public Optional<Post> createPost(
-      String userId, String body, String communityId, MultipartFile image) {
+      String userId, String body, String communityId, String imageBase64) {
     log.info("Creating post for user: {}, community: {}", userId, communityId);
 
     // Validate community if communityId is provided
@@ -56,11 +55,14 @@ public class PostServiceImpl implements PostService {
               .dateCreated(LocalDateTime.now())
               .build();
 
-      // Handle image upload if provided
-      if (image != null && !image.isEmpty()) {
-        Optional<String> imageUrlOpt = imageStoragePort.uploadImage(image, "booky/posts");
-        if (imageUrlOpt.isPresent()) {
-          postEntity.setImage(imageUrlOpt.get());
+      // Manejar imagen con base64 si se proporciona
+      if (imageBase64 != null && !imageBase64.isBlank()) {
+        Optional<String> uploadedImageUrl = imageStoragePort.uploadImage(imageBase64, "booky/posts");
+        if (uploadedImageUrl.isPresent()) {
+          postEntity.setImage(uploadedImageUrl.get());
+          log.info("Image uploaded successfully for post");
+        } else {
+          log.warn("Failed to upload image for post");
         }
       }
 

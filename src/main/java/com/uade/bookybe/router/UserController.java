@@ -23,8 +23,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
 
 @RestController
 @RequiredArgsConstructor
@@ -172,13 +170,10 @@ public class UserController {
         @ApiResponse(responseCode = "404", description = "User not found", content = @Content),
         @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
       })
-  @PutMapping(value = "/users", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<UserDto> updateUserWithImage(
-      @Parameter(description = "User update data", required = true) @RequestPart("user") @Valid
-          UserUpdateDto userUpdateDto,
-      @Parameter(description = "Profile image file (optional)")
-          @RequestPart(value = "image", required = false)
-          MultipartFile image) {
+  @PutMapping(value = "/users", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<UserDto> updateUser(
+      @Parameter(description = "User update data with optional base64 image", required = true)
+      @Valid @RequestBody UserUpdateDto userUpdateDto) {
 
     log.info("Updating user with ID: {}", userUpdateDto.getId());
 
@@ -189,7 +184,7 @@ public class UserController {
 
     User user = UserDtoMapper.INSTANCE.toModel(userUpdateDto);
     return userService
-        .updateUser(userUpdateDto.getId(), user, image)
+        .updateUser(userUpdateDto.getId(), user, userUpdateDto.getImage())
         .map(UserDtoMapper.INSTANCE::toDto)
         .map(
             updatedUser -> {

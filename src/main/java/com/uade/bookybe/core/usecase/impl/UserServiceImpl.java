@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +39,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public Optional<User> updateUser(String id, User user, MultipartFile image) {
+  public Optional<User> updateUser(String id, User user, String imageBase64) {
     UserEntity existing =
         userRepository
             .findById(id)
@@ -70,15 +69,15 @@ public class UserServiceImpl implements UserService {
       existing.setAddress(addressEntity);
     }
 
-    // Manejar imagen
-    if (image != null && !image.isEmpty()) {
+    // Manejar imagen con base64
+    if (imageBase64 != null && !imageBase64.isBlank()) {
       // Eliminar imagen anterior si existe
       if (existing.getImage() != null && !existing.getImage().isBlank()) {
         imageStoragePort.deleteImage(existing.getImage());
       }
 
-      // Subir nueva imagen
-      Optional<String> uploadedImageUrl = imageStoragePort.uploadImage(image, "booky/users");
+      // Subir nueva imagen usando base64
+      Optional<String> uploadedImageUrl = imageStoragePort.uploadImage(imageBase64, "booky/users");
       if (uploadedImageUrl.isPresent()) {
         existing.setImage(uploadedImageUrl.get());
       }
@@ -186,6 +185,15 @@ public class UserServiceImpl implements UserService {
 
     User user = buildUserBySignUp(userSignUp);
     UserEntity entity = UserEntityMapper.INSTANCE.toEntity(user);
+
+    // Manejar imagen durante el registro si se proporciona
+    if (userSignUp.getImage() != null && !userSignUp.getImage().isBlank()) {
+      Optional<String> uploadedImageUrl = imageStoragePort.uploadImage(userSignUp.getImage(), "booky/users");
+      if (uploadedImageUrl.isPresent()) {
+        entity.setImage(uploadedImageUrl.get());
+      }
+    }
+
     UserEntity saved = userRepository.save(entity);
     
     // Inicializar perfil de gamificación automáticamente para nuevo usuario

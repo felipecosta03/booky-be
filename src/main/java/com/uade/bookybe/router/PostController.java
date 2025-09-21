@@ -22,7 +22,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/posts")
@@ -35,7 +34,7 @@ public class PostController {
 
   @Operation(
       summary = "Crear nueva publicación",
-      description = "Crea una nueva publicación con texto e imagen opcional")
+      description = "Crea una nueva publicación con texto e imagen opcional en base64")
   @ApiResponses(
       value = {
         @ApiResponse(
@@ -48,15 +47,10 @@ public class PostController {
         @ApiResponse(responseCode = "400", description = "Datos inválidos", content = @Content),
         @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content)
       })
-  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<PostDto> createPost(
-      @Parameter(description = "Datos de la publicación", required = true)
-          @RequestPart("post")
-          @Valid
-          CreatePostDto createPostDto,
-      @Parameter(description = "Imagen opcional de la publicación")
-          @RequestPart(value = "image", required = false)
-          MultipartFile image,
+      @Parameter(description = "Datos de la publicación con imagen opcional en base64", required = true)
+          @RequestBody @Valid CreatePostDto createPostDto,
       Authentication authentication) {
 
     log.info("Creating post for user: {}", authentication.getName());
@@ -64,7 +58,7 @@ public class PostController {
     String userId = authentication.getName();
 
     return postService
-        .createPost(userId, createPostDto.getBody(), createPostDto.getCommunityId(), image)
+        .createPost(userId, createPostDto.getBody(), createPostDto.getCommunityId(), createPostDto.getImage())
         .map(PostDtoMapper.INSTANCE::toDto)
         .map(
             postDto -> {

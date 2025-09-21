@@ -31,7 +31,7 @@ public interface PostRepository extends JpaRepository<PostEntity, String> {
           """
       SELECT p.* FROM post p
       INNER JOIN user_follows uf ON p.user_id = uf.followed_id
-      WHERE uf.follower_id = :userId
+      WHERE (uf.follower_id = :userId OR p.user_id = :userId) AND p.community_id IS NULL
       ORDER BY p.date_created DESC
       """,
       nativeQuery = true)

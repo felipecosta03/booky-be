@@ -38,4 +38,7 @@ public class UserSignUpDto {
   @Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
   @Schema(description = "User's password", example = "SecurePassword123!", required = true)
   private String password;
+
+  @Schema(description = "Profile image encoded in base64", example = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD...")
+  private String image;
 }

@@ -3,11 +3,10 @@ package com.uade.bookybe.core.usecase;
 import com.uade.bookybe.core.model.Post;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.web.multipart.MultipartFile;
 
 public interface PostService {
 
-  Optional<Post> createPost(String userId, String body, String communityId, MultipartFile image);
+  Optional<Post> createPost(String userId, String body, String communityId, String imageBase64);
 
   Optional<Post> getPostById(String postId);
 

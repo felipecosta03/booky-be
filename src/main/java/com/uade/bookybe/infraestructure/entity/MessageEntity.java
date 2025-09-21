@@ -25,6 +25,9 @@ public class MessageEntity {
   @Column(name = "content", nullable = false, length = 1000)
   private String content;
 
+  @Column(name = "image", length = 100000)
+  private String image; // base64
+
   @Column(name = "date_sent", nullable = false)
   private LocalDateTime dateSent;
 

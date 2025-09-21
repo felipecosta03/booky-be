@@ -180,8 +180,9 @@ public class ChatController {
       Principal principal) {
     
     String currentUserId = principal.getName();
-    Optional<Message> messageOpt = chatService.sendMessage(chatId, currentUserId, request.getContent());
-    
+    Optional<Message> messageOpt =
+        chatService.sendMessage(chatId, currentUserId, request.getContent(), request.getImage());
+
     if (messageOpt.isEmpty()) {
       return ResponseEntity.badRequest().build();
     }

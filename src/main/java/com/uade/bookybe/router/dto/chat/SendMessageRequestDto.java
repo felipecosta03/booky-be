@@ -11,4 +11,5 @@ import lombok.Setter;
 @NoArgsConstructor
 public class SendMessageRequestDto {
   private String content;
+  private String image; // base64
 }

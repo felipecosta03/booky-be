@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface ChatService {
   Optional<Chat> createOrGetChat(String user1Id, String user2Id);
-  Optional<Message> sendMessage(String chatId, String senderId, String content);
+  Optional<Message> sendMessage(String chatId, String senderId, String content, String image);
   List<Message> getChatMessages(String chatId, String userId);
   List<Chat> getUserChats(String userId);
   Optional<Chat> getChatById(String chatId, String userId);

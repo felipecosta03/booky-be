@@ -2,6 +2,7 @@ package com.uade.bookybe.core.usecase.impl;
 
 import com.uade.bookybe.core.model.Chat;
 import com.uade.bookybe.core.model.Message;
+import com.uade.bookybe.core.port.ImageStoragePort;
 import com.uade.bookybe.core.usecase.ChatService;
 import com.uade.bookybe.infraestructure.entity.ChatEntity;
 import com.uade.bookybe.infraestructure.entity.MessageEntity;
@@ -23,6 +24,7 @@ public class ChatServiceImpl implements ChatService {
 
   private final ChatRepository chatRepository;
   private final MessageRepository messageRepository;
+  private final ImageStoragePort imageStoragePort;
 
   @Override
   @Transactional
@@ -49,7 +51,8 @@ public class ChatServiceImpl implements ChatService {
 
   @Override
   @Transactional
-  public Optional<Message> sendMessage(String chatId, String senderId, String content) {
+  public Optional<Message> sendMessage(
+      String chatId, String senderId, String content, String imageBase64) {
     // Verificar que el chat existe y el usuario pertenece al chat
     Optional<ChatEntity> chatOpt = chatRepository.findById(chatId);
     if (chatOpt.isEmpty()) {
@@ -62,16 +65,20 @@ public class ChatServiceImpl implements ChatService {
     }
 
     // Crear el mensaje
-    MessageEntity message = MessageEntity.builder()
+    MessageEntity.MessageEntityBuilder message = MessageEntity.builder()
         .id(UUID.randomUUID().toString())
         .chatId(chatId)
         .senderId(senderId)
         .content(content)
         .dateSent(LocalDateTime.now())
-        .read(false)
-        .build();
+        .read(false);
 
-    MessageEntity savedMessage = messageRepository.save(message);
+    if (imageBase64 != null) {
+        Optional<String> uploadedImageUrl = imageStoragePort.uploadImage(imageBase64, "booky/messages");
+        uploadedImageUrl.ifPresent(message::image);
+    }
+
+    MessageEntity savedMessage = messageRepository.save(message.build());
 
     // Actualizar fecha de última actualización del chat
     chat.setDateUpdated(LocalDateTime.now());

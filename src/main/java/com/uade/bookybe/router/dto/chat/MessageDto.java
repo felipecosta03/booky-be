@@ -16,6 +16,7 @@ public class MessageDto {
   private String chatId;
   private String senderId;
   private String content;
+  private String image;
   private LocalDateTime dateSent;
   private boolean read;
   private UserPreviewDto sender;

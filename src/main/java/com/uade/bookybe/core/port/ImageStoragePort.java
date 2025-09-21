@@ -18,6 +18,8 @@ public interface ImageStoragePort {
    */
   Optional<String> uploadImage(MultipartFile file, String folder);
 
+  Optional<String> uploadImage(String base64, String folder);
+
   /**
    * Elimina una imagen del servicio de almacenamiento
    *

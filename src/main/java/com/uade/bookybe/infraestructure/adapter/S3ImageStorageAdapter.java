@@ -3,6 +3,7 @@ package com.uade.bookybe.infraestructure.adapter;
 import com.uade.bookybe.core.port.ImageStoragePort;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -82,6 +83,63 @@ public class S3ImageStorageAdapter implements ImageStoragePort {
       return Optional.empty();
     } catch (Exception e) {
       log.error("Unexpected error uploading image to S3: {}", e.getMessage(), e);
+      return Optional.empty();
+    }
+  }
+
+  @Override
+  public Optional<String> uploadImage(String base64, String folder) {
+    try {
+      log.info("Uploading base64 image to S3. Folder: {}, Bucket: {}", folder, bucketName);
+
+      if (base64 == null || base64.trim().isEmpty()) {
+        log.error("Base64 data is null or empty");
+        return Optional.empty();
+      }
+
+      // Procesar el base64 y extraer los datos
+      byte[] imageBytes = processBase64Data(base64);
+      if (imageBytes == null) {
+        log.error("Failed to process base64 data");
+        return Optional.empty();
+      }
+
+      // Generar nombre único para el archivo
+      String fileName = "base64-image-" + UUID.randomUUID().toString();
+
+      // Determinar extensión basada en el tipo de contenido del base64
+      String extension = determineFileExtensionFromBase64(base64);
+      fileName += extension;
+
+      String key = buildObjectKey(folder, fileName);
+
+      // Determinar el content type desde el base64
+      String contentType = determineContentTypeFromBase64(base64);
+
+      // Crear el request de upload
+      PutObjectRequest putObjectRequest =
+          PutObjectRequest.builder()
+              .bucket(bucketName)
+              .key(key)
+              .contentType(contentType)
+              .contentLength((long) imageBytes.length)
+              .metadata(
+                  java.util.Map.of(
+                      "source", "base64-upload",
+                      "upload-timestamp", String.valueOf(System.currentTimeMillis())))
+              .build();
+
+      // Subir el archivo
+      s3Client.putObject(putObjectRequest, RequestBody.fromBytes(imageBytes));
+
+      // Generar la URL pública
+      String publicUrl = generatePublicUrl(key);
+      log.info("Base64 image uploaded successfully to S3. URL: {}", publicUrl);
+
+      return Optional.of(publicUrl);
+
+    } catch (Exception e) {
+      log.error("Error uploading base64 image to S3: {}", e.getMessage(), e);
       return Optional.empty();
     }
   }
@@ -209,6 +267,66 @@ public class S3ImageStorageAdapter implements ImageStoragePort {
     }
 
     return "image/jpeg"; // Por defecto
+  }
+
+  /**
+   * Procesa los datos base64 y extrae los bytes de la imagen
+   */
+  private byte[] processBase64Data(String base64) {
+    try {
+      String data = base64;
+
+      // Si contiene el header data:image/...;base64, removerlo
+      if (base64.contains(",")) {
+        String[] parts = base64.split(",");
+        if (parts.length == 2) {
+          data = parts[1];
+        }
+      }
+
+      // Decodificar base64
+      return Base64.getDecoder().decode(data);
+
+    } catch (IllegalArgumentException e) {
+      log.error("Invalid base64 format: {}", e.getMessage());
+      return null;
+    }
+  }
+
+  /**
+   * Determina la extensión del archivo basada en el tipo MIME del base64
+   */
+  private String determineFileExtensionFromBase64(String base64Data) {
+    if (base64Data.contains("data:image/")) {
+      if (base64Data.contains("image/png")) {
+        return ".png";
+      } else if (base64Data.contains("image/jpeg") || base64Data.contains("image/jpg")) {
+        return ".jpg";
+      } else if (base64Data.contains("image/gif")) {
+        return ".gif";
+      } else if (base64Data.contains("image/webp")) {
+        return ".webp";
+      }
+    }
+    return ".jpg"; // default
+  }
+
+  /**
+   * Determina el content type basado en el header del base64
+   */
+  private String determineContentTypeFromBase64(String base64Data) {
+    if (base64Data.contains("data:image/")) {
+      if (base64Data.contains("image/png")) {
+        return "image/png";
+      } else if (base64Data.contains("image/jpeg") || base64Data.contains("image/jpg")) {
+        return "image/jpeg";
+      } else if (base64Data.contains("image/gif")) {
+        return "image/gif";
+      } else if (base64Data.contains("image/webp")) {
+        return "image/webp";
+      }
+    }
+    return "image/jpeg"; // default
   }
 
   /** Genera la URL pública del objeto */

@@ -5,8 +5,10 @@ import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 import com.uade.bookybe.core.port.ImageStoragePort;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -57,6 +59,55 @@ public class CloudinaryImageStorageAdapter implements ImageStoragePort {
 
     } catch (IOException e) {
       log.error("Error uploading image to Cloudinary: {}", e.getMessage(), e);
+      return Optional.empty();
+    }
+  }
+
+  @Override
+  public Optional<String> uploadImage(String base64, String folder) {
+    try {
+      log.info("Uploading base64 image to Cloudinary. Folder: {}", folder);
+
+      if (base64 == null || base64.trim().isEmpty()) {
+        log.error("Base64 data is null or empty");
+        return Optional.empty();
+      }
+
+      // Procesar el base64 y extraer los datos
+      byte[] imageBytes = processBase64Data(base64);
+      if (imageBytes == null) {
+        log.error("Failed to process base64 data");
+        return Optional.empty();
+      }
+
+      // Generar nombre único para el archivo
+      String fileName = "base64-image-" + UUID.randomUUID().toString();
+
+      Map<String, Object> uploadParams =
+          ObjectUtils.asMap(
+              "resource_type",
+              "image",
+              "folder",
+              folder != null ? folder : "booky/base64",
+              "public_id",
+              fileName,
+              "unique_filename",
+              true,
+              "overwrite",
+              false,
+              "quality",
+              "auto:good",
+              "format",
+              "webp");
+
+      Map<?, ?> uploadResult = cloudinary.uploader().upload(imageBytes, uploadParams);
+      String imageUrl = (String) uploadResult.get("secure_url");
+
+      log.info("Base64 image uploaded successfully to Cloudinary. URL: {}", imageUrl);
+      return Optional.of(imageUrl);
+
+    } catch (Exception e) {
+      log.error("Error uploading base64 image to Cloudinary: {}", e.getMessage(), e);
       return Optional.empty();
     }
   }
@@ -119,6 +170,30 @@ public class CloudinaryImageStorageAdapter implements ImageStoragePort {
     } catch (Exception e) {
       log.error("Error generating optimized URL: {}", e.getMessage(), e);
       return imageUrl;
+    }
+  }
+
+  /**
+   * Procesa los datos base64 y extrae los bytes de la imagen
+   */
+  private byte[] processBase64Data(String base64) {
+    try {
+      String data = base64;
+
+      // Si contiene el header data:image/...;base64, removerlo
+      if (base64.contains(",")) {
+        String[] parts = base64.split(",");
+        if (parts.length == 2) {
+          data = parts[1];
+        }
+      }
+
+      // Decodificar base64
+      return Base64.getDecoder().decode(data);
+
+    } catch (IllegalArgumentException e) {
+      log.error("Invalid base64 format: {}", e.getMessage());
+      return null;
     }
   }
 

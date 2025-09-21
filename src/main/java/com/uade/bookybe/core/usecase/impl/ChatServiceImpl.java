@@ -15,11 +15,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChatServiceImpl implements ChatService {
 
   private final ChatRepository chatRepository;
@@ -33,6 +35,7 @@ public class ChatServiceImpl implements ChatService {
     Optional<ChatEntity> existingChat = chatRepository.findByUsers(user1Id, user2Id);
     
     if (existingChat.isPresent()) {
+      log.info("Chat already exists");
       return Optional.of(ChatEntityMapper.INSTANCE.toModel(existingChat.get()));
     }
 
@@ -45,7 +48,12 @@ public class ChatServiceImpl implements ChatService {
         .dateUpdated(LocalDateTime.now())
         .build();
 
+    log.info("New chat created between users {} and {}", user1Id, user2Id);
     ChatEntity savedChat = chatRepository.save(newChat);
+    // log chat saved with chat data
+    log.info("Chat saved: {}", savedChat);
+
+
     return Optional.of(ChatEntityMapper.INSTANCE.toModel(savedChat));
   }
 

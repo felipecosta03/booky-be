@@ -59,8 +59,8 @@ public interface UserBookRepository extends JpaRepository<UserBookEntity, String
   @Query(
       value =
           """
-SELECT u.id, u.username, u.name, u.lastname, u.image, u.address
-FROM users u
+SELECT u
+FROM users u JOIN FETCH u.address
 INNER JOIN user_books ub ON u.id = ub.user_id
 WHERE ub.book_id IN :bookIds
 AND ub.wants_to_exchange = true

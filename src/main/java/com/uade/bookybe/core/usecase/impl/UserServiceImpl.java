@@ -13,6 +13,7 @@ import com.uade.bookybe.infraestructure.entity.UserEntity;
 import com.uade.bookybe.infraestructure.mapper.UserEntityMapper;
 import com.uade.bookybe.infraestructure.repository.UserBookRepository;
 import com.uade.bookybe.infraestructure.repository.UserRepository;
+import com.uade.bookybe.router.dto.user.AddressDto;
 import com.uade.bookybe.router.dto.user.RateUserDto;
 import com.uade.bookybe.router.dto.user.UserPreviewDto;
 import com.uade.bookybe.router.mapper.UserDtoMapper;
@@ -257,8 +258,28 @@ public class UserServiceImpl implements UserService {
 
     return userResults.stream()
         .map(this::mapToUserPreviewDto)
+        .map(this::enrichWithAddress)
         .map(this::enrichWithRate)
         .collect(Collectors.toList());
+  }
+
+  private UserPreviewDto enrichWithAddress(UserPreviewDto userPreviewDto) {
+    userRepository
+        .findById(userPreviewDto.getId())
+        .ifPresent(
+            userEntity -> {
+              if (userEntity.getAddress() != null) {
+                userPreviewDto.setAddress(
+                    AddressDto.builder()
+                        .city(userEntity.getAddress().getCity())
+                        .state(userEntity.getAddress().getState())
+                        .country(userEntity.getAddress().getCountry())
+                        .latitude(userEntity.getAddress().getLatitude())
+                        .longitude(userEntity.getAddress().getLongitude())
+                        .build());
+              }
+            });
+    return userPreviewDto;
   }
 
   private UserPreviewDto enrichWithRate(UserPreviewDto userPreviewDto) {

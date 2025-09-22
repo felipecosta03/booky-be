@@ -59,15 +59,15 @@ public interface UserBookRepository extends JpaRepository<UserBookEntity, String
   @Query(
       value =
           """
-    SELECT u.id, u.username, u.name, u.lastname, u.image
-    FROM users u
-    INNER JOIN user_books ub ON u.id = ub.user_id
-    WHERE ub.book_id IN :bookIds
-    AND ub.wants_to_exchange = true
-    AND ub.user_id != :excludeUserId
-    GROUP BY u.id, u.username, u.name, u.lastname, u.image
-    HAVING COUNT(DISTINCT ub.book_id) = :bookCount
-    LIMIT 100
+SELECT u.id, u.username, u.name, u.lastname, u.image
+FROM users u JOIN address a ON u.address_id = a.id
+INNER JOIN user_books ub ON u.id = ub.user_id
+WHERE ub.book_id IN :bookIds
+AND ub.wants_to_exchange = true
+AND ub.user_id != :excludeUserId
+GROUP BY u.id, u.username, u.name, u.lastname, u.image, a.id
+HAVING COUNT(DISTINCT ub.book_id) = :bookCount
+LIMIT 100
     """,
       nativeQuery = true)
   List<Object[]> findUsersByBookIds(

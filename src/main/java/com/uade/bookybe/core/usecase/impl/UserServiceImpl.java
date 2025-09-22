@@ -6,6 +6,7 @@ import com.uade.bookybe.core.model.User;
 import com.uade.bookybe.core.model.UserSignUp;
 import com.uade.bookybe.core.port.ImageStoragePort;
 import com.uade.bookybe.core.usecase.GamificationService;
+import com.uade.bookybe.core.usecase.UserRateService;
 import com.uade.bookybe.core.usecase.UserService;
 import com.uade.bookybe.infraestructure.entity.AddressEntity;
 import com.uade.bookybe.infraestructure.entity.UserEntity;
@@ -32,6 +33,7 @@ public class UserServiceImpl implements UserService {
   private final BCryptPasswordEncoder passwordEncoder;
   private final ImageStoragePort imageStoragePort;
   private final GamificationService gamificationService;
+  private final UserRateService userRateService;
 
   @Override
   public Optional<User> getUserById(String id) {
@@ -252,7 +254,16 @@ public class UserServiceImpl implements UserService {
     List<Object[]> userResults =
         userBookRepository.findUsersByBookIds(bookIds, requestingUserId, bookIds.size());
 
-    return userResults.stream().map(this::mapToUserPreviewDto).collect(Collectors.toList());
+    return userResults.stream()
+        .map(this::mapToUserPreviewDto)
+        .map(this::enrichWithRate)
+        .collect(Collectors.toList());
+  }
+
+  private UserPreviewDto enrichWithRate(UserPreviewDto userPreviewDto) {
+
+    userPreviewDto.setUserRate(userRateService.getUserAverageRating(userPreviewDto.getId()));
+    return userPreviewDto;
   }
 
   @Override

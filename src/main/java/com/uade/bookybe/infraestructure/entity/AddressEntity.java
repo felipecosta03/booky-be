@@ -13,6 +13,7 @@ import lombok.*;
 public class AddressEntity {
   @Id private String id;
 
+  @Column(nullable = true, length = 100)
   private String city;
   private String state;
   private String country;

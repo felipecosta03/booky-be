@@ -36,6 +36,7 @@ DROP TABLE IF EXISTS community_likes CASCADE;
 CREATE TABLE addresses
 (
     id        VARCHAR(255) PRIMARY KEY,
+    city     VARCHAR(255),
     state     VARCHAR(255),
     country   VARCHAR(255),
     longitude DOUBLE PRECISION,

@@ -5,8 +5,8 @@ import com.uade.bookybe.core.exception.NotFoundException;
 import com.uade.bookybe.core.model.User;
 import com.uade.bookybe.core.model.UserSignUp;
 import com.uade.bookybe.core.port.ImageStoragePort;
-import com.uade.bookybe.core.usecase.UserService;
 import com.uade.bookybe.core.usecase.GamificationService;
+import com.uade.bookybe.core.usecase.UserService;
 import com.uade.bookybe.infraestructure.entity.AddressEntity;
 import com.uade.bookybe.infraestructure.entity.UserEntity;
 import com.uade.bookybe.infraestructure.mapper.UserEntityMapper;
@@ -18,7 +18,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,6 +61,7 @@ public class UserServiceImpl implements UserService {
           AddressEntity.builder()
               .id(UUID.randomUUID().toString())
               .state(user.getAddress().getState())
+              .city(user.getAddress().getCity())
               .country(user.getAddress().getCountry())
               .longitude(user.getAddress().getLongitude())
               .latitude(user.getAddress().getLatitude())
@@ -101,12 +101,13 @@ public class UserServiceImpl implements UserService {
       log.warn("Attempted to delete non-existent user: {}", id);
       return false;
     }
-    
+
     try {
       log.info("Deleting user: {}", id);
-      
+
       // Manual cleanup of gamification data first
-      // This ensures gamification data is deleted even if FK constraints are not properly configured
+      // This ensures gamification data is deleted even if FK constraints are not properly
+      // configured
       try {
         boolean gamificationDeleted = gamificationService.deleteUserGamificationData(id);
         if (gamificationDeleted) {
@@ -115,25 +116,28 @@ public class UserServiceImpl implements UserService {
       } catch (Exception e) {
         log.warn("Could not delete gamification data for user {}: {}", id, e.getMessage());
       }
-      
+
       // Delete the user (should CASCADE to related tables)
       userRepository.deleteById(id);
       log.info("User {} deleted successfully", id);
       return true;
-      
+
     } catch (org.springframework.dao.DataIntegrityViolationException e) {
       log.error("Foreign key constraint violation when deleting user {}: {}", id, e.getMessage());
-      
+
       // More specific error message
       String message = e.getMessage();
       if (message.contains("gamification_profiles")) {
-        throw new RuntimeException("Cannot delete user: gamification profile exists. Please run FK migration script.", e);
+        throw new RuntimeException(
+            "Cannot delete user: gamification profile exists. Please run FK migration script.", e);
       } else if (message.contains("user_achievements")) {
-        throw new RuntimeException("Cannot delete user: user achievements exist. Please run FK migration script.", e);
+        throw new RuntimeException(
+            "Cannot delete user: user achievements exist. Please run FK migration script.", e);
       } else {
-        throw new RuntimeException("Cannot delete user due to foreign key constraints: " + message, e);
+        throw new RuntimeException(
+            "Cannot delete user due to foreign key constraints: " + message, e);
       }
-      
+
     } catch (Exception e) {
       log.error("Unexpected error deleting user {}: {}", id, e.getMessage(), e);
       throw new RuntimeException("Failed to delete user: " + id, e);
@@ -188,17 +192,18 @@ public class UserServiceImpl implements UserService {
 
     // Manejar imagen durante el registro si se proporciona
     if (userSignUp.getImage() != null && !userSignUp.getImage().isBlank()) {
-      Optional<String> uploadedImageUrl = imageStoragePort.uploadImage(userSignUp.getImage(), "booky/users");
+      Optional<String> uploadedImageUrl =
+          imageStoragePort.uploadImage(userSignUp.getImage(), "booky/users");
       if (uploadedImageUrl.isPresent()) {
         entity.setImage(uploadedImageUrl.get());
       }
     }
 
     UserEntity saved = userRepository.save(entity);
-    
+
     // Inicializar perfil de gamificación automáticamente para nuevo usuario
     gamificationService.initializeUserProfile(saved.getId());
-    
+
     return Optional.ofNullable(UserEntityMapper.INSTANCE.toModel(saved));
   }
 
@@ -231,11 +236,11 @@ public class UserServiceImpl implements UserService {
   @Override
   public List<User> searchUsersByUsername(String searchTerm) {
     log.info("Searching for users with username containing: {}", searchTerm);
-    
+
     List<UserEntity> userEntities = userRepository.findByUsernameContainingIgnoreCase(searchTerm);
-    
+
     log.info("Found {} users matching search term: {}", userEntities.size(), searchTerm);
-    
+
     return userEntities.stream()
         .map(UserEntityMapper.INSTANCE::toModel)
         .collect(Collectors.toList());

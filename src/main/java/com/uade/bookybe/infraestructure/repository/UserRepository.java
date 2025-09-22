@@ -54,4 +54,18 @@ public interface UserRepository extends JpaRepository<UserEntity, String> {
           "SELECT * FROM users WHERE LOWER(username) LIKE LOWER(CONCAT('%', :searchTerm, '%')) ORDER BY username",
       nativeQuery = true)
   List<UserEntity> findByUsernameContainingIgnoreCase(@Param("searchTerm") String searchTerm);
+
+  @Query(
+      value =
+          "SELECT u.* FROM users u " +
+          "INNER JOIN addresses a ON u.address_id = a.id " +
+          "WHERE a.latitude BETWEEN :bottomLeftLatitude AND :topRightLatitude " +
+          "AND a.longitude BETWEEN :bottomLeftLongitude AND :topRightLongitude " +
+          "ORDER BY u.username",
+      nativeQuery = true)
+  List<UserEntity> findUsersByLocationBounds(
+      @Param("bottomLeftLatitude") Double bottomLeftLatitude,
+      @Param("bottomLeftLongitude") Double bottomLeftLongitude,
+      @Param("topRightLatitude") Double topRightLatitude,
+      @Param("topRightLongitude") Double topRightLongitude);
 }

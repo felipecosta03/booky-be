@@ -39,4 +39,15 @@ public interface UserService {
    * @return List of users with their matching book counts, ordered by distance if requesting user has address
    */
   List<UserPreviewDto> searchUsersByBooks(List<String> bookIds, String requestingUserId);
+
+  /**
+   * Search users by geographic location within a bounding box
+   * @param bottomLeftLatitude Bottom left latitude coordinate
+   * @param bottomLeftLongitude Bottom left longitude coordinate
+   * @param topRightLatitude Top right latitude coordinate
+   * @param topRightLongitude Top right longitude coordinate
+   * @return List of users within the specified geographic area
+   */
+  List<UserPreviewDto> searchUsersByLocation(Double bottomLeftLatitude, Double bottomLeftLongitude,
+                                           Double topRightLatitude, Double topRightLongitude);
 }

@@ -13,6 +13,7 @@ import com.uade.bookybe.infraestructure.mapper.UserEntityMapper;
 import com.uade.bookybe.infraestructure.repository.UserBookRepository;
 import com.uade.bookybe.infraestructure.repository.UserRepository;
 import com.uade.bookybe.router.dto.user.UserPreviewDto;
+import com.uade.bookybe.router.mapper.UserDtoMapper;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -252,6 +253,23 @@ public class UserServiceImpl implements UserService {
         userBookRepository.findUsersByBookIds(bookIds, requestingUserId, bookIds.size());
 
     return userResults.stream().map(this::mapToUserPreviewDto).collect(Collectors.toList());
+  }
+
+  @Override
+  public List<UserPreviewDto> searchUsersByLocation(Double bottomLeftLatitude, Double bottomLeftLongitude,
+                                                  Double topRightLatitude, Double topRightLongitude) {
+    log.info("Searching for users within geographic bounds: bottomLeft({}, {}), topRight({}, {})",
+             bottomLeftLatitude, bottomLeftLongitude, topRightLatitude, topRightLongitude);
+
+    List<UserEntity> userEntities = userRepository.findUsersByLocationBounds(
+        bottomLeftLatitude, bottomLeftLongitude, topRightLatitude, topRightLongitude);
+
+    log.info("Found {} users within geographic bounds", userEntities.size());
+
+    return userEntities.stream()
+        .map(UserEntityMapper.INSTANCE::toModel)
+        .map(UserDtoMapper.INSTANCE::toPreviewDto)
+        .collect(Collectors.toList());
   }
 
   private UserPreviewDto mapToUserPreviewDto(Object[] result) {

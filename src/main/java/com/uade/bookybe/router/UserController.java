@@ -390,4 +390,43 @@ public class UserController {
     
     return ResponseEntity.ok(result);
   }
+
+  @Operation(
+      summary = "Search users by geographic location",
+      description = "Find users within a geographic bounding box defined by bottom-left and top-right coordinates")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Users found successfully within the geographic area",
+            content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "400", description = "Invalid coordinates or input data", content = @Content)
+      })
+  @PostMapping("/users/search-by-location")
+  public ResponseEntity<List<UserPreviewDto>> searchUsersByLocation(
+      @Parameter(description = "Geographic search criteria with bounding box coordinates", required = true)
+          @Valid @RequestBody SearchUsersByLocationDto locationDto) {
+
+    log.info("Searching for users within geographic bounds: bottomLeft({}, {}), topRight({}, {})",
+             locationDto.getBottomLeftLatitude(), locationDto.getBottomLeftLongitude(),
+             locationDto.getTopRightLatitude(), locationDto.getTopRightLongitude());
+
+    // Validar que las coordenadas forman un rectángulo válido
+    if (locationDto.getBottomLeftLatitude() >= locationDto.getTopRightLatitude() ||
+        locationDto.getBottomLeftLongitude() >= locationDto.getTopRightLongitude()) {
+      log.warn("Invalid bounding box coordinates provided");
+      return ResponseEntity.badRequest().build();
+    }
+
+    List<UserPreviewDto> result = userService.searchUsersByLocation(
+        locationDto.getBottomLeftLatitude(),
+        locationDto.getBottomLeftLongitude(),
+        locationDto.getTopRightLatitude(),
+        locationDto.getTopRightLongitude()
+    );
+
+    log.info("Found {} users within geographic bounds", result.size());
+
+    return ResponseEntity.ok(result);
+  }
 }

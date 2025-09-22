@@ -1,0 +1,47 @@
+### Search users by geographic location
+
+POST http://localhost:8080/users/search-by-location
+Content-Type: application/json
+
+{
+  "bottomLeftLatitude": -34.7,
+  "bottomLeftLongitude": -58.5,
+  "topRightLatitude": -34.5,
+  "topRightLongitude": -58.3
+}
+
+### Search users by location - Buenos Aires area (larger area)
+
+POST http://localhost:8080/users/search-by-location
+Content-Type: application/json
+
+{
+  "bottomLeftLatitude": -34.75,
+  "bottomLeftLongitude": -58.6,
+  "topRightLatitude": -34.4,
+  "topRightLongitude": -58.2
+}
+
+### Search users by location - Invalid coordinates (should return 400)
+
+POST http://localhost:8080/users/search-by-location
+Content-Type: application/json
+
+{
+  "bottomLeftLatitude": -34.5,
+  "bottomLeftLongitude": -58.3,
+  "topRightLatitude": -34.7,
+  "topRightLongitude": -58.5
+}
+
+### Search users by location - Small area in Palermo, Buenos Aires
+
+POST http://localhost:8080/users/search-by-location
+Content-Type: application/json
+
+{
+  "bottomLeftLatitude": -34.595,
+  "bottomLeftLongitude": -58.435,
+  "topRightLatitude": -34.575,
+  "topRightLongitude": -58.405
+}

@@ -1,6 +1,7 @@
 package com.uade.bookybe.core.usecase.impl;
 
 import static com.uade.bookybe.core.model.constant.ExchangeStatus.ACCEPTED;
+import static com.uade.bookybe.core.model.constant.ExchangeStatus.COMPLETED;
 
 import com.uade.bookybe.core.exception.BadRequestException;
 import com.uade.bookybe.core.exception.NotFoundException;
@@ -247,7 +248,7 @@ public class BookExchangeServiceImpl implements BookExchangeService {
         return entity.getOwnerId().equals(userId);
       case CANCELLED:
         // Only requester can cancel
-        return entity.getRequesterId().equals(userId);
+        return !COMPLETED.equals(entity.getStatus()) && entity.getRequesterId().equals(userId);
       case COMPLETED:
         // Both requester and owner can mark as completed
         return ACCEPTED.equals(entity.getStatus())

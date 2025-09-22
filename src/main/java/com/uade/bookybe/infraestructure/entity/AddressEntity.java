@@ -13,6 +13,7 @@ import lombok.*;
 public class AddressEntity {
   @Id private String id;
 
+  private String city;
   private String state;
   private String country;
   private Double longitude;

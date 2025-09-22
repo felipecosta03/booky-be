@@ -10,6 +10,7 @@ import lombok.*;
 public class AddressDto {
 
   private String id;
+  private String city;
   private String state;
   private String country;
   private Double longitude;

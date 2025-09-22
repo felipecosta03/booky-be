@@ -9,6 +9,7 @@ import lombok.*;
 @Builder
 public class Address {
   private String id;
+  private String city;
   private String state;
   private String country;
   private Double longitude;

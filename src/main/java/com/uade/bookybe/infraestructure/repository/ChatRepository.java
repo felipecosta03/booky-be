@@ -23,7 +23,6 @@ public interface ChatRepository extends JpaRepository<ChatEntity, String> {
       "SELECT c FROM ChatEntity c JOIN FETCH c.user1 JOIN FETCH c.user2 WHERE c.id = :chatId")
   Optional<ChatEntity> findByIdWithUsers(@Param("chatId") String chatId);
 
-  @Query(
-      "SELECT c FROM ChatEntity c JOIN FETCH c.user1 JOIN FETCH c.user2 WHERE (c.user1Id = :userId OR c.user2Id = :userId) ORDER BY c.dateUpdated DESC")
+  @Query("SELECT DISTINCT c FROM ChatEntity c JOIN FETCH c.user1 JOIN FETCH c.user2 WHERE (c.user1Id = :userId OR c.user2Id = :userId) ORDER BY c.dateUpdated DESC")
   List<ChatEntity> findByUserIdWithUsersOrderByDateUpdatedDesc(@Param("userId") String userId);
 }

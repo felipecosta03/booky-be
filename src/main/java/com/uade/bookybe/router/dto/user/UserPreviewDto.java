@@ -16,5 +16,5 @@ public class UserPreviewDto {
   private String lastname;
   private String image;
   private AddressDto address;
-  private Double userRate;
+  private RateUserDto userRate;
 }

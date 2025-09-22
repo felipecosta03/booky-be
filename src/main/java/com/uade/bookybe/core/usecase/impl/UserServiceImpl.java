@@ -13,6 +13,7 @@ import com.uade.bookybe.infraestructure.entity.UserEntity;
 import com.uade.bookybe.infraestructure.mapper.UserEntityMapper;
 import com.uade.bookybe.infraestructure.repository.UserBookRepository;
 import com.uade.bookybe.infraestructure.repository.UserRepository;
+import com.uade.bookybe.router.dto.user.RateUserDto;
 import com.uade.bookybe.router.dto.user.UserPreviewDto;
 import com.uade.bookybe.router.mapper.UserDtoMapper;
 import java.time.LocalDateTime;
@@ -262,18 +263,30 @@ public class UserServiceImpl implements UserService {
 
   private UserPreviewDto enrichWithRate(UserPreviewDto userPreviewDto) {
 
-    userPreviewDto.setUserRate(userRateService.getUserAverageRating(userPreviewDto.getId()));
+    Double averageRating = userRateService.getUserAverageRating(userPreviewDto.getId());
+    Long countRating = userRateService.getUserRatingCount(userPreviewDto.getId());
+    RateUserDto rateUserDto =
+        RateUserDto.builder().totalRatings(countRating).averageRating(averageRating).build();
+    userPreviewDto.setUserRate(rateUserDto);
     return userPreviewDto;
   }
 
   @Override
-  public List<UserPreviewDto> searchUsersByLocation(Double bottomLeftLatitude, Double bottomLeftLongitude,
-                                                  Double topRightLatitude, Double topRightLongitude) {
-    log.info("Searching for users within geographic bounds: bottomLeft({}, {}), topRight({}, {})",
-             bottomLeftLatitude, bottomLeftLongitude, topRightLatitude, topRightLongitude);
+  public List<UserPreviewDto> searchUsersByLocation(
+      Double bottomLeftLatitude,
+      Double bottomLeftLongitude,
+      Double topRightLatitude,
+      Double topRightLongitude) {
+    log.info(
+        "Searching for users within geographic bounds: bottomLeft({}, {}), topRight({}, {})",
+        bottomLeftLatitude,
+        bottomLeftLongitude,
+        topRightLatitude,
+        topRightLongitude);
 
-    List<UserEntity> userEntities = userRepository.findUsersByLocationBounds(
-        bottomLeftLatitude, bottomLeftLongitude, topRightLatitude, topRightLongitude);
+    List<UserEntity> userEntities =
+        userRepository.findUsersByLocationBounds(
+            bottomLeftLatitude, bottomLeftLongitude, topRightLatitude, topRightLongitude);
 
     log.info("Found {} users within geographic bounds", userEntities.size());
 

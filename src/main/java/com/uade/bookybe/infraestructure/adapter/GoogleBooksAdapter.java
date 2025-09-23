@@ -151,6 +151,8 @@ public class GoogleBooksAdapter implements GoogleBooksPort {
       JsonNode imageLinks = volumeInfo.get("imageLinks");
       if (imageLinks.has("thumbnail")) {
         bookBuilder.image(imageLinks.get("thumbnail").asText());
+      }else if (imageLinks.has("smallThumbnail")){
+        bookBuilder.image(imageLinks.get("smallThumbnail").asText());
       }
     }
     

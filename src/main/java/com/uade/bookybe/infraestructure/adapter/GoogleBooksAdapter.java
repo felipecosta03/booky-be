@@ -153,6 +153,8 @@ public class GoogleBooksAdapter implements GoogleBooksPort {
         bookBuilder.image(imageLinks.get("thumbnail").asText());
       }else if (imageLinks.has("smallThumbnail")){
         bookBuilder.image(imageLinks.get("smallThumbnail").asText());
+      }else {
+        bookBuilder.image("https://books.google.com/googlebooks/images/no_cover_thumb.gif");
       }
     }
     

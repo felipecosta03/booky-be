@@ -3,6 +3,7 @@ package com.uade.bookybe.router.dto.post;
 import com.uade.bookybe.router.dto.community.CommunityDto;
 import com.uade.bookybe.router.dto.user.UserPreviewDto;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,4 +23,7 @@ public class PostDto {
   private UserPreviewDto user;
   private CommunityDto community;
   private Integer commentsCount;
+  private Integer likesCount;
+  private Boolean isLikedByUser;
+  private List<String> likes;
 }

@@ -101,15 +101,26 @@ public class PostController {
       })
   @GetMapping("/{postId}")
   public ResponseEntity<PostDto> getPostById(
-      @Parameter(description = "ID de la publicación", required = true) @PathVariable
-          String postId) {
+      @Parameter(description = "ID de la publicación", required = true) @PathVariable String postId,
+      Authentication authentication) {
 
     log.info("Getting post by ID: {}", postId);
 
+    String requestingUserId = authentication != null ? authentication.getName() : null;
+
     return postService
         .getPostById(postId)
-        .map(PostDtoMapper.INSTANCE::toDto)
-        .map(ResponseEntity::ok)
+        .map(
+            post -> {
+              PostDto postDto = PostDtoMapper.INSTANCE.toDto(post);
+              postDto.setCommentsCount(commentService.countCommentsByPostId(postId));
+              if (requestingUserId != null) {
+                postDto.setIsLikedByUser(postService.isPostLikedByUser(postId, requestingUserId));
+              } else {
+                postDto.setIsLikedByUser(false);
+              }
+              return ResponseEntity.ok(postDto);
+            })
         .orElseGet(
             () -> {
               log.warn("Post not found with ID: {}", postId);
@@ -156,6 +167,11 @@ public class PostController {
     postDtos.forEach(
         postDto -> {
           postDto.setCommentsCount(commentService.countCommentsByPostId(postDto.getId()));
+          if (requestingUserId != null) {
+            postDto.setIsLikedByUser(postDto.getLikes().contains(requestingUserId));
+          } else {
+            postDto.setIsLikedByUser(false);
+          }
         });
     log.info("Retrieved {} posts with filters", postDtos.size());
     return ResponseEntity.ok(postDtos);
@@ -234,5 +250,35 @@ public class PostController {
       log.warn("Failed to delete post: {} by user: {}", postId, userId);
       return ResponseEntity.notFound().build();
     }
+  }
+
+  @Operation(
+      summary = "Dar/quitar like a una publicación",
+      description = "Añade o elimina un like de una publicación según el estado actual")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Like actualizado exitosamente",
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = PostDto.class))),
+        @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Publicación no encontrada",
+            content = @Content)
+      })
+  @PostMapping("/{postId}/like")
+  public ResponseEntity<Void> toggleLike(
+      @Parameter(description = "ID de la publicación", required = true) @PathVariable String postId,
+      Authentication authentication) {
+
+    log.info("Toggling like for post: {} by user: {}", postId, authentication.getName());
+
+    String userId = authentication.getName();
+    postService.toggleLike(postId, userId);
+    return ResponseEntity.noContent().build();
   }
 }

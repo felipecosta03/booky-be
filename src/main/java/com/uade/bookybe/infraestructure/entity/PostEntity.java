@@ -2,6 +2,8 @@ package com.uade.bookybe.infraestructure.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,6 +31,12 @@ public class PostEntity {
 
   @Column(name = "community_id")
   private String communityId;
+
+  @ElementCollection
+  @CollectionTable(name = "post_likes", joinColumns = @JoinColumn(name = "post_id"))
+  @Column(name = "user_id")
+  @Builder.Default
+  private List<String> likes = new ArrayList<>();
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", insertable = false, updatable = false)

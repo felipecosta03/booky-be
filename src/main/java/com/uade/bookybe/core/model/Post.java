@@ -1,6 +1,8 @@
 package com.uade.bookybe.core.model;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,4 +21,6 @@ public class Post {
   private String communityId;
   private User user;
   private Community community;
+  @Builder.Default
+  private List<String> likes = new ArrayList<>();
 }

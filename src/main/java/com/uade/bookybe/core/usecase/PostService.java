@@ -26,4 +26,10 @@ public interface PostService {
   Optional<Post> updatePost(String postId, String userId, String body);
 
   boolean deletePost(String postId, String userId);
+
+  /** Añade un like a un post o lo elimina si ya existe */
+  Optional<Post> toggleLike(String postId, String userId);
+
+  /** Verifica si un usuario le dio like a un post */
+  boolean isPostLikedByUser(String postId, String userId);
 }

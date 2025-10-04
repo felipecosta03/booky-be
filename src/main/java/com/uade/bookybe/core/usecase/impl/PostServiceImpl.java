@@ -11,6 +11,7 @@ import com.uade.bookybe.infraestructure.mapper.PostEntityMapper;
 import com.uade.bookybe.infraestructure.repository.CommunityRepository;
 import com.uade.bookybe.infraestructure.repository.PostRepository;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -211,5 +212,57 @@ public class PostServiceImpl implements PostService {
       log.error("Error deleting post: {}", postId, e);
       return false;
     }
+  }
+
+  @Override
+  public Optional<Post> toggleLike(String postId, String userId) {
+    log.info("Toggling like for post: {} by user: {}", postId, userId);
+
+    Optional<PostEntity> postEntityOpt = postRepository.findById(postId);
+    if (postEntityOpt.isEmpty()) {
+      log.warn("Post not found with ID: {}", postId);
+      return Optional.empty();
+    }
+
+    PostEntity postEntity = postEntityOpt.get();
+
+    // Inicializar la lista de likes si es null
+    if (postEntity.getLikes() == null) {
+      postEntity.setLikes(new ArrayList<>());
+    }
+
+    boolean wasLiked = postEntity.getLikes().contains(userId);
+
+    if (wasLiked) {
+      // Eliminar like
+      postEntity.getLikes().remove(userId);
+      log.info("Like removed from post: {} by user: {}", postId, userId);
+    } else {
+      // Añadir like
+      postEntity.getLikes().add(userId);
+      log.info("Like added to post: {} by user: {}", postId, userId);
+    }
+
+    try {
+      PostEntity updatedPost = postRepository.save(postEntity);
+      return Optional.of(PostEntityMapper.INSTANCE.toModel(updatedPost));
+    } catch (Exception e) {
+      log.error("Error toggling like for post: {} by user: {}", postId, userId, e);
+      return Optional.empty();
+    }
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public boolean isPostLikedByUser(String postId, String userId) {
+    log.debug("Checking if post: {} is liked by user: {}", postId, userId);
+
+    Optional<PostEntity> postEntityOpt = postRepository.findById(postId);
+    if (postEntityOpt.isEmpty()) {
+      return false;
+    }
+
+    PostEntity postEntity = postEntityOpt.get();
+    return postEntity.getLikes() != null && postEntity.getLikes().contains(userId);
   }
 }

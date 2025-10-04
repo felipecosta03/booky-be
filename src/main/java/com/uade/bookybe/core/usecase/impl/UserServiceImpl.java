@@ -256,11 +256,68 @@ public class UserServiceImpl implements UserService {
     List<Object[]> userResults =
         userBookRepository.findUsersByBookIds(bookIds, requestingUserId, bookIds.size());
 
-    return userResults.stream()
+    // Obtener las coordenadas del usuario que hace la búsqueda
+    Optional<UserEntity> requestingUser = userRepository.findById(requestingUserId);
+    Double requestingUserLat = null;
+    Double requestingUserLon = null;
+
+    if (requestingUser.isPresent() && requestingUser.get().getAddress() != null) {
+      requestingUserLat = requestingUser.get().getAddress().getLatitude();
+      requestingUserLon = requestingUser.get().getAddress().getLongitude();
+    }
+
+    final Double finalRequestingUserLat = requestingUserLat;
+    final Double finalRequestingUserLon = requestingUserLon;
+
+    List<UserPreviewDto> users = userResults.stream()
         .map(this::mapToUserPreviewDto)
         .map(this::enrichWithAddress)
         .map(this::enrichWithRate)
         .collect(Collectors.toList());
+
+    // Ordenar por distancia si el usuario solicitante tiene coordenadas
+    if (finalRequestingUserLat != null && finalRequestingUserLon != null) {
+      users.sort((user1, user2) -> {
+        Double distance1 = calculateEuclideanDistance(
+            finalRequestingUserLat, finalRequestingUserLon,
+            user1.getAddress() != null ? user1.getAddress().getLatitude() : null,
+            user1.getAddress() != null ? user1.getAddress().getLongitude() : null
+        );
+        Double distance2 = calculateEuclideanDistance(
+            finalRequestingUserLat, finalRequestingUserLon,
+            user2.getAddress() != null ? user2.getAddress().getLatitude() : null,
+            user2.getAddress() != null ? user2.getAddress().getLongitude() : null
+        );
+
+        // Los usuarios sin coordenadas van al final
+        if (distance1 == null && distance2 == null) return 0;
+        if (distance1 == null) return 1;
+        if (distance2 == null) return -1;
+
+        return Double.compare(distance1, distance2);
+      });
+    }
+
+    return users;
+  }
+
+  /**
+   * Calcula la distancia euclidiana entre dos puntos geográficos
+   * @param lat1 Latitud del punto 1
+   * @param lon1 Longitud del punto 1
+   * @param lat2 Latitud del punto 2
+   * @param lon2 Longitud del punto 2
+   * @return Distancia euclidiana o null si alguna coordenada es null
+   */
+  private Double calculateEuclideanDistance(Double lat1, Double lon1, Double lat2, Double lon2) {
+    if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
+      return null;
+    }
+
+    double deltaLat = lat2 - lat1;
+    double deltaLon = lon2 - lon1;
+
+    return Math.sqrt(deltaLat * deltaLat + deltaLon * deltaLon);
   }
 
   private UserPreviewDto enrichWithAddress(UserPreviewDto userPreviewDto) {

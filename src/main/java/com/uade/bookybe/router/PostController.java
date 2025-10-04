@@ -1,6 +1,7 @@
 package com.uade.bookybe.router;
 
 import com.uade.bookybe.core.model.Post;
+import com.uade.bookybe.core.usecase.CommentService;
 import com.uade.bookybe.core.usecase.PostService;
 import com.uade.bookybe.router.dto.post.CreatePostDto;
 import com.uade.bookybe.router.dto.post.PostDto;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Posts", description = "API para gestión de publicaciones")
 public class PostController {
 
+  private final CommentService commentService;
   private final PostService postService;
 
   @Operation(
@@ -49,8 +51,12 @@ public class PostController {
       })
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<PostDto> createPost(
-      @Parameter(description = "Datos de la publicación con imagen opcional en base64", required = true)
-          @RequestBody @Valid CreatePostDto createPostDto,
+      @Parameter(
+              description = "Datos de la publicación con imagen opcional en base64",
+              required = true)
+          @RequestBody
+          @Valid
+          CreatePostDto createPostDto,
       Authentication authentication) {
 
     log.info("Creating post for user: {}", authentication.getName());
@@ -58,7 +64,11 @@ public class PostController {
     String userId = authentication.getName();
 
     return postService
-        .createPost(userId, createPostDto.getBody(), createPostDto.getCommunityId(), createPostDto.getImage())
+        .createPost(
+            userId,
+            createPostDto.getBody(),
+            createPostDto.getCommunityId(),
+            createPostDto.getImage())
         .map(PostDtoMapper.INSTANCE::toDto)
         .map(
             postDto -> {
@@ -116,24 +126,37 @@ public class PostController {
             responseCode = "200",
             description = "Posts retrieved successfully",
             content = @Content(mediaType = "application/json")),
-        @ApiResponse(responseCode = "401", description = "Unauthorized (for feed type)", content = @Content)
+        @ApiResponse(
+            responseCode = "401",
+            description = "Unauthorized (for feed type)",
+            content = @Content)
       })
   @GetMapping
   public ResponseEntity<List<PostDto>> getPosts(
-      @Parameter(description = "Type of posts: 'feed' or 'general'") @RequestParam(required = false) String type,
+      @Parameter(description = "Type of posts: 'feed' or 'general'") @RequestParam(required = false)
+          String type,
       @Parameter(description = "Filter by user ID") @RequestParam(required = false) String userId,
-      @Parameter(description = "Filter by community ID") @RequestParam(required = false) String communityId,
+      @Parameter(description = "Filter by community ID") @RequestParam(required = false)
+          String communityId,
       Authentication authentication) {
 
     String requestingUserId = authentication != null ? authentication.getName() : null;
-    
-    log.info("Getting posts with filters - type: {}, userId: {}, communityId: {}, requestingUserId: {}", 
-             type, userId, communityId, requestingUserId);
+
+    log.info(
+        "Getting posts with filters - type: {}, userId: {}, communityId: {}, requestingUserId: {}",
+        type,
+        userId,
+        communityId,
+        requestingUserId);
 
     List<Post> posts = postService.getPostsFiltered(type, userId, communityId, requestingUserId);
     List<PostDto> postDtos =
         posts.stream().map(PostDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
 
+    postDtos.forEach(
+        postDto -> {
+          postDto.setCommentsCount(commentService.countCommentsByPostId(postDto.getId()));
+        });
     log.info("Retrieved {} posts with filters", postDtos.size());
     return ResponseEntity.ok(postDtos);
   }

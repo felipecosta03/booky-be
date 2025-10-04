@@ -144,4 +144,9 @@ public class CommentServiceImpl implements CommentService {
       return false;
     }
   }
+
+  @Override
+  public Integer countCommentsByPostId(String postId) {
+    return commentRepository.countByPostId(postId);
+  }
 }

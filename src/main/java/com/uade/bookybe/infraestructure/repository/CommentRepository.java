@@ -18,5 +18,6 @@ public interface CommentRepository extends JpaRepository<CommentEntity, String> 
       "SELECT c FROM CommentEntity c JOIN FETCH c.user WHERE c.postId = :postId ORDER BY c.dateCreated DESC")
   List<CommentEntity> findByPostIdWithUserOrderByDateCreatedDesc(@Param("postId") String postId);
 
-  long countByPostId(String postId);
+  @Query("SELECT COUNT(c) FROM CommentEntity c WHERE c.postId = :postId")
+  Integer countByPostId(String postId);
 }

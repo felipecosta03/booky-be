@@ -17,4 +17,6 @@ public interface CommentService {
   Optional<Comment> updateComment(String commentId, String userId, String body);
 
   boolean deleteComment(String commentId, String userId);
+
+  Integer countCommentsByPostId(String postId);
 }

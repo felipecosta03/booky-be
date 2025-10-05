@@ -194,8 +194,8 @@ public class BookExchangeServiceImpl implements BookExchangeService {
             .id("exchange-" + UUID.randomUUID().toString().substring(0, 8))
             .ownerId(originalEntity.getRequesterId()) // Former requester becomes owner
             .requesterId(originalEntity.getOwnerId()) // Former owner becomes requester
-            .ownerBookIds(requesterBookIds) // Books offered by new owner (former requester)
-            .requesterBookIds(ownerBookIds) // Books requested by new requester (former owner)
+            .ownerBookIds(ownerBookIds) // Books offered by new owner (former requester)
+            .requesterBookIds(requesterBookIds) // Books requested by new requester (former owner)
             .status(ExchangeStatus.PENDING)
             .dateCreated(LocalDateTime.now())
             .dateUpdated(LocalDateTime.now())

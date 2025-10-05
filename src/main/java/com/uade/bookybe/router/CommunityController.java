@@ -245,7 +245,7 @@ public class CommunityController {
     communityDtos.forEach(
         communityDto -> {
           communityDto.setJoinAvailable(
-              communityService.isUserMember(communityDto.getId(), userId));
+              !communityService.isUserMember(communityDto.getId(), userId));
         });
 
     log.info("Found {} communities for query: {}", communityDtos.size(), q);

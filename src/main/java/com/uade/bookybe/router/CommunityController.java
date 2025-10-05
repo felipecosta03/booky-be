@@ -231,13 +231,22 @@ public class CommunityController {
       })
   @GetMapping("/search")
   public ResponseEntity<List<CommunityDto>> searchCommunities(
-      @Parameter(description = "Término de búsqueda", required = true) @RequestParam String q) {
+      @Parameter(description = "Término de búsqueda", required = true) @RequestParam String q,
+      Authentication authentication) {
 
     log.info("Searching communities with query: {}", q);
+
+    String userId = authentication.getName();
 
     List<Community> communities = communityService.searchCommunities(q);
     List<CommunityDto> communityDtos =
         communities.stream().map(CommunityDtoMapper.INSTANCE::toDto).collect(Collectors.toList());
+
+    communityDtos.forEach(
+        communityDto -> {
+          communityDto.setJoinAvailable(
+              communityService.isUserMember(communityDto.getId(), userId));
+        });
 
     log.info("Found {} communities for query: {}", communityDtos.size(), q);
     return ResponseEntity.ok(communityDtos);

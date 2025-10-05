@@ -36,7 +36,7 @@ DROP TABLE IF EXISTS community_likes CASCADE;
 CREATE TABLE addresses
 (
     id        VARCHAR(255) PRIMARY KEY,
-    city     VARCHAR(255),
+    city      VARCHAR(255),
     state     VARCHAR(255),
     country   VARCHAR(255),
     longitude DOUBLE PRECISION,
@@ -225,20 +225,20 @@ CREATE TABLE community_members
 -- Tabla: reading_clubs (versión completa)
 CREATE TABLE reading_clubs
 (
-    id                      VARCHAR(255) PRIMARY KEY,
-    date_created            TIMESTAMP,
-    description             VARCHAR(1000),
-    last_updated            TIMESTAMP,
-    name                    VARCHAR(255),
-    book_id                 VARCHAR(255),
-    community_id            VARCHAR(255),
-    moderator_id            VARCHAR(255),
-    next_meeting            TIMESTAMP,
-    current_chapter         INTEGER DEFAULT 0,
-    meeting_active          BOOLEAN DEFAULT FALSE,
-    meeting_started_at      TIMESTAMP,
-    meeting_ended_at        TIMESTAMP,
-    last_meeting_duration   BIGINT DEFAULT 0,
+    id                    VARCHAR(255) PRIMARY KEY,
+    date_created          TIMESTAMP,
+    description           VARCHAR(1000),
+    last_updated          TIMESTAMP,
+    name                  VARCHAR(255),
+    book_id               VARCHAR(255),
+    community_id          VARCHAR(255),
+    moderator_id          VARCHAR(255),
+    next_meeting          TIMESTAMP,
+    current_chapter       INTEGER DEFAULT 0,
+    meeting_active        BOOLEAN DEFAULT FALSE,
+    meeting_started_at    TIMESTAMP,
+    meeting_ended_at      TIMESTAMP,
+    last_meeting_duration BIGINT  DEFAULT 0,
     FOREIGN KEY (book_id) REFERENCES books (id),
     FOREIGN KEY (community_id) REFERENCES community (id),
     FOREIGN KEY (moderator_id) REFERENCES users (id)
@@ -419,23 +419,27 @@ VALUES ('ach-first-book', 'Primer Libro', 'Agrega tu primer libro a la bibliotec
         50, true),
        ('ach-hundred-points', 'Centurión', 'Alcanza 100 puntos', 'HITO', '💯', 100, 'TOTAL_POINTS', 25, true);
 
-INSERT INTO addresses (id, state, country, longitude, latitude)
-VALUES ('addr-100', 'Buenos Aires', 'Argentina', -58.3816, -34.6037),
-       ('addr-101', 'Córdoba', 'Argentina', -64.1888, -31.4201),
-       ('addr-102', 'Rosario', 'Argentina', -60.6393, -32.9468),
-       ('addr-103', 'Mendoza', 'Argentina', -68.8272, -32.8908),
-       ('addr-104', 'Mar del Plata', 'Argentina', -57.5759, -38.0055),
-       ('addr-105', 'Salta', 'Argentina', -65.4232, -24.7821),
-       ('addr-106', 'Tucumán', 'Argentina', -65.2226, -26.8241),
-       ('addr-107', 'Santa Fe', 'Argentina', -60.7021, -31.6107),
-       ('addr-108', 'Neuquén', 'Argentina', -68.0591, -38.9516),
-       ('addr-109', 'Bariloche', 'Argentina', -71.3103, -41.1335),
-       ('addr-110', 'Madrid', 'España', -3.7038, 40.4168),
-       ('addr-111', 'Barcelona', 'España', 2.1734, 41.3851),
-       ('addr-112', 'México DF', 'México', -99.1332, 19.4326),
-       ('addr-113', 'Lima', 'Perú', -77.0428, -12.0464),
-       ('addr-114', 'Santiago', 'Chile', -70.6693, -33.4489),
-       ('addr-115', 'Bogotá', 'Colombia', -74.0721, 4.7110);
+INSERT INTO addresses (id, city, state, country, longitude, latitude)
+VALUES
+-- Buenos Aires y CABA (80% - 13 direcciones)
+('addr-100', 'Buenos Aires', 'CABA', 'Argentina', -58.3816, -34.6037),
+('addr-101', 'La Plata', 'Buenos Aires', 'Argentina', -57.9544, -34.9214),
+('addr-102', 'Mar del Plata', 'Buenos Aires', 'Argentina', -57.5759, -38.0055),
+('addr-103', 'Tandil', 'Buenos Aires', 'Argentina', -59.1332, -37.3217),
+('addr-104', 'Bahía Blanca', 'Buenos Aires', 'Argentina', -62.2663, -38.7183),
+('addr-105', 'San Isidro', 'Buenos Aires', 'Argentina', -58.5123, -34.4708),
+('addr-106', 'Tigre', 'Buenos Aires', 'Argentina', -58.5799, -34.4264),
+('addr-107', 'Quilmes', 'Buenos Aires', 'Argentina', -58.2549, -34.7203),
+('addr-108', 'San Martín', 'Buenos Aires', 'Argentina', -58.5373, -34.5755),
+('addr-109', 'Morón', 'Buenos Aires', 'Argentina', -58.6198, -34.6532),
+('addr-110', 'Lomas de Zamora', 'Buenos Aires', 'Argentina', -58.3984, -34.7595),
+('addr-111', 'Pilar', 'Buenos Aires', 'Argentina', -58.9142, -34.4587),
+('addr-112', 'Luján', 'Buenos Aires', 'Argentina', -59.1156, -34.5647),
+
+-- Interior del país (20% - 3 direcciones)
+('addr-113', 'Córdoba', 'Córdoba', 'Argentina', -64.1888, -31.4201),
+('addr-114', 'Rosario', 'Santa Fe', 'Argentina', -60.6393, -32.9468),
+('addr-115', 'Mendoza', 'Mendoza', 'Argentina', -68.8272, -32.8908);
 
 \echo '✅ Direcciones insertadas'
 
@@ -476,8 +480,6 @@ VALUES
 ('user-010', 'valentina.castro@hotmail.com', 'valentinac',
  '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Valentina', 'Castro', 'Bloguera de reseñas de libros',
  NULL, 160, 'addr-109', NOW()),
-
--- Usuarios Internacionales
 ('user-011', 'isabella.martinez@gmail.es', 'isabellam', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy',
  'Isabella', 'Martínez', 'Profesora de literatura española', NULL, 280, 'addr-110', NOW()),
 ('user-012', 'pablo.ruiz@outlook.es', 'pablor', '$2a$10$hHkijCVJXJSNk6ZFXmO1y.q/ZL3J5YDLgVWOkbMzRzhXd1RPW1Eyy', 'Pablo',
@@ -518,79 +520,93 @@ VALUES
  'Una novela romántica que explora temas de clase, matrimonio y moralidad',
  'La historia de Elizabeth Bennet y Mr. Darcy, una pareja que debe superar sus diferencias de clase y sus primeras impresiones erróneas para encontrar el amor verdadero.',
  432, '1ra Edición', 'Penguin Classics', 'Jane Austen',
- 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400', 9),
+ 'https://acdn-us.mitiendanube.com/stores/002/355/687/products/orgullo-y-prejuicio-alma-ilustrados-220f98385d98e3379e17072685553358-640-0.jpg',
+ 9),
 
 ('book-002', '9780446310789', 'Matar un Ruiseñor',
  'Una poderosa historia sobre la injusticia racial en el sur de Estados Unidos',
  'Ambientada en los años 30, narra la historia de Scout Finch y su padre Atticus, un abogado que defiende a un hombre negro acusado injustamente de violación.',
  376, '1ra Edición', 'Grand Central Publishing', 'Harper Lee',
- 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400', 9),
+ 'https://images.cdn2.buscalibre.com/fit-in/360x360/0f/25/0f25231fd7db1c56defb44d67d8cf4a7.jpg', 9),
 
 ('book-003', '9780743273565', 'El Gran Gatsby', 'Una crítica al sueño americano a través de los ojos de Jay Gatsby',
  'La historia de Jay Gatsby y su obsesión por Daisy Buchanan, ambientada en la era del jazz de los años 20.', 180,
- '1ra Edición', 'Scribner', 'F. Scott Fitzgerald', 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
+ '1ra Edición', 'Scribner', 'F. Scott Fitzgerald',
+ 'https://www.planetadelibros.com.ar/usuaris/libros/fotos/135/original/el-gran-gatsby_9789500435192.jpg',
  8),
 
 ('book-004', '9780451524935', '1984', 'Una distopía sobre totalitarismo y vigilancia',
  'Winston Smith vive en un mundo donde el Gran Hermano controla cada aspecto de la vida, hasta que conoce a Julia y comienza a cuestionar el sistema.',
  328, '1ra Edición', 'Signet Classics', 'George Orwell',
- 'https://images.unsplash.com/photo-1495640388908-05fa85288e61?w=400', 9),
+ 'https://images.cdn1.buscalibre.com/fit-in/360x360/c9/ee/c9eef0bafc045010bfc431812ea5bbf8.jpg', 9),
 
 ('book-005', '9780553380163', 'Un Mundo Feliz', 'Una sociedad utópica que esconde un oscuro control social',
  'En el año 2540, la humanidad vive en una sociedad aparentemente perfecta donde no existe el dolor, pero tampoco la libertad individual.',
  268, '1ra Edición', 'Bantam Classics', 'Aldous Huxley',
- 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400', 8),
+ 'https://www.penguinlibros.com/ar/3485144/un-mundo-feliz.jpg', 8),
 
 -- Literatura Contemporánea
 ('book-006', '9780062315007', 'El Alquimista', 'Una fábula sobre seguir los sueños personales',
  'Santiago, un pastor andaluz, viaja desde España hasta las pirámides de Egipto en busca de un tesoro, pero encuentra algo mucho más valioso.',
- 163, '1ra Edición', 'HarperOne', 'Paulo Coelho', 'https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400',
+ 163, '1ra Edición', 'HarperOne', 'Paulo Coelho',
+ 'https://www.planetadelibros.com.ar/usuaris/libros/fotos/384/original/383561_portada_el-alquimista_paulo-coelho_201612191218.jpg',
  7),
 
 ('book-007', '9780375760891', 'La Ladrona de Libros', 'Una historia conmovedora ambientada en la Alemania nazi',
  'Liesel, una niña alemana, roba libros y los comparte con otros, incluyendo a un judío escondido en su sótano.', 552,
- '1ra Edición', 'Knopf Books', 'Markus Zusak', 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400', 9),
+ '1ra Edición', 'Knopf Books', 'Markus Zusak', 'https://www.penguinlibros.com/ar/1595289/la-ladrona-de-libros.jpg', 9),
 
 ('book-008', '9780385537859', 'Bajo la Misma Estrella', 'Una historia de amor entre dos adolescentes con cáncer',
  'Hazel y Augustus se conocen en un grupo de apoyo para jóvenes con cáncer y viven una intensa historia de amor.', 313,
- '1ra Edición', 'Dutton Books', 'John Green', 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400', 8),
+ '1ra Edición', 'Dutton Books', 'John Green',
+ 'https://images.cdn3.buscalibre.com/fit-in/360x360/f2/67/f267cdd7d83a8b08394786f07f950ea1.jpg', 8),
 
 -- Fantasía y Ciencia Ficción
 ('book-009', '9780439708180', 'Harry Potter y la Piedra Filosofal', 'El inicio de la saga mágica más famosa',
  'Harry Potter descubre en su undécimo cumpleaños que es un mago y debe enfrentarse al mago oscuro que mató a sus padres.',
- 309, '1ra Edición', 'Scholastic', 'J.K. Rowling', 'https://images.unsplash.com/photo-1621351183012-e2f9972dd9bf?w=400',
+ 309, '1ra Edición', 'Scholastic', 'J.K. Rowling',
+ 'https://images.cdn2.buscalibre.com/fit-in/360x360/e6/5f/e65f54742ad7bbc41903d17f75b77d78.jpg',
  9),
 
 ('book-010', '9780307887436', 'La Chica del Dragón Tatuado', 'Un thriller sueco lleno de misterio',
  'Un periodista y una hacker antisocial investigan la desaparición de una mujer de una poderosa familia sueca.', 465,
- '1ra Edición', 'Vintage Crime', 'Stieg Larsson', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+ '1ra Edición', 'Vintage Crime', 'Stieg Larsson',
+ 'https://images.cdn1.buscalibre.com/fit-in/360x360/92/b1/92b1fd3196fb0ca3ab16f783da41ccf8.jpg',
  8),
 
 -- Más libros para mayor variedad
 ('book-011', '9780316769174', 'El Guardián entre el Centeno', 'Una novela de iniciación adolescente',
  'Holden Caulfield narra sus experiencias después de ser expulsado de una escuela preparatoria.', 277, '1ra Edición',
- 'Little, Brown', 'J.D. Salinger', 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400', 7),
+ 'Little, Brown', 'J.D. Salinger',
+ 'https://www.alianzaeditorial.es/imagenes/libros/grande/9788491049418-el-guardian-entre-el-centeno.jpg', 7),
 
 ('book-012', '9780452284234', 'Rebelión en la Granja', 'Una alegoría sobre el totalitarismo',
  'Los animales de una granja se rebelan contra sus dueños humanos, esperando crear una sociedad donde todos los animales sean iguales.',
  112, '1ra Edición', 'Plume Books', 'George Orwell',
- 'https://images.unsplash.com/photo-1495640388908-05fa85288e61?w=400', 8),
+ 'https://images.cdn3.buscalibre.com/fit-in/360x360/af/07/af07a2e4dcc7ddb8e95cff4fd15c1162.jpg', 8),
 
 ('book-013', '9780486282114', 'El Retrato de Dorian Gray',
  'Una historia sobre la belleza, la moralidad y la corrupción',
  'Dorian Gray mantiene su juventud mientras su retrato envejece y se vuelve grotesco, reflejando su alma corrupta.',
  254, '1ra Edición', 'Dover Publications', 'Oscar Wilde',
- 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400', 8),
+ 'https://images.cdn1.buscalibre.com/fit-in/360x360/39/57/3957c8756494c0958f26ed04712ae63f.jpg', 8),
 
-('book-014', '9780140449136', 'Crimen y Castigo', 'Una profunda exploración psicológica del crimen',
- 'Raskolnikov, un estudiante empobrecido, comete un asesinato y lucha con las consecuencias psicológicas de su acto.',
- 671, '1ra Edición', 'Penguin Classics', 'Fyodor Dostoevsky',
- 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400', 9),
+('book-014',
+ '9789878000114',
+ 'Harry Potter y la cámara secreta',
+ 'El segundo año de Harry en Hogwarts se ve amenazado cuando una antigua cámara secreta es abierta, liberando un peligro que aterroriza a los estudiantes.',
+ 'Harry Potter regresa a Hogwarts para su segundo año. Pronto, extraños sucesos comienzan a ocurrir: alumnos petrificados y mensajes misteriosos en las paredes. Con la ayuda de Ron y Hermione, Harry descubre el secreto de la Cámara de los Secretos y se enfrenta al heredero de Slytherin.',
+ 384,
+ '1ra Edición',
+ 'Salamandra',
+ 'J.K. Rowling',
+ 'https://images.cdn1.buscalibre.com/fit-in/360x360/08/cb/08cb91c9ebda8f8b7dc89b51536d289c.jpg',
+ 9),
 
 ('book-015', '9780060935467', 'Cien Años de Soledad', 'Una obra maestra del realismo mágico',
  'La historia de la familia Buendía a lo largo de siete generaciones en el pueblo ficticio de Macondo.', 417,
  '1ra Edición', 'Harper Perennial', 'Gabriel García Márquez',
- 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400', 9);
+ 'https://images.cdn3.buscalibre.com/fit-in/360x360/b9/d5/b9d5d415d11423d0f9e98074ee6997d9.jpg', 9);
 
 INSERT INTO book_categories (book_id, category)
 VALUES
@@ -653,9 +669,9 @@ VALUES
 ('book-013', 'Terror'),
 ('book-013', 'Literatura Clásica'),
 ('book-013', 'Filosofía'),
-('book-014', 'Drama'),
-('book-014', 'Literatura Clásica'),
-('book-014', 'Psicología'),
+('book-014', 'Fantasía'),
+('book-014', 'Juvenil'),
+('book-014', 'Aventura'),
 ('book-015', 'Realismo Mágico'),
 ('book-015', 'Literatura Clásica'),
 ('book-015', 'Familia');
@@ -664,60 +680,61 @@ INSERT INTO user_books (id, user_id, book_id, status, is_favorite, wants_to_exch
 VALUES
 
 -- Usuario 1 (Juan Pérez) - Literatura clásica
-('ub-001', 'user-001', 'book-001', 'READ', true, false),      -- Orgullo y Prejuicio (favorito)
-('ub-002', 'user-001', 'book-003', 'READ', false, true),      -- El Gran Gatsby (para intercambio)
+('ub-001', 'user-001', 'book-001', 'TO_READ', true, false),   -- Orgullo y Prejuicio (favorito)
+('ub-002', 'user-001', 'book-003', 'READING', false, true),   -- El Gran Gatsby (para intercambio)
 ('ub-003', 'user-001', 'book-004', 'READING', false, false),  -- 1984 (leyendo)
 ('ub-004', 'user-001', 'book-014', 'TO_READ', false, false),  -- Crimen y Castigo (por leer)
-('ub-005', 'user-001', 'book-015', 'READ', true, true),       -- Cien Años de Soledad (favorito + intercambio)
+('ub-005', 'user-001', 'book-015', 'READING', true, true),    -- Cien Años de Soledad (favorito + intercambio)
 
 -- Usuario 2 (María García) - Misterio y thriller
-('ub-006', 'user-002', 'book-010', 'READ', true, false),      -- La Chica del Dragón Tatuado (favorito)
-('ub-007', 'user-002', 'book-002', 'READ', false, true),      -- Matar un Ruiseñor (para intercambio)
+('ub-006', 'user-002', 'book-010', 'READING', true, false),   -- La Chica del Dragón Tatuado (favorito)
+('ub-007', 'user-002', 'book-002', 'READING', false, true),   -- Matar un Ruiseñor (para intercambio)
 ('ub-008', 'user-002', 'book-007', 'READING', false, false),  -- La Ladrona de Libros (leyendo)
 ('ub-009', 'user-002', 'book-011', 'WISHLIST', false, false), -- El Guardián (wishlist)
-('ub-010', 'user-002', 'book-013', 'READ', false, true),      -- Dorian Gray (para intercambio)
+('ub-010', 'user-002', 'book-013', 'TO_READ', false, true),   -- Dorian Gray (para intercambio)
 
 -- Usuario 3 (Carlos Rodríguez) - Ciencia ficción y fantasía
-('ub-011', 'user-003', 'book-004', 'READ', true, false),      -- 1984 (favorito)
-('ub-012', 'user-003', 'book-005', 'READ', true, true),       -- Un Mundo Feliz (favorito + intercambio)
-('ub-013', 'user-003', 'book-009', 'READ', false, true),      -- Harry Potter (para intercambio)
+('ub-011', 'user-003', 'book-004', 'TO_READ', true, false),   -- 1984 (favorito)
+('ub-012', 'user-003', 'book-005', 'READING', true, true),    -- Un Mundo Feliz (favorito + intercambio)
+('ub-013', 'user-003', 'book-009', 'TO_READ', false, true),   -- Harry Potter (para intercambio)
 ('ub-014', 'user-003', 'book-012', 'READING', false, false),  -- Rebelión en la Granja (leyendo)
 ('ub-015', 'user-003', 'book-001', 'TO_READ', false, false),  -- Orgullo y Prejuicio (por leer)
 
 -- Usuario 4 (Ana López) - Literatura juvenil
-('ub-016', 'user-004', 'book-008', 'READ', true, false),      -- Bajo la Misma Estrella (favorito)
-('ub-017', 'user-004', 'book-009', 'READ', true, true),       -- Harry Potter (favorito + intercambio)
-('ub-018', 'user-004', 'book-007', 'READ', false, true),      -- La Ladrona de Libros (para intercambio)
+('ub-016', 'user-004', 'book-008', 'TO_READ', true, false),   -- Bajo la Misma Estrella (favorito)
+('ub-017', 'user-004', 'book-009', 'TO_READ', true, true),    -- Harry Potter (favorito + intercambio)
+('ub-018', 'user-004', 'book-007', 'TO_READ', false, true),   -- La Ladrona de Libros (para intercambio)
 ('ub-019', 'user-004', 'book-011', 'READING', false, false),  -- El Guardián (leyendo)
 ('ub-020', 'user-004', 'book-006', 'WISHLIST', false, false), -- El Alquimista (wishlist)
 
 -- Usuario 5 (Luis Martínez) - Historia y biografías
-('ub-021', 'user-005', 'book-002', 'READ', true, false),      -- Matar un Ruiseñor (favorito)
-('ub-022', 'user-005', 'book-014', 'READ', false, true),      -- Crimen y Castigo (para intercambio)
+('ub-021', 'user-005', 'book-002', 'READING', true, false),   -- Matar un Ruiseñor (favorito)
+('ub-022', 'user-005', 'book-014', 'TO_READ', false, true),   -- Crimen y Castigo (para intercambio)
 ('ub-023', 'user-005', 'book-015', 'READING', false, false),  -- Cien Años de Soledad (leyendo)
 ('ub-024', 'user-005', 'book-013', 'TO_READ', false, false),  -- Dorian Gray (por leer)
-('ub-025', 'user-005', 'book-003', 'READ', false, true),      -- El Gran Gatsby (para intercambio)
+('ub-025', 'user-005', 'book-003', 'TO_READ', false, true),   -- El Gran Gatsby (para intercambio)
 
 -- Usuario 6 (Sofía González) - Poesía y narrativa
-('ub-026', 'user-006', 'book-006', 'READ', true, false),      -- El Alquimista (favorito)
-('ub-027', 'user-006', 'book-013', 'READ', false, true),      -- Dorian Gray (para intercambio)
+('ub-026', 'user-006', 'book-006', 'TO_READ', true, false),   -- El Alquimista (favorito)
+('ub-027', 'user-006', 'book-013', 'READING', false, true),   -- Dorian Gray (para intercambio)
 ('ub-028', 'user-006', 'book-001', 'READING', false, false),  -- Orgullo y Prejuicio (leyendo)
 ('ub-029', 'user-006', 'book-015', 'TO_READ', false, false),  -- Cien Años de Soledad (por leer)
 ('ub-030', 'user-006', 'book-008', 'WISHLIST', false, false), -- Bajo la Misma Estrella (wishlist)
 
 -- Usuario 7 (Diego Fernández) - Biografías y ensayos
-('ub-031', 'user-007', 'book-012', 'READ', true, false),      -- Rebelión en la Granja (favorito)
-('ub-032', 'user-007', 'book-004', 'READ', false, true),      -- 1984 (para intercambio)
+('ub-031', 'user-007', 'book-012', 'READING', true, false),   -- Rebelión en la Granja (favorito)
+('ub-032', 'user-007', 'book-004', 'READING', false, true),   -- 1984 (para intercambio)
 ('ub-033', 'user-007', 'book-010', 'READING', false, false),  -- La Chica del Dragón (leyendo)
 ('ub-034', 'user-007', 'book-005', 'WISHLIST', false, false), -- Un Mundo Feliz (wishlist)
-('ub-035', 'user-007', 'book-006', 'READ', false, true),      -- El Alquimista (para intercambio)
+('ub-035', 'user-007', 'book-006', 'TO_READ', false, true),   -- El Alquimista (para intercambio)
 
 -- Usuario 8 (Lucía Morales) - Estudiante de literatura
-('ub-036', 'user-008', 'book-011', 'READ', true, false),      -- El Guardián (favorito)
-('ub-037', 'user-008', 'book-003', 'READ', false, true),      -- El Gran Gatsby (para intercambio)
+('ub-036', 'user-008', 'book-011', 'TO_READ', true, false),   -- El Guardián (favorito)
+('ub-037', 'user-008', 'book-003', 'TO_READ', false, true),   -- El Gran Gatsby (para intercambio)
 ('ub-038', 'user-008', 'book-001', 'READING', false, false),  -- Orgullo y Prejuicio (leyendo)
 ('ub-039', 'user-008', 'book-014', 'TO_READ', false, false),  -- Crimen y Castigo (por leer)
-('ub-040', 'user-008', 'book-007', 'WISHLIST', false, false); -- La Ladrona de Libros (wishlist)
+('ub-040', 'user-008', 'book-007', 'WISHLIST', false, false), -- La Ladrona de Libros (wishlist)
+('ub-041', 'user-004', 'book-014', 'READING', true, true); -- Harry Potter (favorito + intercambio)
 
 INSERT INTO community (id, date_created, description, name, admin_id)
 VALUES
@@ -853,7 +870,8 @@ VALUES
 ('comm-010', 'admin-002'); -- Super Admin en Reseñas y Críticas
 
 INSERT INTO reading_clubs (id, date_created, description, last_updated, name, book_id, community_id, moderator_id,
-                           next_meeting, current_chapter, meeting_active, meeting_started_at, meeting_ended_at, last_meeting_duration)
+                           next_meeting, current_chapter, meeting_active, meeting_started_at, meeting_ended_at,
+                           last_meeting_duration)
 VALUES
 
 -- Clubes en comunidades existentes
@@ -1093,41 +1111,6 @@ VALUES
 ('msg-028', 'chat-005', 'user-002',
  'Al principio puede parecer lento, pero después no podrás dejarlo. La trama es adictiva.',
  NOW() - INTERVAL '45 minutes', false);
-
--- =====================================================
--- DATOS DE INTERCAMBIOS
--- =====================================================
-
--- Insertar intercambios
-INSERT INTO book_exchanges (id, requester_id, owner_id, status, date_created, date_updated, chat_id)
-VALUES
--- Intercambio completado entre Juan y Carlos
-('exchange-001', 'user-001', 'user-003', 'COMPLETED', NOW() - INTERVAL '3 days', NOW() - INTERVAL '1 day', 'chat-001'),
-
--- Intercambio pendiente entre Luis y Sofía
-('exchange-002', 'user-005', 'user-006', 'PENDING', NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 hour', 'chat-003'),
-
--- Intercambio aceptado entre María y Ana (sin chat específico aún)
-('exchange-003', 'user-002', 'user-004', 'ACCEPTED', NOW() - INTERVAL '2 hours', NOW() - INTERVAL '1 hour', NULL);
-
--- Insertar libros de intercambios
-INSERT INTO exchange_owner_books (exchange_id, user_book_id)
-VALUES
--- Carlos ofrece "Un Mundo Feliz" (ub-012)
-('exchange-001', 'ub-012'),
--- Sofía ofrece "Dorian Gray" (ub-027)  
-('exchange-002', 'ub-027'),
--- Ana ofrece "Harry Potter" (ub-017)
-('exchange-003', 'ub-017');
-
-INSERT INTO exchange_requester_books (exchange_id, user_book_id)
-VALUES
--- Juan ofrece "Cien Años de Soledad" (ub-005)
-('exchange-001', 'ub-005'),
--- Luis ofrece "Crimen y Castigo" (ub-022)
-('exchange-002', 'ub-022'),
--- María ofrece "Matar un Ruiseñor" (ub-007)
-('exchange-003', 'ub-007');
 
 -- Insertar calificación para el intercambio completado
 INSERT INTO user_rates (id, user_id, exchange_id, rating, comment, date_created)

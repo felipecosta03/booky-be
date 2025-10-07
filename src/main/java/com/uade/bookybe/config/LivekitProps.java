@@ -13,5 +13,6 @@ public class LivekitProps {
   private String apiKey;
   private String apiSecret;
   private String wsUrl;
+
   private long tokenTtlSeconds = 600; // 10min
 }

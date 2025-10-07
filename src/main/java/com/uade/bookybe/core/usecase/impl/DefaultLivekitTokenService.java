@@ -50,12 +50,18 @@ public class DefaultLivekitTokenService implements LivekitTokenService {
 
             // Set participant identity
             token.setIdentity(participantId);
-            token.setName(participantId);
+
+            // Add room join grant and video grants for publish/subscribe
+            token.addGrants(
+                new io.livekit.server.RoomJoin(true),
+                new io.livekit.server.RoomName(roomName),
+                new io.livekit.server.CanPublish(canPublish),
+                new io.livekit.server.CanSubscribe(canSubscribe)
+            );
 
             // Set token expiration using configured TTL
             token.setExpiration(Date.from(Instant.now().plusSeconds(livekitProps.getTokenTtlSeconds())));
-            // Create a basic token for now - the API seems to be different
-            // This is a simplified version that should work
+
             return token.toJwt();
 
         } catch (Exception e) {

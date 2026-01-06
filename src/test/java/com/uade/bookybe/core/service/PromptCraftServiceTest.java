@@ -1,113 +1,189 @@
 package com.uade.bookybe.core.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.BDDMockito.*;
+
 import com.uade.bookybe.core.model.Book;
 import com.uade.bookybe.core.service.gateway.OpenAIClient;
-import org.junit.jupiter.api.BeforeEach;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class PromptCraftServiceTest {
 
-  @Mock
-  private OpenAIClient openAIClient;
+  @Mock private OpenAIClient openAIClient;
 
-  @InjectMocks
-  private PromptCraftService promptCraftService;
+  @InjectMocks private PromptCraftService sut;
 
-  private Book testBook;
+  @Captor private ArgumentCaptor<String> systemPromptCaptor;
 
-  @BeforeEach
-  void setUp() {
-    testBook = Book.builder()
-        .id("123")
-        .title("El Hobbit")
-        .author("J.R.R. Tolkien")
-        .synopsis("Un hobbit emprende una aventura épica")
-        .categories(List.of("Fantasy", "Adventure"))
-        .build();
-  }
+  @Captor private ArgumentCaptor<String> userPromptCaptor;
 
   @Test
-  void buildPrompt_WithValidInputs_ShouldReturnCraftedPrompt() {
-    // Given
-    String text = "Bilbo se encuentra en una cueva oscura con un anillo brillante en el suelo";
-    String style = "photorealistic";
-    String expectedPrompt = "360° equirectangular panorama of a dark cave with glowing ring, mystical atmosphere, photorealistic style, seamless edges, high detail, 8k if possible";
+  void
+      buildPrompt_deberiaDelegarEnOpenAIClient_conSystemPromptYUserPrompt_yRetornarCraftedPrompt() {
+    // given
+    Book book =
+        Book.builder()
+            .id("b1")
+            .title("El Hobbit")
+            .author("J.R.R. Tolkien")
+            .categories(List.of("Fantasy", "Adventure"))
+            .synopsis("Una aventura épica con enanos, un mago y un hobbit.")
+            .build();
 
-    when(openAIClient.craftPromptWithGPT(any(String.class), any(String.class)))
-        .thenReturn(expectedPrompt);
-
-    // When
-    String result = promptCraftService.buildPrompt(testBook, text, style);
-
-    // Then
-    assertNotNull(result);
-    assertEquals(expectedPrompt, result);
-    verify(openAIClient).craftPromptWithGPT(any(String.class), any(String.class));
-  }
-
-  @Test
-  void buildPrompt_WhenOpenAIFails_ShouldReturnFallbackPrompt() {
-    // Given
-    String text = "Una biblioteca antigua con estanterías de roble";
+    String fragment = "En un agujero en el suelo, vivía un hobbit.";
     String style = "photorealistic";
 
-    when(openAIClient.craftPromptWithGPT(any(String.class), any(String.class)))
-        .thenThrow(new RuntimeException("OpenAI service unavailable"));
+    given(openAIClient.craftPromptWithGPT(anyString(), anyString())).willReturn("CRAFTED_PROMPT");
 
-    // When
-    String result = promptCraftService.buildPrompt(testBook, text, style);
+    // when
+    String result = sut.buildPrompt(book, fragment, style);
 
-    // Then
-    assertNotNull(result);
-    assertTrue(result.contains("360° equirectangular panorama"));
-    assertTrue(result.contains("photorealistic style"));
-    assertTrue(result.contains("seamless edges"));
-    verify(openAIClient).craftPromptWithGPT(any(String.class), any(String.class));
+    // then
+    assertEquals("CRAFTED_PROMPT", result);
+
+    then(openAIClient)
+        .should()
+        .craftPromptWithGPT(systemPromptCaptor.capture(), userPromptCaptor.capture());
+
+    String systemPrompt = systemPromptCaptor.getValue();
+    String userPrompt = userPromptCaptor.getValue();
+
+    // System prompt checks (sanity)
+    assertNotNull(systemPrompt);
+    assertTrue(systemPrompt.contains("360°"));
+    assertTrue(systemPrompt.toLowerCase().contains("equirectangular"));
+
+    // User prompt checks (content)
+    assertNotNull(userPrompt);
+    assertTrue(userPrompt.contains("Metadatos del libro:"));
+    assertTrue(userPrompt.contains("- Título: El Hobbit"));
+    assertTrue(userPrompt.contains("- Autor: J.R.R. Tolkien"));
+    assertTrue(userPrompt.contains("- Géneros: Fantasy, Adventure"));
+
+    assertTrue(userPrompt.contains("Fragmento narrado:"));
+    assertTrue(userPrompt.contains("\"" + fragment + "\""));
+
+    assertTrue(userPrompt.contains("Estilo preferido: " + style));
+    assertTrue(userPrompt.contains("Devuélveme SOLO el prompt final"));
   }
 
   @Test
-  void buildPrompt_WithNullStyle_ShouldUsePhotorealistic() {
-    // Given
-    String text = "Un castillo medieval en las montañas";
-    String expectedPrompt = "Medieval castle panorama with photorealistic rendering";
+  void buildPrompt_noDeberiaIncluirGeneros_siCategoriesNullOVacia() {
+    // given
+    Book bookNull = Book.builder().id("b1").title("Libro").author("Autor").categories(null).build();
 
-    when(openAIClient.craftPromptWithGPT(any(String.class), any(String.class)))
-        .thenReturn(expectedPrompt);
+    Book bookEmpty =
+        Book.builder().id("b2").title("Libro2").author("Autor2").categories(List.of()).build();
 
-    // When
-    String result = promptCraftService.buildPrompt(testBook, text, null);
+    given(openAIClient.craftPromptWithGPT(anyString(), anyString())).willReturn("OK");
 
-    // Then
-    assertNotNull(result);
-    assertEquals(expectedPrompt, result);
+    // when
+    sut.buildPrompt(bookNull, "frag", "style");
+    then(openAIClient).should().craftPromptWithGPT(anyString(), userPromptCaptor.capture());
+    String prompt1 = userPromptCaptor.getValue();
+
+    // reset interactions to capture again
+    clearInvocations(openAIClient);
+    given(openAIClient.craftPromptWithGPT(anyString(), anyString())).willReturn("OK");
+
+    sut.buildPrompt(bookEmpty, "frag", "style");
+    then(openAIClient).should().craftPromptWithGPT(anyString(), userPromptCaptor.capture());
+    String prompt2 = userPromptCaptor.getValue();
+
+    // then
+    assertFalse(prompt1.contains("- Géneros:"));
+    assertFalse(prompt2.contains("- Géneros:"));
   }
 
   @Test
-  void buildPrompt_WithFantasyBook_ShouldIncludeMagicalElements() {
-    // Given
-    String text = "Un bosque encantado con luces misteriosas";
+  void buildPrompt_noDeberiaIncluirSinopsis_siEsNullOVacia() {
+    // given
+    Book bookNullSynopsis =
+        Book.builder().id("b1").title("Libro").author("Autor").synopsis(null).build();
 
-    when(openAIClient.craftPromptWithGPT(any(String.class), any(String.class)))
-        .thenThrow(new RuntimeException("Use fallback"));
+    Book bookBlankSynopsis =
+        Book.builder().id("b2").title("Libro2").author("Autor2").synopsis("   ").build();
 
-    // When
-    String result = promptCraftService.buildPrompt(testBook, text, "artistic");
+    given(openAIClient.craftPromptWithGPT(anyString(), anyString())).willReturn("OK");
 
-    // Then
-    assertNotNull(result);
-    assertTrue(result.contains("magical elements"));
-    assertTrue(result.contains("mystical ambiance"));
+    // when
+    sut.buildPrompt(bookNullSynopsis, "frag", "style");
+    then(openAIClient).should().craftPromptWithGPT(anyString(), userPromptCaptor.capture());
+    String prompt1 = userPromptCaptor.getValue();
+
+    clearInvocations(openAIClient);
+    given(openAIClient.craftPromptWithGPT(anyString(), anyString())).willReturn("OK");
+
+    sut.buildPrompt(bookBlankSynopsis, "frag", "style");
+    then(openAIClient).should().craftPromptWithGPT(anyString(), userPromptCaptor.capture());
+    String prompt2 = userPromptCaptor.getValue();
+
+    // then
+    assertFalse(prompt1.contains("- Sinopsis:"));
+    assertFalse(prompt2.contains("- Sinopsis:"));
+  }
+
+  @Test
+  void buildPrompt_deberiaTruncarSinopsis_a200CaracteresMasPuntosSuspensivos() {
+    // given
+    String longSynopsis = "a".repeat(250);
+
+    Book book =
+        Book.builder().id("b1").title("Libro").author("Autor").synopsis(longSynopsis).build();
+
+    given(openAIClient.craftPromptWithGPT(anyString(), anyString())).willReturn("OK");
+
+    // when
+    sut.buildPrompt(book, "frag", "style");
+
+    // then
+    then(openAIClient).should().craftPromptWithGPT(anyString(), userPromptCaptor.capture());
+    String userPrompt = userPromptCaptor.getValue();
+
+    assertTrue(userPrompt.contains("- Sinopsis: "));
+    // 200 chars + "..."
+    String expectedSnippet = "a".repeat(200) + "...";
+    assertTrue(userPrompt.contains(expectedSnippet));
+    assertFalse(userPrompt.contains("a".repeat(201) + "...")); // sanity
+  }
+
+  @Test
+  void buildPrompt_noDeberiaIncluirEstilo_siStyleNullOVacioOBlanco() {
+    // given
+    Book book = Book.builder().id("b1").title("Libro").author("Autor").build();
+
+    given(openAIClient.craftPromptWithGPT(anyString(), anyString())).willReturn("OK");
+
+    // when
+    sut.buildPrompt(book, "frag", null);
+    then(openAIClient).should().craftPromptWithGPT(anyString(), userPromptCaptor.capture());
+    String p1 = userPromptCaptor.getValue();
+
+    clearInvocations(openAIClient);
+    given(openAIClient.craftPromptWithGPT(anyString(), anyString())).willReturn("OK");
+
+    sut.buildPrompt(book, "frag", "");
+    then(openAIClient).should().craftPromptWithGPT(anyString(), userPromptCaptor.capture());
+    String p2 = userPromptCaptor.getValue();
+
+    clearInvocations(openAIClient);
+    given(openAIClient.craftPromptWithGPT(anyString(), anyString())).willReturn("OK");
+
+    sut.buildPrompt(book, "frag", "   ");
+    then(openAIClient).should().craftPromptWithGPT(anyString(), userPromptCaptor.capture());
+    String p3 = userPromptCaptor.getValue();
+
+    // then
+    assertFalse(p1.contains("Estilo preferido:"));
+    assertFalse(p2.contains("Estilo preferido:"));
+    assertFalse(p3.contains("Estilo preferido:"));
   }
 }

@@ -23,9 +23,24 @@ public interface SceneImageGenerationRepository extends JpaRepository<SceneImage
   List<SceneImageGeneration> findByBookIdOrderByCreatedAtDesc(String bookId);
 
   /**
+   * Find all generations for a specific reading club
+   */
+  List<SceneImageGeneration> findByReadingClubIdOrderByCreatedAtDesc(String readingClubId);
+
+  /**
+   * Find existing generation by reading club ID and fragment hash to avoid duplicates
+   */
+  Optional<SceneImageGeneration> findByReadingClubIdAndFragmentHash(String readingClubId, String fragmentHash);
+
+  /**
    * Count generations for a book (for analytics)
    */
   long countByBookId(String bookId);
+
+  /**
+   * Count generations for a reading club (for analytics)
+   */
+  long countByReadingClubId(String readingClubId);
 
   /**
    * Find recent generations (for monitoring and analytics)

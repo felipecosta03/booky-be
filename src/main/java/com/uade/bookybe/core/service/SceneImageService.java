@@ -5,6 +5,7 @@ import com.uade.bookybe.core.exception.BookNotFoundException;
 import com.uade.bookybe.core.exception.InvalidImageSizeException;
 import com.uade.bookybe.core.exception.OpenAIServiceException;
 import com.uade.bookybe.core.model.Book;
+import com.uade.bookybe.core.model.ReadingClub;
 import com.uade.bookybe.core.model.SceneImageGeneration;
 import com.uade.bookybe.core.model.dto.ImageResult;
 import com.uade.bookybe.core.model.dto.SceneImageRequest;
@@ -12,6 +13,7 @@ import com.uade.bookybe.core.model.dto.SceneImageResponse;
 import com.uade.bookybe.core.port.SceneImageGenerationRepository;
 import com.uade.bookybe.core.service.gateway.OpenAIClient;
 import com.uade.bookybe.core.usecase.BookService;
+import com.uade.bookybe.core.usecase.ReadingClubService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,7 @@ import java.util.regex.Pattern;
 public class SceneImageService {
 
   private final BookService bookService;
+  private final ReadingClubService readingClubService;
   private final SceneImageGenerationRepository sceneImageGenerationRepository;
   private final PromptCraftService promptCraftService;
   private final OpenAIClient openAIClient;
@@ -44,11 +47,17 @@ public class SceneImageService {
   private static final Pattern SIZE_PATTERN = Pattern.compile("^(\\d+)x(\\d+)$");
 
   @Transactional
-  public SceneImageResponse generateSceneImage(String bookId, SceneImageRequest request) {
-    log.info("Generating scene image for book: {} with text length: {}", bookId, request.getText().length());
+  public SceneImageResponse generateSceneImage(String readingClubId, SceneImageRequest request) {
+    log.info("Generating scene image for reading club: {} with text length: {}", readingClubId, request.getText().length());
 
     // Validate request
     validateRequest(request);
+
+    // Get reading club and extract book ID
+    ReadingClub readingClub = readingClubService.getReadingClubById(readingClubId)
+        .orElseThrow(() -> new IllegalArgumentException("Reading club not found: " + readingClubId));
+
+    String bookId = readingClub.getBookId();
 
     // Get book using existing BookService
     Book book = bookService.getBookById(bookId)
@@ -57,12 +66,12 @@ public class SceneImageService {
     // Generate fragment hash for caching/deduplication
     String fragmentHash = generateFragmentHash(request.getText());
 
-    // Check if we already have this generation (optional caching)
+    // Check if we already have this generation for this reading club
     Optional<SceneImageGeneration> existingGeneration =
-        sceneImageGenerationRepository.findByBookIdAndFragmentHash(bookId, fragmentHash);
+        sceneImageGenerationRepository.findByReadingClubIdAndFragmentHash(readingClubId, fragmentHash);
 
     if (existingGeneration.isPresent()) {
-      log.info("Found existing generation for book: {} and fragment hash: {}", bookId, fragmentHash);
+      log.info("Found existing generation for reading club: {} and fragment hash: {}", readingClubId, fragmentHash);
       return mapToResponse(existingGeneration.get());
     }
 
@@ -83,9 +92,10 @@ public class SceneImageService {
 
       ImageResult imageResult = openAIClient.generateImage(craftedPrompt, size, request.getSeed(), returnBase64);
 
-      // Save the generation record
+      // Save the generation record with both bookId and readingClubId
       SceneImageGeneration generation = SceneImageGeneration.builder()
           .bookId(bookId)
+          .readingClubId(readingClubId)
           .fragmentHash(fragmentHash)
           .craftedPrompt(craftedPrompt)
           .imageUrl(imageResult.getUrl())
@@ -101,13 +111,13 @@ public class SceneImageService {
 
       generation = sceneImageGenerationRepository.save(generation);
 
-      log.info("Successfully generated scene image for book: {} in {}ms",
-          bookId, imageResult.getResponseTimeMs());
+      log.info("Successfully generated scene image for reading club: {} (book: {}) in {}ms",
+          readingClubId, bookId, imageResult.getResponseTimeMs());
 
       return mapToResponse(generation);
 
     } catch (Exception e) {
-      log.error("Error generating scene image for book: " + bookId, e);
+      log.error("Error generating scene image for reading club: " + readingClubId, e);
       throw new OpenAIServiceException("Failed to generate scene image: " + e.getMessage(), e);
     }
   }
@@ -201,9 +211,24 @@ public class SceneImageService {
   }
 
   /**
+   * Get all scene generations for a specific reading club
+   */
+  public List<SceneImageGeneration> getReadingClubSceneGenerations(String readingClubId) {
+    return sceneImageGenerationRepository.findByReadingClubIdOrderByCreatedAtDesc(readingClubId);
+  }
+
+  /**
+   * Get generation statistics for a reading club
+   */
+  public long getReadingClubGenerationCount(String readingClubId) {
+    return sceneImageGenerationRepository.countByReadingClubId(readingClubId);
+  }
+
+  /**
    * Get generation statistics for a book
    */
   public long getBookGenerationCount(String bookId) {
     return sceneImageGenerationRepository.countByBookId(bookId);
   }
 }
+

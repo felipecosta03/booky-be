@@ -21,25 +21,28 @@ public class SceneImageGeneration {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "book_id", nullable = false)
+  @Column(name = "book_id", columnDefinition = "TEXT", nullable = false)
   private String bookId;
 
-  @Column(name = "fragment_hash", nullable = false)
+  @Column(name = "reading_club_id", columnDefinition = "TEXT")
+  private String readingClubId;
+
+  @Column(name = "fragment_hash", columnDefinition = "TEXT", nullable = false)
   private String fragmentHash;
 
   @Column(name = "crafted_prompt", columnDefinition = "TEXT", nullable = false)
   private String craftedPrompt;
 
-  @Column(name = "image_url")
+  @Column(name = "image_url", columnDefinition = "TEXT")
   private String imageUrl;
 
   @Column(name = "image_base64", columnDefinition = "TEXT")
   private String imageBase64;
 
-  @Column(name = "size", nullable = false)
+  @Column(name = "size", columnDefinition = "TEXT", nullable = false)
   private String size;
 
-  @Column(name = "style")
+  @Column(name = "style", columnDefinition = "TEXT")
   private String style;
 
   @Column(name = "seed")

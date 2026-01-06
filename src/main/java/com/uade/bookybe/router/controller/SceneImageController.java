@@ -24,10 +24,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/books")
+@RequestMapping("/api/reading-clubs")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Scene Image Generation", description = "Generate 360° VR scene images from book text fragments")
+@Tag(name = "Scene Image Generation", description = "Generate 360° VR scene images from book text fragments for reading clubs")
 public class SceneImageController {
 
   private final SceneImageService sceneImageService;
@@ -38,22 +38,23 @@ public class SceneImageController {
   // Rate limiting configuration
   private static final int MAX_REQUESTS_PER_MINUTE = 10;
 
-  @PostMapping("/{bookId}/scene-image")
+  @PostMapping("/{readingClubId}/scene-image")
   @Operation(
-      summary = "Generate 360° scene image from book text fragment",
-      description = "Creates a 360° equirectangular VR image based on a text fragment from the specified book. " +
-                   "The system uses the book's metadata (title, author, genre) combined with the text fragment " +
-                   "to generate a detailed scene description prompt via GPT, then creates the image using DALL-E."
+      summary = "Generate 360° scene image from book text fragment for reading club",
+      description = "Creates a 360° equirectangular VR image based on a text fragment for the specified reading club. " +
+                   "The system uses the reading club's book metadata (title, author, genre) combined with the text fragment " +
+                   "to generate a detailed scene description prompt via GPT, then creates the image using DALL-E. " +
+                   "Multiple images can be generated for a reading club as they progress through the book."
   )
   @ApiResponse(responseCode = "200", description = "Scene image generated successfully")
-  @ApiResponse(responseCode = "400", description = "Invalid request parameters")
-  @ApiResponse(responseCode = "404", description = "Book not found")
+  @ApiResponse(responseCode = "400", description = "Invalid request parameters or reading club not found")
+  @ApiResponse(responseCode = "404", description = "Reading club not found")
   @ApiResponse(responseCode = "422", description = "Invalid image size format")
   @ApiResponse(responseCode = "429", description = "Rate limit exceeded")
   @ApiResponse(responseCode = "503", description = "OpenAI service unavailable")
   public ResponseEntity<SceneImageResponse> generateSceneImage(
-      @Parameter(description = "Book ID", required = true)
-      @PathVariable String bookId,
+      @Parameter(description = "Reading Club ID", required = true)
+      @PathVariable String readingClubId,
 
       @Parameter(description = "Scene generation request", required = true)
       @Valid @RequestBody SceneImageRequest request,
@@ -67,58 +68,59 @@ public class SceneImageController {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
       }
 
-      log.info("Generating scene image for book: {} with text length: {}",
-          bookId, request.getText().length());
+      log.info("Generating scene image for reading club: {} with text length: {}",
+          readingClubId, request.getText().length());
 
-      SceneImageResponse response = sceneImageService.generateSceneImage(bookId, request);
+      SceneImageResponse response = sceneImageService.generateSceneImage(readingClubId, request);
 
-      log.info("Successfully generated scene image for book: {}", bookId);
+      log.info("Successfully generated scene image for reading club: {}", readingClubId);
       return ResponseEntity.ok(response);
 
     } catch (IllegalArgumentException e) {
-      log.warn("Invalid request for book {}: {}", bookId, e.getMessage());
+      log.warn("Invalid request for reading club {}: {}", readingClubId, e.getMessage());
       return ResponseEntity.badRequest().build();
     } catch (BookNotFoundException e) {
-      log.warn("Book not found: {}", bookId);
+      log.warn("Book not found for reading club: {}", readingClubId);
       return ResponseEntity.notFound().build();
     } catch (InvalidImageSizeException e) {
-      log.warn("Invalid size format for book {}: {}", bookId, e.getMessage());
+      log.warn("Invalid size format for reading club {}: {}", readingClubId, e.getMessage());
       return ResponseEntity.unprocessableEntity().build();
     } catch (OpenAIServiceException e) {
-      log.error("OpenAI service error for book {}: {}", bookId, e.getMessage());
+      log.error("OpenAI service error for reading club {}: {}", readingClubId, e.getMessage());
       return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
     } catch (Exception e) {
-      log.error("Unexpected error generating scene image for book: " + bookId, e);
+      log.error("Unexpected error generating scene image for reading club: " + readingClubId, e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
   }
 
-  @GetMapping("/{bookId}/scene-generations")
+  @GetMapping("/{readingClubId}/scene-generations")
   @Operation(
-      summary = "Get all scene generations for a book",
-      description = "Returns all previous scene image generations for the specified book"
+      summary = "Get all scene generations for a reading club",
+      description = "Returns all previous scene image generations for the specified reading club, " +
+                   "showing the progression of images created as the club reads through the book"
   )
-  public ResponseEntity<List<Object>> getBookSceneGenerations(@PathVariable String bookId) {
+  public ResponseEntity<List<Object>> getReadingClubSceneGenerations(@PathVariable String readingClubId) {
     try {
-      var generations = sceneImageService.getBookSceneGenerations(bookId);
+      var generations = sceneImageService.getReadingClubSceneGenerations(readingClubId);
       return ResponseEntity.ok(List.of(generations.toArray()));
     } catch (Exception e) {
-      log.error("Error retrieving scene generations for book: " + bookId, e);
+      log.error("Error retrieving scene generations for reading club: " + readingClubId, e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
   }
 
-  @GetMapping("/{bookId}/scene-generations/count")
+  @GetMapping("/{readingClubId}/scene-generations/count")
   @Operation(
-      summary = "Get scene generation count for a book",
-      description = "Returns the total number of scene generations created for the specified book"
+      summary = "Get scene generation count for a reading club",
+      description = "Returns the total number of scene generations created for the specified reading club"
   )
-  public ResponseEntity<Long> getBookGenerationCount(@PathVariable String bookId) {
+  public ResponseEntity<Long> getReadingClubGenerationCount(@PathVariable String readingClubId) {
     try {
-      long count = sceneImageService.getBookGenerationCount(bookId);
+      long count = sceneImageService.getReadingClubGenerationCount(readingClubId);
       return ResponseEntity.ok(count);
     } catch (Exception e) {
-      log.error("Error retrieving generation count for book: " + bookId, e);
+      log.error("Error retrieving generation count for reading club: " + readingClubId, e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
   }

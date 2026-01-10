@@ -1,243 +1,100 @@
-# 📚 Booky Backend
+# Booky Backend (booky-be)
 
-Sistema backend para aplicación de intercambio y gestión de libros desarrollado con Spring Boot.
+Backend de Booky: plataforma social de gestión de libros, clubes de lectura, comunidades, gamificación y generación de imágenes con IA.
 
-## 🚀 Inicio Rápido
+## Descripción
+Booky es una plataforma social para lectores que permite gestionar bibliotecas personales, participar en comunidades, clubes de lectura, intercambiar libros, comentar, chatear, gamificar la experiencia y generar imágenes de escenas literarias usando IA (OpenAI). Este repositorio contiene el backend desarrollado en Java con Spring Boot.
 
-### Prerrequisitos
-- Docker y Docker Compose instalados
-- Java 17+ (para desarrollo)
-- Maven 3.8+ (para desarrollo)
+## Características principales
+- Gestión de usuarios y autenticación JWT
+- Biblioteca personal y gestión de libros (integración con Google Books)
+- Clubes de lectura y reuniones virtuales (LiveKit)
+- Comunidades y foros
+- Intercambio de libros entre usuarios
+- Sistema de comentarios y posts
+- Chat en tiempo real
+- Gamificación (logros, puntos, actividades)
+- Generación de imágenes de escenas literarias con IA (OpenAI)
+- Almacenamiento de imágenes en Cloudinary o AWS S3
+- API documentada con OpenAPI/Swagger
 
-### Opciones de Inicio
+## Instalación
+### Requisitos previos
+- Java 17+
+- Maven 3.8+
+- Docker (opcional, para despliegue y pruebas locales)
+- Acceso a claves de Cloudinary, AWS S3, OpenAI y LiveKit (opcional para funcionalidades avanzadas)
 
-#### Opción 1: Script de Control Unificado (Recomendado)
-
-Usa el script `booky.sh` para manejar toda la aplicación:
-
+### Clonar el repositorio
 ```bash
-# Hacer el script ejecutable (solo primera vez)
-chmod +x booky.sh
-
-# Ver todos los comandos disponibles
-./booky.sh
+git clone https://github.com/felipecosta03/booky-be.git
+cd booky-be
 ```
 
-#### Opción 2: Docker Compose (Alternativa)
+### Configuración
+Las variables de entorno y configuraciones se definen en `src/main/resources/application.yml` y `application-prod.yml`. Puedes sobrescribirlas con variables de entorno.
 
+Ejemplo de variables importantes:
+- `DATABASE_URL` (producción)
+- `JWT_SECRET`, `JWT_EXPIRATION`
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+- `AWS_S3_ACCESS_KEY`, `AWS_S3_SECRET_KEY`, `AWS_S3_BUCKET`
+- `OPENAI_API_KEY`
+- `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_WS_URL`
+
+Puedes copiar y adaptar el archivo `application.yml` para desarrollo local.
+
+## Ejecución local
+### Usando Maven
 ```bash
-# Iniciar todos los servicios
-docker-compose up -d
-
-# Ver logs
-docker-compose logs -f
-
-# Parar servicios
-docker-compose down
+./mvnw spring-boot:run
 ```
+La API estará disponible en http://localhost:8080
 
-## 📋 Comandos Disponibles
-
-### 1️⃣ Inicio Completo
+### Usando Docker
 ```bash
-./booky.sh start
+docker build -t booky-be .
+docker run -p 8080:8080 --env-file .env booky-be
 ```
-- **Función**: Setup completo desde cero
-- **Incluye**: PostgreSQL + Backend + Datos de muestra + Adminer
-- **Tiempo**: ~2-3 minutos
-- **Uso**: Primera ejecución o reset completo
 
-### 2️⃣ Solo Backend (Desarrollo Rápido)
+## Testing
+Ejecuta los tests con:
 ```bash
-./booky.sh backend
+./mvnw test
 ```
-- **Función**: Reconstruye solo el backend
-- **Prerrequisito**: PostgreSQL debe estar corriendo
-- **Tiempo**: ~1 minuto
-- **Uso**: Ideal después de cambios en código
+Los tests cubren servicios, controladores y adaptadores de infraestructura.
 
-### 3️⃣ Parar Todo
-```bash
-./booky.sh stop
+## Despliegue
+### Docker Compose
+El proyecto soporta despliegue con Docker Compose (ver workflows en `.github/workflows/`).
+
+### Fly.io / EC2
+- Configura las variables de entorno necesarias.
+- Usa los archivos de workflow para automatizar el despliegue.
+
+## Documentación de la API
+La documentación OpenAPI/Swagger está disponible en:
+- http://localhost:8080/swagger-ui.html
+- http://localhost:8080/v3/api-docs
+
+Incluye endpoints para usuarios, libros, comunidades, clubes de lectura, posts, comentarios, chat, gamificación, imágenes y más.
+
+## Estructura de carpetas
+- `src/main/java/com/uade/bookybe/` — Código fuente principal
+- `src/main/resources/` — Configuración y recursos
+- `src/test/java/` — Tests unitarios e integración
+- `Dockerfile` — Imagen Docker
+- `pom.xml` — Dependencias Maven
+
+## Ejemplo de uso de la API
+```http
+POST /auth/login
+{
+  "email": "usuario@ejemplo.com",
+  "password": "123456"
+}
+// Respuesta: { "token": "..." }
+
+GET /books/search?q=harry+potter
+// Respuesta: lista de libros
 ```
-- **Función**: Para todos los servicios y limpia contenedores
-- **Tiempo**: ~10 segundos
-- **Uso**: Cierre limpio al terminar
-
-## 🌐 Servicios Disponibles
-
-Una vez iniciado, tendrás acceso a:
-
-| Servicio | URL | Descripción |
-|----------|-----|-------------|
-| **API Backend** | http://localhost:8080 | API REST principal |
-| **Swagger UI** | http://localhost:8080/swagger-ui/index.html | Documentación interactiva |
-| **Adminer** | http://localhost:8081 | Cliente web PostgreSQL |
-| **PostgreSQL** | localhost:5433 | Base de datos (postgres/admin) |
-
-## 🧪 Testing de Endpoints
-
-### Opción 1: Script Automatizado (Recomendado)
-```bash
-# Ejecutar todos los tests automáticamente
-./test-all-endpoints.sh
-```
-
-### Opción 2: Tests Manuales
-Ver documentación completa en `api-endpoints-test.md`
-
-```bash
-# Buscar libros
-curl "http://localhost:8080/books/search?q=hobbit"
-
-# Obtener usuarios
-curl "http://localhost:8080/users"
-
-# Agregar libro a biblioteca
-curl -X POST "http://localhost:8080/books/users/user-001/library" \
-  -H "Content-Type: application/json" \
-  -d '{"isbn": "9780439708180", "status": "TO_READ"}'
-
-# Obtener comunidades
-curl "http://localhost:8080/reading-clubs"
-```
-
-### 📄 Archivos de Testing Disponibles
-- **`test-all-endpoints.sh`** - Script ejecutable que prueba todos los endpoints
-- **`api-endpoints-test.md`** - Documentación completa con ejemplos de curl
-- **Estado actual**: 16/17 endpoints funcionando (94% success rate)
-
-## 🏗️ Arquitectura
-
-### Estructura del Proyecto
-```
-src/main/java/com/uade/bookybe/
-├── config/           # Configuraciones (Security, JWT, etc.)
-├── core/            # Modelos de dominio y casos de uso
-├── infraestructure/ # Entidades, repositorios y adaptadores
-└── router/          # Controladores y DTOs
-```
-
-### Capas de la Aplicación
-
-1. **Controller**: Recibe DTOs, los mapea a modelos via MapStruct
-2. **Service**: Lógica de negocio, comunica con repositorios
-3. **Repository**: Acceso a datos, maneja entidades
-4. **Mappers**: MapStruct para conversión DTO ↔ Modelo ↔ Entidad
-
-## 🗄️ Base de Datos
-
-### Esquema Principal
-- **users**: Usuarios del sistema
-- **books**: Catálogo de libros
-- **user_books**: Biblioteca personal de cada usuario
-- **community**: Comunidades de lectores
-- **reading_clubs**: Clubes de lectura
-- **reading_club_members**: Membresías de clubes
-
-### Datos de Muestra Incluidos
-- **16 usuarios** (incluye administradores)
-- **20 comunidades** organizadas por géneros literarios
-- **5 clubes de lectura** activos
-- **5 libros** con categorías
-
-## 🔧 Desarrollo
-
-### Flujo Típico de Desarrollo
-```bash
-# Primera vez
-./booky.sh start
-
-# Hacer cambios en código...
-./booky.sh backend    # Rebuild rápido
-
-# Más cambios...
-./booky.sh backend    # Rebuild rápido
-
-# Al terminar
-./booky.sh stop
-```
-
-### Variables de Entorno
-```env
-DATABASE_URL=jdbc:postgresql://booky-postgres:5432/booky
-DATABASE_USERNAME=postgres
-DATABASE_PASSWORD=admin
-SPRING_PROFILES_ACTIVE=local
-```
-
-### Autenticación JWT
-La aplicación utiliza JWT para autenticación:
-- **Sign-up**: `POST /sign-up`
-- **Sign-in**: `POST /sign-in` (retorna JWT token)
-- **Headers**: `Authorization: Bearer <token>`
-
-## 📊 Funcionalidades Principales
-
-### ✅ Implementadas y Verificadas
-- **Gestión de Usuarios**: Registro, login, perfiles
-- **Catálogo de Libros**: Búsqueda via Google Books API
-- **Biblioteca Personal**: Agregar/remover libros, estados de lectura
-- **Comunidades**: Creación y gestión de comunidades temáticas
-- **Clubes de Lectura**: Clubes por libro con moderadores
-- **Autenticación**: JWT con Spring Security
-
-### 🔒 Endpoints Protegidos
-- Todas las operaciones de biblioteca personal
-- Gestión de comunidades
-- Operaciones de clubes de lectura
-
-## 🐛 Solución de Problemas
-
-### El backend no inicia
-```bash
-# Ver logs
-docker logs booky-backend
-
-# Verificar PostgreSQL
-docker ps | grep booky-postgres
-```
-
-### Base de datos no conecta
-```bash
-# Reiniciar todo desde cero
-./booky.sh stop
-./booky.sh start
-```
-
-### Puerto ya en uso
-```bash
-# Verificar qué está usando el puerto
-lsof -i :8080
-lsof -i :5433
-```
-
-## 📂 Scripts de Base de Datos
-
-Los siguientes scripts se cargan automáticamente:
-
-- `scripts/database_schema_updated.sql` - Esquema principal
-- `scripts/alta_usuarios.sql` - Datos de usuarios
-- `scripts/alta_comunidades.sql` - Datos de comunidades  
-- `scripts/alta_clubes_lectura.sql` - Datos de clubes
-
-## 🎯 Tecnologías
-
-- **Backend**: Spring Boot 3.5.0, Java 17
-- **Base de Datos**: PostgreSQL 15
-- **Seguridad**: Spring Security + JWT
-- **Documentación**: SpringDoc OpenAPI (Swagger)
-- **Mapeo**: MapStruct
-- **Contenedores**: Docker + Docker Compose
-- **Build**: Maven
-
-## 📝 Notas
-
-- **Contraseña por defecto**: Todos los usuarios de muestra tienen la contraseña `password123`
-- **Admin users**: `admin@booky.com` y `superadmin@booky.com`
-- **Network**: Los contenedores usan la red `booky-network`
-- **Persistencia**: Los datos de PostgreSQL se mantienen en el volumen `postgres_data`
-
----
-
-**¿Problemas?** Usa `./booky.sh` para ver la ayuda completa o verifica los logs con `docker logs booky-backend` 

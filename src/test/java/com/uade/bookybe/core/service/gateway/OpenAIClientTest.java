@@ -82,9 +82,11 @@ class OpenAIClientTest {
     // given
     given(openAIConfig.getImageModel()).willReturn("img-model");
     given(openAIConfig.getMaxRetries()).willReturn(0);
+    given(openAIConfig.getImageTimeout()).willReturn(Duration.ofSeconds(180));
 
     Object imageResponse = buildImageResponse("http://img", "BASE64DATA", "rev");
     stubWebClientPostChain("/images/generations", imageResponse);
+    doReturn(responseSpec).when(responseSpec).onStatus(any(), any());
 
     // when
     ImageResult result = sut.generateImage("prompt", "2048x1024", null, true);
@@ -113,9 +115,11 @@ class OpenAIClientTest {
     // given
     given(openAIConfig.getImageModel()).willReturn("img-model");
     given(openAIConfig.getMaxRetries()).willReturn(0);
+    given(openAIConfig.getImageTimeout()).willReturn(Duration.ofSeconds(180));
 
     Object imageResponse = buildImageResponse("http://img", "BASE64DATA", "rev");
     stubWebClientPostChain("/images/generations", imageResponse);
+    doReturn(responseSpec).when(responseSpec).onStatus(any(), any());
 
     // when
     ImageResult result = sut.generateImage("prompt", "4096x2048", null, true);

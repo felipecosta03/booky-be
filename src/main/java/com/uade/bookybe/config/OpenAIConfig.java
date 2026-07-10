@@ -16,5 +16,6 @@ public class OpenAIConfig {
   private String imageModel = "gpt-image-2";
   private String baseUrl = "https://api.openai.com/v1";
   private Duration timeout = Duration.ofSeconds(30);
+  private Duration imageTimeout = Duration.ofSeconds(180);
   private int maxRetries = 3;
 }

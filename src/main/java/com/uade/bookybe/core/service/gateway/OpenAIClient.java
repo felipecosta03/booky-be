@@ -1,7 +1,6 @@
 package com.uade.bookybe.core.service.gateway;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uade.bookybe.config.OpenAIConfig;
 import com.uade.bookybe.core.model.dto.ImageResult;
@@ -9,15 +8,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 @Service
 @RequiredArgsConstructor
@@ -77,10 +79,10 @@ public class OpenAIClient {
   }
 
   /**
-   * Generate image using DALL-E
+   * Generate image using OpenAI Images API
    */
   public ImageResult generateImage(String prompt, String size, Integer seed, boolean returnBase64) {
-    log.debug("Generating image with DALL-E using model: {}", openAIConfig.getImageModel());
+    log.debug("Generating image with OpenAI using model: {}", openAIConfig.getImageModel());
 
     ImageRequest request = ImageRequest.builder()
         .model(openAIConfig.getImageModel())
@@ -88,25 +90,36 @@ public class OpenAIClient {
         .n(1)
         .size(size)
         .build();
+    Duration imageTimeout = imageTimeout();
+    int promptLength = promptLength(prompt);
 
     try {
       long startTime = System.currentTimeMillis();
+      log.info(
+          "Calling OpenAI Images API: model={}, size={}, promptLength={}, timeout={}, maxRetries={}, seedPresent={}, returnBase64Requested={}",
+          request.getModel(), request.getSize(), promptLength, imageTimeout, openAIConfig.getMaxRetries(),
+          seed != null, returnBase64);
 
       ImageResponse response = webClient.post()
           .uri("/images/generations")
           .bodyValue(request)
           .retrieve()
+          .onStatus(HttpStatusCode::isError, clientResponse -> logImageErrorResponse(clientResponse, request))
           .bodyToMono(ImageResponse.class)
           .retryWhen(Retry.backoff(openAIConfig.getMaxRetries(), Duration.ofSeconds(2))
               .filter(this::isRetryableException))
-          .timeout(Duration.ofSeconds(90)) // Increase timeout for image generation
+          .timeout(imageTimeout)
           .block();
 
       long responseTime = System.currentTimeMillis() - startTime;
-      log.debug("Image generation completed in {}ms", responseTime);
+      log.info("OpenAI Images API completed in {}ms: model={}, size={}", responseTime, request.getModel(), request.getSize());
 
       if (response != null && !response.getData().isEmpty()) {
         ImageData imageData = response.getData().get(0);
+        log.debug(
+            "OpenAI Images API response parsed: model={}, size={}, hasUrl={}, hasBase64={}, hasRevisedPrompt={}",
+            request.getModel(), request.getSize(), imageData.getUrl() != null, imageData.getB64Json() != null,
+            imageData.getRevisedPrompt() != null);
         return ImageResult.builder()
             .url(imageData.getUrl())
             .base64(imageData.getB64Json())
@@ -115,15 +128,90 @@ public class OpenAIClient {
             .build();
       }
 
+      log.error("OpenAI Images API returned empty response: model={}, size={}, promptLength={}",
+          request.getModel(), request.getSize(), promptLength);
       throw new RuntimeException("Empty response from OpenAI Images API");
 
     } catch (WebClientResponseException e) {
-      log.error("OpenAI Images API error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+      log.error(
+          "OpenAI Images API failed after retries: status={}, model={}, size={}, promptLength={}, responseBody={}",
+          e.getStatusCode(), request.getModel(), request.getSize(), promptLength,
+          truncateForLog(e.getResponseBodyAsString()), e);
       throw new RuntimeException("Failed to generate image: " + e.getMessage(), e);
     } catch (Exception e) {
-      log.error("Unexpected error calling OpenAI Images API", e);
+      Throwable rootCause = rootCause(e);
+      if (hasTimeoutCause(e)) {
+        log.error(
+            "OpenAI Images API timed out: model={}, size={}, promptLength={}, configuredTimeout={}, rootCause={}: {}",
+            request.getModel(), request.getSize(), promptLength, imageTimeout, rootCause.getClass().getName(),
+            rootCause.getMessage(), e);
+      } else {
+        log.error(
+            "Unexpected error calling OpenAI Images API: model={}, size={}, promptLength={}, rootCause={}: {}",
+            request.getModel(), request.getSize(), promptLength, rootCause.getClass().getName(),
+            rootCause.getMessage(), e);
+      }
       throw new RuntimeException("Failed to generate image", e);
     }
+  }
+
+  private Mono<? extends Throwable> logImageErrorResponse(ClientResponse response, ImageRequest request) {
+    return response.bodyToMono(String.class)
+        .defaultIfEmpty("")
+        .map(responseBody -> {
+          HttpStatusCode status = response.statusCode();
+          log.error(
+              "OpenAI Images API returned non-2xx response: status={}, model={}, size={}, promptLength={}, responseBody={}",
+              status, request.getModel(), request.getSize(), promptLength(request.getPrompt()),
+              truncateForLog(responseBody));
+          return WebClientResponseException.create(
+              status.value(),
+              status.toString(),
+              response.headers().asHttpHeaders(),
+              responseBody.getBytes(StandardCharsets.UTF_8),
+              StandardCharsets.UTF_8);
+        });
+  }
+
+  private Duration imageTimeout() {
+    Duration configuredTimeout = openAIConfig.getImageTimeout();
+    return configuredTimeout != null ? configuredTimeout : Duration.ofSeconds(180);
+  }
+
+  private int promptLength(String prompt) {
+    return prompt == null ? 0 : prompt.length();
+  }
+
+  private String truncateForLog(String value) {
+    if (value == null || value.isBlank()) {
+      return "<empty>";
+    }
+
+    int maxLength = 4000;
+    if (value.length() <= maxLength) {
+      return value;
+    }
+
+    return value.substring(0, maxLength) + "... [truncated]";
+  }
+
+  private boolean hasTimeoutCause(Throwable throwable) {
+    Throwable current = throwable;
+    while (current != null) {
+      if (current instanceof TimeoutException || current.getClass().getName().contains("ReadTimeoutException")) {
+        return true;
+      }
+      current = current.getCause();
+    }
+    return false;
+  }
+
+  private Throwable rootCause(Throwable throwable) {
+    Throwable root = throwable;
+    while (root.getCause() != null && root.getCause() != root) {
+      root = root.getCause();
+    }
+    return root;
   }
 
   private boolean isRetryableException(Throwable throwable) {

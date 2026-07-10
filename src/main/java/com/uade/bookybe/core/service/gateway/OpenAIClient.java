@@ -82,26 +82,12 @@ public class OpenAIClient {
   public ImageResult generateImage(String prompt, String size, Integer seed, boolean returnBase64) {
     log.debug("Generating image with DALL-E using model: {}", openAIConfig.getImageModel());
 
-    ImageRequest.ImageRequestBuilder requestBuilder = ImageRequest.builder()
+    ImageRequest request = ImageRequest.builder()
         .model(openAIConfig.getImageModel())
         .prompt(prompt)
         .n(1)
         .size(size)
-        .quality("standard") // Use standard quality to reduce response size
-        .style("vivid");
-
-    // For large sizes, prefer URL over base64 to avoid buffer issues
-    if (returnBase64 && isLargeSize(size)) {
-      log.warn("Requested base64 for large size {}, switching to URL to avoid buffer overflow", size);
-      requestBuilder.responseFormat("url");
-      returnBase64 = false;
-    } else if (returnBase64) {
-      requestBuilder.responseFormat("b64_json");
-    } else {
-      requestBuilder.responseFormat("url");
-    }
-
-    ImageRequest request = requestBuilder.build();
+        .build();
 
     try {
       long startTime = System.currentTimeMillis();
@@ -123,7 +109,7 @@ public class OpenAIClient {
         ImageData imageData = response.getData().get(0);
         return ImageResult.builder()
             .url(imageData.getUrl())
-            .base64(returnBase64 ? imageData.getB64Json() : null)
+            .base64(imageData.getB64Json())
             .revisedPrompt(imageData.getRevisedPrompt())
             .responseTimeMs(responseTime)
             .build();
@@ -138,12 +124,6 @@ public class OpenAIClient {
       log.error("Unexpected error calling OpenAI Images API", e);
       throw new RuntimeException("Failed to generate image", e);
     }
-  }
-
-  private boolean isLargeSize(String size) {
-    // Consider sizes larger than 2048x1024 as large
-    if (size == null) return false;
-    return size.equals("4096x2048") || size.contains("4096");
   }
 
   private boolean isRetryableException(Throwable throwable) {
@@ -216,10 +196,6 @@ public class OpenAIClient {
     private String prompt;
     private Integer n;
     private String size;
-    private String quality;
-    private String style;
-    @JsonProperty("response_format")
-    private String responseFormat;
   }
 
   @lombok.Data

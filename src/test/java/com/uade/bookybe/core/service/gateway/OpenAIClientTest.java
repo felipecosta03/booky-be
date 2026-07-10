@@ -78,7 +78,7 @@ class OpenAIClientTest {
   // ---------------- generateImage ----------------
 
   @Test
-  void generateImage_deberiaRetornarBase64_cuandoReturnBase64True_ySizeNoGrande() throws Exception {
+  void generateImage_deberiaEnviarSoloParametrosBasicos_yRetornarBase64SiLaApiLoDevuelve() throws Exception {
     // given
     given(openAIConfig.getImageModel()).willReturn("img-model");
     given(openAIConfig.getMaxRetries()).willReturn(0);
@@ -103,13 +103,13 @@ class OpenAIClientTest {
     assertEquals("prompt", getField(req, "prompt"));
     assertEquals(1, getField(req, "n"));
     assertEquals("2048x1024", getField(req, "size"));
-    assertEquals("standard", getField(req, "quality"));
-    assertEquals("vivid", getField(req, "style"));
-    assertEquals("b64_json", getField(req, "responseFormat"));
+    assertThrows(NoSuchFieldException.class, () -> getField(req, "quality"));
+    assertThrows(NoSuchFieldException.class, () -> getField(req, "style"));
+    assertThrows(NoSuchFieldException.class, () -> getField(req, "responseFormat"));
   }
 
   @Test
-  void generateImage_deberiaForzarUrl_cuandoReturnBase64True_ySizeGrande() throws Exception {
+  void generateImage_noDeberiaForzarResponseFormat_cuandoReturnBase64True_ySizeGrande() throws Exception {
     // given
     given(openAIConfig.getImageModel()).willReturn("img-model");
     given(openAIConfig.getMaxRetries()).willReturn(0);
@@ -123,11 +123,15 @@ class OpenAIClientTest {
     // then
     assertNotNull(result);
     assertEquals("http://img", result.getUrl());
-    assertNull(result.getBase64(), "Para size grande debe forzar URL y base64 null");
+    assertEquals("BASE64DATA", result.getBase64());
 
     then(requestBodySpec).should().bodyValue(bodyCaptor.capture());
     Object req = bodyCaptor.getValue();
-    assertEquals("url", getField(req, "responseFormat"));
+    assertEquals("img-model", getField(req, "model"));
+    assertEquals("prompt", getField(req, "prompt"));
+    assertEquals(1, getField(req, "n"));
+    assertEquals("4096x2048", getField(req, "size"));
+    assertThrows(NoSuchFieldException.class, () -> getField(req, "responseFormat"));
   }
 
   // ---------------- helpers: WebClient chain ----------------

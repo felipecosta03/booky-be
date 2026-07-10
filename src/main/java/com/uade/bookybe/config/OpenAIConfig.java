@@ -13,7 +13,7 @@ public class OpenAIConfig {
 
   private String apiKey;
   private String chatModel = "gpt-4o";
-  private String imageModel = "gpt-image-1"; // dall-e-3, gpt-image-1
+  private String imageModel = "gpt-image-2";
   private String baseUrl = "https://api.openai.com/v1";
   private Duration timeout = Duration.ofSeconds(30);
   private int maxRetries = 3;

@@ -105,7 +105,7 @@ livekit:
 openai:
   api-key: ${OPENAI_API_KEY:}
   chat-model: ${OPENAI_CHAT_MODEL:gpt-4o-mini}
-  image-model: ${OPENAI_IMAGE_MODEL:dall-e-3}
+  image-model: ${OPENAI_IMAGE_MODEL:gpt-image-2}
   base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
   timeout: ${OPENAI_TIMEOUT:30s}
   max-retries: ${OPENAI_MAX_RETRIES:3}

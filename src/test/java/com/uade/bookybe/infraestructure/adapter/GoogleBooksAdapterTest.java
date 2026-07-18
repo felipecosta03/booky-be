@@ -14,11 +14,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @ExtendWith(MockitoExtension.class)
 class GoogleBooksAdapterTest {
+
+  private static final String GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
+  private static final String GOOGLE_BOOKS_API_KEY = "test-google-books-key";
 
   @Mock private RestTemplate restTemplate;
 
@@ -29,6 +36,7 @@ class GoogleBooksAdapterTest {
   void setUp() {
     objectMapper = new ObjectMapper();
     sut = new GoogleBooksAdapter(restTemplate, objectMapper);
+    ReflectionTestUtils.setField(sut, "apiKey", GOOGLE_BOOKS_API_KEY);
   }
 
   // ---------------- getBookByIsbn ----------------
@@ -37,7 +45,7 @@ class GoogleBooksAdapterTest {
   void getBookByIsbn_deberiaRetornarEmpty_cuandoResponseEsNull() {
     // given
     String isbn = "9781234567890";
-    String expectedUrl = "https://www.googleapis.com/books/v1/volumes?q=isbn:" + isbn;
+    String expectedUrl = expectedUrl("isbn", isbn);
 
     given(restTemplate.getForObject(eq(expectedUrl), eq(String.class))).willReturn(null);
 
@@ -53,7 +61,7 @@ class GoogleBooksAdapterTest {
   void getBookByIsbn_deberiaRetornarEmpty_cuandoNoHayItems() {
     // given
     String isbn = "9781234567890";
-    String expectedUrl = "https://www.googleapis.com/books/v1/volumes?q=isbn:" + isbn;
+    String expectedUrl = expectedUrl("isbn", isbn);
 
     given(restTemplate.getForObject(eq(expectedUrl), eq(String.class)))
         .willReturn(
@@ -73,7 +81,7 @@ class GoogleBooksAdapterTest {
   void getBookByIsbn_deberiaRetornarEmpty_cuandoItemsVacio() {
     // given
     String isbn = "9781234567890";
-    String expectedUrl = "https://www.googleapis.com/books/v1/volumes?q=isbn:" + isbn;
+    String expectedUrl = expectedUrl("isbn", isbn);
 
     given(restTemplate.getForObject(eq(expectedUrl), eq(String.class)))
         .willReturn(
@@ -93,7 +101,7 @@ class GoogleBooksAdapterTest {
   void getBookByIsbn_deberiaRetornarBook_parseandoCamposPrincipales() {
     // given
     String isbn = "9781234567890";
-    String expectedUrl = "https://www.googleapis.com/books/v1/volumes?q=isbn:" + isbn;
+    String expectedUrl = expectedUrl("isbn", isbn);
 
     String longDesc = "a".repeat(600);
 
@@ -157,7 +165,7 @@ class GoogleBooksAdapterTest {
   void getBookByIsbn_deberiaUsarSmallThumbnail_siNoHayThumbnail() {
     // given
     String isbn = "9781234567890";
-    String expectedUrl = "https://www.googleapis.com/books/v1/volumes?q=isbn:" + isbn;
+    String expectedUrl = expectedUrl("isbn", isbn);
 
     given(restTemplate.getForObject(eq(expectedUrl), eq(String.class)))
         .willReturn(
@@ -186,7 +194,7 @@ class GoogleBooksAdapterTest {
   void getBookByIsbn_deberiaRetornarEmpty_cuandoRestTemplateLanzaRestClientException() {
     // given
     String isbn = "9781234567890";
-    String expectedUrl = "https://www.googleapis.com/books/v1/volumes?q=isbn:" + isbn;
+    String expectedUrl = expectedUrl("isbn", isbn);
 
     given(restTemplate.getForObject(eq(expectedUrl), eq(String.class)))
         .willThrow(new RestClientException("boom"));
@@ -199,10 +207,28 @@ class GoogleBooksAdapterTest {
   }
 
   @Test
+  void getBookByIsbn_deberiaRetornarEmpty_cuandoGoogleBooksResponde429() {
+    // given
+    String isbn = "9781234567890";
+    String expectedUrl = expectedUrl("isbn", isbn);
+
+    given(restTemplate.getForObject(eq(expectedUrl), eq(String.class)))
+        .willThrow(
+            HttpClientErrorException.create(
+                HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests", null, null, null));
+
+    // when
+    Optional<Book> result = sut.getBookByIsbn(isbn);
+
+    // then
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
   void getBookByIsbn_deberiaRetornarEmpty_cuandoJsonInvalido() {
     // given
     String isbn = "9781234567890";
-    String expectedUrl = "https://www.googleapis.com/books/v1/volumes?q=isbn:" + isbn;
+    String expectedUrl = expectedUrl("isbn", isbn);
 
     given(restTemplate.getForObject(eq(expectedUrl), eq(String.class)))
         .willReturn("{ invalid json");
@@ -217,10 +243,10 @@ class GoogleBooksAdapterTest {
   // ---------------- searchBookByTitle ----------------
 
   @Test
-  void searchBookByTitle_deberiaReemplazarEspaciosPorMas_enLaUrl() {
+  void searchBookByTitle_deberiaCodificarParametrosEnLaUrl() {
     // given
     String title = "Harry Potter";
-    String expectedUrl = "https://www.googleapis.com/books/v1/volumes?q=intitle:" + "Harry+Potter";
+    String expectedUrl = expectedUrl("intitle", title);
 
     given(restTemplate.getForObject(eq(expectedUrl), eq(String.class)))
         .willReturn(
@@ -240,10 +266,50 @@ class GoogleBooksAdapterTest {
   }
 
   @Test
+  void searchBookByTitle_deberiaCodificarAcentosYCaracteresEspeciales_enLaUrl() {
+    // given
+    String title = "Cien a" + '\u00f1' + "os & edici" + '\u00f3' + "n especial";
+    String parsedTitle = "Cien a" + '\u00f1' + "os";
+    String expectedUrl =
+        "https://www.googleapis.com/books/v1/volumes?q=intitle:Cien%20a%C3%B1os%20%26%20edici%C3%B3n%20especial&key=test-google-books-key";
+
+    given(restTemplate.getForObject(eq(expectedUrl), eq(String.class)))
+        .willReturn(
+            """
+          { "items": [ { "volumeInfo": { "title": "Cien a\\u00f1os", "authors": ["Autor"] } } ] }
+        """);
+
+    // when
+    Optional<Book> result = sut.searchBookByTitle(title);
+
+    // then
+    assertTrue(result.isPresent());
+    assertEquals(parsedTitle, result.get().getTitle());
+    then(restTemplate).should().getForObject(eq(expectedUrl), eq(String.class));
+  }
+
+  @Test
+  void searchBookByTitle_deberiaLlamarAnonimo_cuandoApiKeyEstaVacia() {
+    // given
+    ReflectionTestUtils.setField(sut, "apiKey", " ");
+    String title = "Nada";
+    String expectedUrl = expectedAnonymousUrl("intitle", title);
+
+    given(restTemplate.getForObject(eq(expectedUrl), eq(String.class))).willReturn("{ \"items\": [] }");
+
+    // when
+    Optional<Book> result = sut.searchBookByTitle(title);
+
+    // then
+    assertTrue(result.isEmpty());
+    then(restTemplate).should().getForObject(eq(expectedUrl), eq(String.class));
+  }
+
+  @Test
   void searchBookByTitle_deberiaRetornarEmpty_cuandoItemsVacio() {
     // given
     String title = "Nada";
-    String expectedUrl = "https://www.googleapis.com/books/v1/volumes?q=intitle:" + "Nada";
+    String expectedUrl = expectedUrl("intitle", title);
 
     given(restTemplate.getForObject(eq(expectedUrl), eq(String.class)))
         .willReturn(
@@ -262,7 +328,7 @@ class GoogleBooksAdapterTest {
   void searchBookByTitle_deberiaRetornarEmpty_cuandoResponseNull() {
     // given
     String title = "Algo";
-    String expectedUrl = "https://www.googleapis.com/books/v1/volumes?q=intitle:" + "Algo";
+    String expectedUrl = expectedUrl("intitle", title);
 
     given(restTemplate.getForObject(eq(expectedUrl), eq(String.class))).willReturn(null);
 
@@ -277,7 +343,7 @@ class GoogleBooksAdapterTest {
   void searchBookByTitle_deberiaRetornarEmpty_cuandoRestTemplateLanzaRestClientException() {
     // given
     String title = "Boom";
-    String expectedUrl = "https://www.googleapis.com/books/v1/volumes?q=intitle:" + "Boom";
+    String expectedUrl = expectedUrl("intitle", title);
 
     given(restTemplate.getForObject(eq(expectedUrl), eq(String.class)))
         .willThrow(new RestClientException("down"));
@@ -287,5 +353,44 @@ class GoogleBooksAdapterTest {
 
     // then
     assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void searchBookByTitle_deberiaRetornarEmpty_cuandoGoogleBooksResponde403() {
+    // given
+    String title = "Sin permisos";
+    String expectedUrl = expectedUrl("intitle", title);
+
+    given(restTemplate.getForObject(eq(expectedUrl), eq(String.class)))
+        .willThrow(
+            HttpClientErrorException.create(
+                HttpStatus.FORBIDDEN, "Forbidden", null, null, null));
+
+    // when
+    Optional<Book> result = sut.searchBookByTitle(title);
+
+    // then
+    assertTrue(result.isEmpty());
+  }
+
+  private static String expectedUrl(String searchField, String searchValue) {
+    return UriComponentsBuilder.fromUriString(GOOGLE_BOOKS_API_URL)
+        .queryParam("q", query(searchField, searchValue))
+        .queryParam("key", GOOGLE_BOOKS_API_KEY)
+        .build()
+        .encode()
+        .toUriString();
+  }
+
+  private static String expectedAnonymousUrl(String searchField, String searchValue) {
+    return UriComponentsBuilder.fromUriString(GOOGLE_BOOKS_API_URL)
+        .queryParam("q", query(searchField, searchValue))
+        .build()
+        .encode()
+        .toUriString();
+  }
+
+  private static String query(String searchField, String searchValue) {
+    return "%s:%s".formatted(searchField, searchValue);
   }
 }

@@ -9,9 +9,13 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @RequiredArgsConstructor
@@ -20,6 +24,9 @@ public class GoogleBooksAdapter implements GoogleBooksPort {
 
   private final RestTemplate restTemplate;
   private final ObjectMapper objectMapper;
+
+  @Value("${google.books.api-key}")
+  private String apiKey;
   
   private static final String GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
 
@@ -28,7 +35,7 @@ public class GoogleBooksAdapter implements GoogleBooksPort {
     log.info("Fetching book from Google Books API with ISBN: {}", isbn);
     
     try {
-      String url = GOOGLE_BOOKS_API_URL + "?q=isbn:" + isbn;
+      String url = buildVolumesUrl("isbn", isbn);
       String response = restTemplate.getForObject(url, String.class);
       
       if (response == null) {
@@ -50,6 +57,9 @@ public class GoogleBooksAdapter implements GoogleBooksPort {
       log.info("Successfully fetched book: {}", book.getTitle());
       return Optional.of(book);
       
+    } catch (RestClientResponseException e) {
+      logGoogleBooksApiError("ISBN", isbn, e);
+      return Optional.empty();
     } catch (RestClientException e) {
       log.error("Error calling Google Books API for ISBN {}: {}", isbn, e.getMessage());
       return Optional.empty();
@@ -64,7 +74,7 @@ public class GoogleBooksAdapter implements GoogleBooksPort {
     log.info("Searching book from Google Books API with title: {}", title);
     
     try {
-      String url = GOOGLE_BOOKS_API_URL + "?q=intitle:" + title.replace(" ", "+");
+      String url = buildVolumesUrl("intitle", title);
       String response = restTemplate.getForObject(url, String.class);
       
       if (response == null) {
@@ -86,12 +96,58 @@ public class GoogleBooksAdapter implements GoogleBooksPort {
       log.info("Successfully found book: {}", book.getTitle());
       return Optional.of(book);
       
+    } catch (RestClientResponseException e) {
+      logGoogleBooksApiError("title", title, e);
+      return Optional.empty();
     } catch (RestClientException e) {
       log.error("Error calling Google Books API for title {}: {}", title, e.getMessage());
       return Optional.empty();
     } catch (Exception e) {
       log.error("Error parsing Google Books API response for title {}: {}", title, e.getMessage());
       return Optional.empty();
+    }
+  }
+
+  private String buildVolumesUrl(String searchField, String searchValue) {
+    UriComponentsBuilder uriBuilder =
+        UriComponentsBuilder.fromUriString(GOOGLE_BOOKS_API_URL)
+            .queryParam("q", "%s:%s".formatted(searchField, searchValue));
+
+    if (StringUtils.hasText(apiKey)) {
+      uriBuilder.queryParam("key", apiKey);
+    } else {
+      log.warn(
+          "Google Books API key is empty or not configured. Performing an anonymous request; quota limits may be affected.");
+    }
+
+    return uriBuilder.build().encode().toUriString();
+  }
+
+  private void logGoogleBooksApiError(
+      String searchType, String searchValue, RestClientResponseException e) {
+    int statusCode = e.getStatusCode().value();
+
+    if (statusCode == 429) {
+      log.error(
+          "Google Books quota exceeded for {} {}. HTTP status: {}. Message: {}",
+          searchType,
+          searchValue,
+          statusCode,
+          e.getMessage());
+    } else if (statusCode == 403) {
+      log.error(
+          "Google Books API key is invalid or lacks permissions for {} {}. HTTP status: {}. Message: {}",
+          searchType,
+          searchValue,
+          statusCode,
+          e.getMessage());
+    } else {
+      log.error(
+          "Google Books API responded with error for {} {}. HTTP status: {}. Message: {}",
+          searchType,
+          searchValue,
+          statusCode,
+          e.getMessage());
     }
   }
 

@@ -111,6 +111,11 @@ openai:
   image-timeout: ${OPENAI_IMAGE_TIMEOUT:180s}
   max-retries: ${OPENAI_MAX_RETRIES:3}
 
+# Google Books Configuration
+google:
+  books:
+    api-key: ${GOOGLE_BOOKS_API_KEY:}
+
 # Scene Image Generation Configuration
 scene-image:
   default-size: ${SCENE_IMAGE_DEFAULT_SIZE:1024x1024}
